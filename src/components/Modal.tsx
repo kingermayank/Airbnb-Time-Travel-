@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import './Modal.css';
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,7 +11,6 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, children }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -17,7 +18,6 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
       requestAnimationFrame(() => {
         if (modalRef.current) {
           modalRef.current.classList.add('modal-enter-active');
-          setIsActive(true);
         }
         if (backdropRef.current) {
           backdropRef.current.classList.add('backdrop-enter-active');
@@ -27,7 +27,6 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
       // Remove active classes when closing
       if (modalRef.current) {
         modalRef.current.classList.remove('modal-enter-active');
-        setIsActive(false);
       }
       if (backdropRef.current) {
         backdropRef.current.classList.remove('backdrop-enter-active');
@@ -37,7 +36,7 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
 
   if (!isOpen) return null;
 
-  return (
+  const modalNode = (
     <div
       ref={backdropRef}
       className="modal-backdrop"
@@ -56,5 +55,7 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
       </div>
     </div>
   );
+
+  return createPortal(modalNode, document.body);
 }
 

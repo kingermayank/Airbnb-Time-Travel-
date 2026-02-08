@@ -12,7 +12,7 @@ const TELEPORTATION_METHODS = [
     id: 'delorean',
     name: 'Back to the Future DeLorean',
     description: 'Hit 88 miles per hour and break the space-time continuum—just like Marty and Doc Brown. Roads required. Lightning optional.',
-    icon: '/images/vehicles/delorean.jpg'
+    icon: '/images/vehicles/delorean.png'
   },
   {
     id: 'tardis',
@@ -28,21 +28,21 @@ const TELEPORTATION_METHODS = [
   }
 ];
 
-// Payment method options – images from public/images/payments/
+// Payment method options – images from public/images/coins/ (PNG filenames as in folder)
 const PAYMENT_METHODS = [
   {
     id: 'bitcoin',
     name: 'Bitcoin',
     address: 'bc1qk8f...ghjkl',
-    icon: '/images/payments/bitcoin.svg',
+    icon: '/images/coins/10%20Bitcoin.png',
     symbol: '₿',
     iconSize: 32
   },
   {
-    id: 'ethereum',
-    name: 'Ethereum',
+    id: 'ethereum-classic',
+    name: 'Ethereum Classic',
     address: '0x742d...f44e',
-    icon: '/images/payments/ethereum.svg',
+    icon: '/images/coins/24%20Ethereum%20Classic.png',
     symbol: 'Ξ',
     iconSize: 32
   },
@@ -50,8 +50,16 @@ const PAYMENT_METHODS = [
     id: 'usdc',
     name: 'USDC',
     address: '0xAbc1...789F',
-    icon: '/images/payments/usdc.svg',
+    icon: '/images/coins/12%20USDC.png',
     symbol: '$',
+    iconSize: 32
+  },
+  {
+    id: 'stellar',
+    name: 'Stellar',
+    address: 'GDRK...xYz9',
+    icon: '/images/coins/7%20Stellar.png',
+    symbol: 'XLM',
     iconSize: 32
   }
 ];
@@ -458,7 +466,7 @@ export function ConfirmationPage() {
                       key={method.id}
                       onClick={() => setSelectedTeleportation(method.id)}
                       style={{
-                        border: isSelected ? '2px solid rgba(34, 34, 34, 1)' : '1px solid rgba(217, 217, 217, 1)',
+                        border: isSelected ? '2px solid rgba(34, 34, 34, 1)' : '2px solid rgba(217, 217, 217, 1)',
                         borderRadius: '16px',
                         padding: '16px',
                         backgroundColor: isSelected ? 'rgba(247, 247, 247, 1)' : 'white',
@@ -1035,18 +1043,9 @@ export function ConfirmationPage() {
               {PAYMENT_METHODS.map((method, index) => {
                 const isSelected = tempSelectedPayment.id === method.id;
                 const isFirst = index === 0;
-                const isLast = index === PAYMENT_METHODS.length - 1;
-                
+
                 return (
                   <div key={method.id}>
-                    {isFirst && (
-                      <div style={{
-                        height: '1px',
-                        width: '100%',
-                        backgroundColor: 'rgba(229, 231, 235, 1)',
-                        marginBottom: '16px'
-                      }} />
-                    )}
                     {!isFirst && index === 1 && (
                       <div style={{
                         fontFamily: 'var(--ds-font-family)',
@@ -1110,14 +1109,12 @@ export function ConfirmationPage() {
                         )}
                       </div>
                     </div>
-                    {!isLast && (
-                      <div style={{
-                        height: '1px',
-                        width: '100%',
-                        backgroundColor: 'rgba(229, 231, 235, 1)',
-                        marginTop: '16px'
-                      }} />
-                    )}
+                    <div style={{
+                      height: '1px',
+                      width: '100%',
+                      backgroundColor: 'rgba(229, 231, 235, 1)',
+                      marginTop: '16px'
+                    }} />
                   </div>
                 );
               })}

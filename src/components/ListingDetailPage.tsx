@@ -12,6 +12,8 @@ const DURATION_OPTIONS = [
   { value: 48, label: '2 days', multiplier: 7 },
   { value: 72, label: '3 days', multiplier: 9 },
 ];
+import { Header, Button } from '../design-system';
+import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { PhotoViewer } from './PhotoViewer';
 import { motion } from 'framer-motion';
 import { HeroGridSkeleton } from './HeroGridSkeleton';
@@ -99,8 +101,29 @@ import {
   Rocket,
   Cpu,
   Bot,
+  HelpCircle,
+  Menu,
   type LucideIcon
 } from 'lucide-react';
+
+const FIGMA_NAV_ITEMS = [
+  { label: 'Time Travel', iconUrl: TIME_TRAVEL_ICON_URL },
+  { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
+];
+
+const headerRightSlot = (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ds-spacing-12)' }}>
+    <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
+      Become a host
+    </Button>
+    <button type="button" className="ds-header-right-icon-btn" aria-label="Help" style={{ border: 'none' }}>
+      <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+    </button>
+    <button type="button" className="ds-header-right-icon-btn" aria-label="Menu" style={{ border: 'none' }}>
+      <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+    </button>
+  </div>
+);
 
 // ============================================================================
 // REVIEW BADGE COMPONENTS (Airbnb-style red icons)
@@ -394,6 +417,16 @@ function getThingsToKnowIcon(iconName: string | undefined): LucideIcon {
   }
 }
 
+/** Format host join_date to "X month(s)" or "X year(s)" for "X months hosting" / "X years hosting". */
+function formatHostingDuration(joinDate: string): string {
+  const join = new Date(joinDate);
+  const now = new Date();
+  const months = (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth());
+  if (months < 12) return `${months} month${months !== 1 ? 's' : ''}`;
+  const years = Math.floor(months / 12);
+  return `${years} year${years !== 1 ? 's' : ''}`;
+}
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -413,6 +446,7 @@ export function ListingDetailPage() {
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const guestDropdownRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -513,9 +547,22 @@ export function ListingDetailPage() {
       <div style={{
         backgroundColor: '#ffffff',
         minHeight: '100vh',
-        padding: '24px 80px',
+        display: 'flex',
+        flexDirection: 'column',
       }}>
-        <HeroGridSkeleton />
+        <Header
+          brandName="warpbnb"
+          navItems={FIGMA_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={() => {}}
+          onLogoClick={() => navigate('/')}
+          rightSlot={headerRightSlot}
+        />
+        <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
+          <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+            <HeroGridSkeleton />
+          </div>
+        </div>
       </div>
     );
   }
@@ -621,36 +668,20 @@ export function ListingDetailPage() {
         style={{
           backgroundColor: '#ffffff',
           minHeight: '100vh',
-          padding: '32px 160px 64px 160px',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            marginBottom: '24px',
-            padding: '8px 0',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8L10 4" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{
-            fontFamily: '"Figtree", sans-serif',
-            fontSize: '14px',
-            color: '#222',
-            textDecoration: 'underline',
-          }}>
-            Back
-          </span>
-        </button>
-
+        <Header
+          brandName="warpbnb"
+          navItems={FIGMA_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={() => {}}
+          onLogoClick={() => navigate('/')}
+          rightSlot={headerRightSlot}
+        />
+        <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
+        <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
         {/* Title */}
         <h1 style={{
           fontFamily: '"Figtree", sans-serif',
@@ -735,44 +766,70 @@ export function ListingDetailPage() {
           <div>
             {/* Property Info */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
               paddingBottom: '24px',
               borderBottom: '1px solid #EBEBEB',
               marginBottom: '24px',
             }}>
-              <div>
-                <h2 style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 600,
-                  color: '#222',
-                  marginBottom: '8px',
-                }}>
-                  {listing.property_type} hosted by {listing.hosts?.name || 'Host'}
-                </h2>
-                <div style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '16px',
-                  color: '#222',
-                }}>
-                  {listing.guest_capacity} guests · {listing.bedrooms} bedroom{listing.bedrooms !== 1 ? 's' : ''} · {listing.beds} bed{listing.beds !== 1 ? 's' : ''} · {listing.baths} bath{listing.baths !== 1 ? 's' : ''}
-                </div>
-                {listing.location_description && (
-                  <div style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#717171',
-                    marginTop: '4px',
-                  }}>
-                    {listing.location_description}
-                  </div>
-                )}
+              <h2 style={{
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: '22px',
+                fontWeight: 600,
+                color: '#222',
+                marginBottom: '4px',
+              }}>
+                {listing.property_type}
+              </h2>
+              <div style={{
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: '16px',
+                color: '#222',
+              }}>
+                {listing.guest_capacity} guests · {listing.bedrooms} bedroom{listing.bedrooms !== 1 ? 's' : ''} · {listing.beds} bed{listing.beds !== 1 ? 's' : ''} · {listing.baths} bath{listing.baths !== 1 ? 's' : ''}
               </div>
+              {listing.overall_rating != null && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '4px',
+                }}>
+                  <Star size={16} fill="#222" color="#222" />
+                  <span style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#222',
+                  }}>
+                    {listing.overall_rating.toFixed(2)}
+                  </span>
+                  <span style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '16px',
+                    color: '#222',
+                  }}> · </span>
+                  <span style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '16px',
+                    color: '#222',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }} onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                    {listing.total_reviews ?? listing.reviews?.length ?? 0} reviews
+                  </span>
+                </div>
+              )}
+            </div>
 
-              {/* Host Avatar */}
-              {listing.hosts && (
+            {/* Host Section */}
+            {listing.hosts && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                paddingBottom: '24px',
+                borderBottom: '1px solid #EBEBEB',
+                marginBottom: '24px',
+              }}>
                 <div style={{
                   width: '56px',
                   height: '56px',
@@ -802,36 +859,26 @@ export function ListingDetailPage() {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            {/* Rating Summary */}
-            {listing.overall_rating && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                paddingBottom: '24px',
-                borderBottom: '1px solid #EBEBEB',
-                marginBottom: '24px',
-              }}>
-                <Star size={16} fill="#222" color="#222" />
-                <span style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#222',
-                }}>
-                  {listing.overall_rating.toFixed(2)}
-                </span>
-                <span style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '16px',
-                  color: '#222',
-                  textDecoration: 'underline',
-                }}>
-                  {listing.total_reviews} reviews
-                </span>
+                <div>
+                  <div style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#222',
+                    marginBottom: '2px',
+                  }}>
+                    Hosted by {listing.hosts.name}
+                  </div>
+                  {listing.hosts.join_date && (
+                    <div style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '14px',
+                      color: '#717171',
+                    }}>
+                      {formatHostingDuration(listing.hosts.join_date)} hosting
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -884,6 +931,7 @@ export function ListingDetailPage() {
             )}
 
             {/* Description */}
+            {(listing.full_description || listing.short_description) && (
             <div style={{
               paddingBottom: '24px',
               borderBottom: '1px solid #EBEBEB',
@@ -895,10 +943,83 @@ export function ListingDetailPage() {
                 lineHeight: '24px',
                 color: '#222',
                 whiteSpace: 'pre-line',
+                display: '-webkit-box',
+                WebkitLineClamp: 8,
+                WebkitBoxOrient: 'vertical' as const,
+                overflow: 'hidden',
               }}>
                 {listing.full_description || listing.short_description}
               </p>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => setShowDescriptionModal(true)}
+                style={{ marginTop: '16px' }}
+              >
+                Show more
+              </Button>
             </div>
+            )}
+
+            {/* Description modal (full text) */}
+            <Modal
+              isOpen={showDescriptionModal}
+              onClose={() => setShowDescriptionModal(false)}
+            >
+              <div style={{
+                padding: '24px',
+                maxWidth: '640px',
+                maxHeight: '85vh',
+                overflow: 'auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: '16px',
+                  marginBottom: '24px',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowDescriptionModal(false)}
+                    aria-label="Close"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      lineHeight: 1,
+                      color: '#222',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <h2 style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '28px',
+                    fontWeight: 600,
+                    color: '#222',
+                    margin: 0,
+                    lineHeight: 1.25,
+                    textAlign: 'left',
+                  }}>
+                    About this space
+                  </h2>
+                </div>
+                <p style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  color: '#222',
+                  whiteSpace: 'pre-line',
+                  margin: 0,
+                }}>
+                  {listing.full_description || listing.short_description}
+                </p>
+              </div>
+            </Modal>
 
             {/* Sleeping Arrangements */}
             {sleepingArrangements && sleepingArrangements.length > 0 && (
@@ -992,29 +1113,20 @@ export function ListingDetailPage() {
                 })}
               </div>
               {listing.amenities.length > 10 && !showAllAmenities && (
-                <button
+                <Button
+                  variant="secondary"
+                  size="lg"
                   onClick={() => setShowAllAmenities(true)}
-                  style={{
-                    marginTop: '24px',
-                    padding: '14px 24px',
-                    border: '1px solid #222',
-                    borderRadius: '8px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 500,
-                    color: '#222',
-                  }}
+                  style={{ marginTop: '24px' }}
                 >
                   Show all {listing.amenities.length} amenities
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Reviews Section */}
             {listing.reviews.length > 0 && (
-              <div style={{
+              <div id="reviews-section" style={{
                 paddingBottom: '24px',
                 borderBottom: '1px solid #EBEBEB',
                 marginBottom: '24px',
@@ -1164,23 +1276,14 @@ export function ListingDetailPage() {
                 </div>
 
                 {listing.reviews.length > 6 && !showAllReviews && (
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="lg"
                     onClick={() => setShowAllReviews(true)}
-                    style={{
-                      marginTop: '24px',
-                      padding: '14px 24px',
-                      border: '1px solid #222',
-                      borderRadius: '8px',
-                      background: 'white',
-                      cursor: 'pointer',
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                    }}
+                    style={{ marginTop: '24px' }}
                   >
                     Show all {listing.reviews.length} reviews
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -1881,6 +1984,8 @@ export function ListingDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       </motion.div>
     </>
