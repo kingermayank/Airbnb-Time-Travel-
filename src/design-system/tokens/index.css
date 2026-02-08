@@ -43,6 +43,9 @@
   --ds-navbar-active: #222222;
   --ds-header-coming-soon-glow: 0 0 14px rgba(120, 180, 255, 0.45);
 
+  /* Confirmation page (Figma 283-3283): light beige/off-white background */
+  --ds-confirmation-bg: #FAF9F7;
+
   /* ---- Spacing (ds- prefix, match Figma) ---- */
   --ds-spacing-0: 0;
   --ds-spacing-2: 2px;

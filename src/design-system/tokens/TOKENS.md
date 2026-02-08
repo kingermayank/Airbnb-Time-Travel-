@@ -25,6 +25,7 @@ Tokens are defined in `index.css` and used by foundation and pattern components.
 | `--ds-navbar-active` | #222222 | Header nav active tab (Figma 307-4788) |
 | Coming soon pill | radial #354668 50% → #657E9B 100%, radius 8px 16px 2px 16px | Header pill (Figma 307-4788) |
 | `--ds-header-coming-soon-glow` | 0 0 14px rgba(120,180,255,0.45) | Coming soon pill glow |
+| `--ds-confirmation-bg` | #FAF9F7 | Confirmation page background (Figma 283-3283: light beige/off-white) |
 
 ## Spacing
 

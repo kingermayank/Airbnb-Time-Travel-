@@ -2,36 +2,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
+import { Header, Button } from '../design-system';
+import { BookingConfirmation } from './BookingConfirmation';
+import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 
-// Teleportation method options
+// Teleportation method options – images from public/images/vehicles/
 const TELEPORTATION_METHODS = [
   {
     id: 'delorean',
     name: 'Back to the Future DeLorean',
     description: 'Hit 88 miles per hour and break the space-time continuum—just like Marty and Doc Brown. Roads required. Lightning optional.',
-    icon: 'http://localhost:3845/assets/912c07d150fdf2998eab5dfe9d4d5995b44479de.png'
+    icon: '/images/vehicles/delorean.jpg'
   },
   {
     id: 'tardis',
     name: 'TARDIS Unit',
     description: 'Bigger on the inside. Interdimensional police box piloted across space and time by The Doctor. Expect surprising landings and British charm.',
-    icon: 'http://localhost:3845/assets/f1a6b238a822256621dce249288edf8ecafde669.png'
+    icon: '/images/vehicles/tardis.png'
   },
   {
     id: 'time-stone',
     name: 'Doctor Strange\'s Time Stone',
     description: 'Manipulate time itself using the Eye of Agamotto. Loop, rewind, or fast-forward to your destination with sorcerer-level precision.',
-    icon: 'http://localhost:3845/assets/b8259fa394c3a2f192130fe67094918869a3a0cd.png'
+    icon: '/images/vehicles/time-stone.png'
   }
 ];
 
-// Payment method options
+// Payment method options – images from public/images/payments/
 const PAYMENT_METHODS = [
   {
     id: 'bitcoin',
     name: 'Bitcoin',
     address: 'bc1qk8f...ghjkl',
-    icon: 'http://localhost:3845/assets/f04614b76b88cc0915f0b7e3573d06dabfd49c72.svg',
+    icon: '/images/payments/bitcoin.svg',
     symbol: '₿',
     iconSize: 32
   },
@@ -39,7 +42,7 @@ const PAYMENT_METHODS = [
     id: 'ethereum',
     name: 'Ethereum',
     address: '0x742d...f44e',
-    icon: 'http://localhost:3845/assets/4af60bde8ac5992935144e42ef99e3ce6e822479.svg',
+    icon: '/images/payments/ethereum.svg',
     symbol: 'Ξ',
     iconSize: 32
   },
@@ -47,10 +50,15 @@ const PAYMENT_METHODS = [
     id: 'usdc',
     name: 'USDC',
     address: '0xAbc1...789F',
-    icon: 'http://localhost:3845/assets/aaf3d429a3bd7ac4227867248ed26832c8000354.png',
+    icon: '/images/payments/usdc.svg',
     symbol: '$',
     iconSize: 32
   }
+];
+
+const CONFIRMATION_NAV_ITEMS = [
+  { label: 'Time Travel', iconUrl: TIME_TRAVEL_ICON_URL },
+  { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
 export function ConfirmationPage() {
@@ -67,6 +75,19 @@ export function ConfirmationPage() {
   const [selectedTeleportation, setSelectedTeleportation] = useState('tardis');
   const [insuranceSelected, setInsuranceSelected] = useState(false);
   const [guestCount, setGuestCount] = useState(1);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
+  const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
+
+  // Match Magic Path BookingConfirmation page background when confirmation view is shown
+  useEffect(() => {
+    if (!bookingConfirmed || !listing) return;
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = 'rgba(243, 239, 236, 1)';
+    return () => {
+      document.body.style.backgroundColor = prev;
+    };
+  }, [bookingConfirmed, listing]);
 
   useEffect(() => {
     if (!id) {
@@ -166,7 +187,7 @@ export function ConfirmationPage() {
         alignItems: 'center',
         minHeight: '100vh',
         fontSize: '16px',
-        fontFamily: '"Graphik Web", sans-serif',
+        fontFamily: 'var(--ds-font-family)',
         color: 'rgba(113, 113, 113, 1)'
       }}>
         Loading confirmation...
@@ -187,7 +208,7 @@ export function ConfirmationPage() {
       }}>
         <div style={{
           fontSize: '18px',
-          fontFamily: '"Graphik Web", sans-serif',
+          fontFamily: 'var(--ds-font-family)',
           fontWeight: 500,
           color: 'rgba(34, 34, 34, 1)',
           marginBottom: '12px'
@@ -201,7 +222,7 @@ export function ConfirmationPage() {
           backgroundColor: '#FF395C',
           color: 'white',
           fontSize: '14px',
-          fontFamily: '"Graphik Web", sans-serif',
+          fontFamily: 'var(--ds-font-family)',
           fontWeight: 500,
           cursor: 'pointer',
           marginTop: '20px'
@@ -215,166 +236,55 @@ export function ConfirmationPage() {
   const pricing = calculatePricing();
   if (!pricing) return null;
 
+  // Post-booking confirmation view (Figma: Securing arrival window)
+  if (bookingConfirmed && listing) {
+    const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
+    const eraOrDate = listing.date || '1734 CE';
+
+    return (
+      <BookingConfirmation
+        title={listing.title}
+        location={eraOrDate}
+        date={eraOrDate}
+        guests={`${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
+        price={confirmationTotal}
+        imageUrl={listing.main_image}
+        onLogoClick={() => navigate('/')}
+      />
+    );
+  }
+
+  const headerRightSlot = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ds-spacing-12)' }}>
+      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }} onClick={() => navigate('/')}>
+        Become a host
+      </Button>
+      <button type="button" className="ds-header-right-icon-btn" aria-label="Help" style={{ border: 'none' }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ds-navbar-active)' }}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </button>
+      <button type="button" className="ds-header-right-icon-btn" aria-label="Menu" style={{ border: 'none' }}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ds-navbar-active)' }}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+      </button>
+    </div>
+  );
+
   return (
     <div style={{
       width: '100%',
       minHeight: '100vh',
-      backgroundColor: 'rgba(255, 255, 255, 1)',
+      backgroundColor: 'var(--ds-background)',
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Header */}
-      <div style={{
-        width: '100%',
-        height: '101px',
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 40px',
-        backgroundColor: 'rgba(251, 251, 251, 1)',
-        boxSizing: 'border-box',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        borderBottom: '1px solid rgba(235, 235, 235, 1)'
-      }}>
-        {/* Logo */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          cursor: 'pointer',
-          flex: 1
-        }} onClick={() => navigate('/')}>
-          <img src="https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/c976b0ad-ec40-4b9b-92cf-fc5026868616.svg" alt="Airbnb" style={{
-            width: '40px',
-            height: '40px'
-          }} />
-          <img src="https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/4383b27d-8ae5-4540-a091-0635cd01d9b5.svg" alt="Vector" style={{
-            width: '65.6px',
-            height: '17.5px',
-            marginLeft: '4px'
-          }} />
-        </div>
-
-        {/* Navigation Tabs */}
-        <nav style={{
-          display: 'flex',
-          gap: '32px',
-          height: '100%',
-          alignItems: 'center'
-        }}>
-          {[
-            { label: 'Homes', icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/049c1522-ce42-4a6a-9fe2-74ddbee53971.png' },
-            { label: 'Experiences', icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/ec4befb5-f8d2-460c-bd98-9e3d5a3e16e8.png' },
-            { label: 'Services', icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/3e65e158-8c5e-4f56-9efa-9a9faa7db084.png' },
-            { label: 'Time Travel', icon: 'https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/9be8222d-7ffa-4c1a-a97f-6b3ed6400a37.png' }
-          ].map(item => (
-            <button key={item.label} onClick={() => item.label === 'Time Travel' ? null : navigate('/')} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px 0 0 0',
-              height: '80px',
-              justifyContent: 'center',
-              transition: 'opacity 0.2s'
-            }} onMouseEnter={e => e.currentTarget.style.opacity = '0.7'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  overflow: 'hidden',
-                  position: 'relative'
-                }}>
-                  <img src={item.icon} alt={item.label} style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain'
-                  }} />
-                </div>
-                <span style={{
-                  fontSize: '14px',
-                  fontFamily: '"Graphik Web", sans-serif',
-                  fontWeight: item.label === 'Time Travel' ? 500 : 400,
-                  color: item.label === 'Time Travel' ? 'rgba(34, 34, 34, 1)' : 'rgba(106, 106, 106, 1)'
-                }}>
-                  {item.label}
-                </span>
-              </div>
-              <div style={{
-                height: '3px',
-                backgroundColor: item.label === 'Time Travel' ? 'rgba(34, 34, 34, 1)' : 'transparent',
-                width: '100%',
-                borderRadius: '30px',
-                marginTop: 'auto',
-                marginBottom: '6px'
-              }} />
-            </button>
-          ))}
-        </nav>
-
-        {/* Right Actions */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          gap: '12px',
-          flex: 1
-        }}>
-          <button style={{
-            height: '40px',
-            padding: '0 16px',
-            borderRadius: '24px',
-            border: 'none',
-            background: 'none',
-            fontSize: '14px',
-            fontWeight: 500,
-            fontFamily: '"Graphik Web", sans-serif',
-            cursor: 'pointer'
-          }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-            Become a host
-          </button>
-          <button style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '20px',
-            border: 'none',
-            backgroundColor: 'rgba(242, 242, 242, 1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}>
-            <img src="https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/495a65a7-2776-4c22-93e9-ddbbec08f861.svg" alt="Language" style={{
-              width: '20px',
-              height: '20px'
-            }} />
-          </button>
-          <button style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '20px',
-            border: 'none',
-            backgroundColor: 'rgba(242, 242, 242, 1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}>
-            <img src="https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/517d93ae-5050-47a4-9279-35f65f33e53f.svg" alt="Menu" style={{
-              width: '20px',
-              height: '20px'
-            }} />
-          </button>
-        </div>
+      <div style={{ borderBottom: '1px solid var(--ds-border-light)' }}>
+        <Header
+          brandName="warpbnb"
+          navItems={CONFIRMATION_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={(label) => label === 'Time Travel' ? undefined : navigate('/')}
+          onLogoClick={() => navigate('/')}
+          rightSlot={headerRightSlot}
+        />
       </div>
 
       {/* Main Content */}
@@ -414,7 +324,7 @@ export function ConfirmationPage() {
             </svg>
           </button>
           <div style={{
-            fontFamily: '"Graphik Web", sans-serif',
+            fontFamily: 'var(--ds-font-family)',
             fontWeight: 500,
             fontSize: '30px',
             lineHeight: '40px',
@@ -463,7 +373,7 @@ export function ConfirmationPage() {
                   alignItems: 'flex-start'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '20px',
                     lineHeight: '28px',
@@ -484,7 +394,7 @@ export function ConfirmationPage() {
                       height: '20px'
                     }} />
                     <div style={{
-                      fontFamily: '"Graphik Web", sans-serif',
+                      fontFamily: 'var(--ds-font-family)',
                       fontSize: '16px',
                       lineHeight: '24px',
                       letterSpacing: '-0.32px',
@@ -502,7 +412,7 @@ export function ConfirmationPage() {
                     borderRadius: '10px',
                     border: 'none',
                     cursor: 'pointer',
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '14px',
                     lineHeight: '20px',
@@ -526,7 +436,7 @@ export function ConfirmationPage() {
               backgroundColor: 'white'
             }}>
               <div style={{
-                fontFamily: '"Graphik Web", sans-serif',
+                fontFamily: 'var(--ds-font-family)',
                 fontWeight: 500,
                 fontSize: '20px',
                 lineHeight: '28px',
@@ -573,7 +483,7 @@ export function ConfirmationPage() {
                         alignItems: 'flex-start'
                       }}>
                         <div style={{
-                          fontFamily: '"Graphik Web", sans-serif',
+                          fontFamily: 'var(--ds-font-family)',
                           fontWeight: 500,
                           fontSize: '16px',
                           lineHeight: '24px',
@@ -583,7 +493,7 @@ export function ConfirmationPage() {
                           {method.name}
                         </div>
                         <div style={{
-                          fontFamily: '"Graphik Web", sans-serif',
+                          fontFamily: 'var(--ds-font-family)',
                           fontSize: '14px',
                           lineHeight: '20px',
                           letterSpacing: '-0.28px',
@@ -640,7 +550,7 @@ export function ConfirmationPage() {
                   alignItems: 'flex-start'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '16px',
                     lineHeight: '24px',
@@ -651,7 +561,7 @@ export function ConfirmationPage() {
                     Add emergency extraction insurance?
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '14px',
                     lineHeight: '20px',
@@ -662,7 +572,7 @@ export function ConfirmationPage() {
                     Yes, add peace of mind for 40{selectedPaymentMethod.symbol}.
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -700,7 +610,7 @@ export function ConfirmationPage() {
                 marginBottom: '16px'
               }} />
               <div style={{
-                fontFamily: '"Graphik Web", sans-serif',
+                fontFamily: 'var(--ds-font-family)',
                 fontSize: '14px',
                 lineHeight: '20px',
                 letterSpacing: '-0.28px',
@@ -748,7 +658,7 @@ export function ConfirmationPage() {
                   alignItems: 'flex-start'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '18px',
                     lineHeight: '26px',
@@ -767,7 +677,7 @@ export function ConfirmationPage() {
                       <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF395C"/>
                     </svg>
                     <div style={{
-                      fontFamily: '"Graphik Web", sans-serif',
+                      fontFamily: 'var(--ds-font-family)',
                       fontWeight: 500,
                       fontSize: '14px',
                       lineHeight: '20px',
@@ -783,7 +693,7 @@ export function ConfirmationPage() {
                       borderRadius: '50%'
                     }} />
                     <div style={{
-                      fontFamily: '"Graphik Web", sans-serif',
+                      fontFamily: 'var(--ds-font-family)',
                       fontWeight: 500,
                       fontSize: '14px',
                       lineHeight: '20px',
@@ -801,7 +711,7 @@ export function ConfirmationPage() {
                 marginBottom: '16px'
               }}>
                 <div style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '14px',
                   lineHeight: '20px',
@@ -812,7 +722,7 @@ export function ConfirmationPage() {
                   Free cancellation
                 </div>
                 <div style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontSize: '14px',
                   lineHeight: '20px',
                   letterSpacing: '-0.28px',
@@ -845,7 +755,7 @@ export function ConfirmationPage() {
                   alignItems: 'flex-start'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontWeight: 500,
                     fontSize: '14px',
                     lineHeight: '20px',
@@ -855,7 +765,7 @@ export function ConfirmationPage() {
                     Guests
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -870,7 +780,7 @@ export function ConfirmationPage() {
                   borderRadius: '10px',
                   border: 'none',
                   cursor: 'pointer',
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '14px',
                   lineHeight: '20px',
@@ -898,7 +808,7 @@ export function ConfirmationPage() {
                 marginBottom: '16px'
               }}>
                 <div style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '14px',
                   lineHeight: '20px',
@@ -914,7 +824,7 @@ export function ConfirmationPage() {
                   alignItems: 'center'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -923,7 +833,7 @@ export function ConfirmationPage() {
                     Base Fare
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -938,7 +848,7 @@ export function ConfirmationPage() {
                   alignItems: 'center'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -947,7 +857,7 @@ export function ConfirmationPage() {
                     Vehicle Class
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -962,7 +872,7 @@ export function ConfirmationPage() {
                   alignItems: 'center'
                 }}>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -971,7 +881,7 @@ export function ConfirmationPage() {
                     Service Fee
                   </div>
                   <div style={{
-                    fontFamily: '"Graphik Web", sans-serif',
+                    fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
@@ -997,7 +907,7 @@ export function ConfirmationPage() {
                 marginBottom: '16px'
               }}>
                 <div style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '16px',
                   lineHeight: '24px',
@@ -1007,7 +917,7 @@ export function ConfirmationPage() {
                   Total
                 </div>
                 <div style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '16px',
                   lineHeight: '24px',
@@ -1020,8 +930,10 @@ export function ConfirmationPage() {
 
               {/* Book Button */}
               <button
+                disabled={isBookingSubmitting}
                 onClick={async () => {
                   try {
+                    setIsBookingSubmitting(true);
                     const bookingData = {
                       listing_id: listing.id,
                       listing_title: listing.title,
@@ -1032,45 +944,46 @@ export function ConfirmationPage() {
                       occupancy_tax_usd: pricing.usdOccupancyTax,
                       guest_count: guestCount
                     };
-                    
-                    const booking = await createBooking(bookingData);
-                    
-                    if (booking) {
-                      alert('Booking confirmed! Your reservation has been saved.');
-                      // Optionally navigate to a success page or back to listings
-                      // navigate('/bookings');
-                    } else {
-                      alert('Booking created locally (Supabase not configured).');
+
+                    try {
+                      await createBooking(bookingData);
+                    } catch (saveError) {
+                      console.error('Error creating booking:', saveError);
+                      setBookingSaveFailed(true);
                     }
+                    // Always show confirmation page so the user sees their booking details
+                    setBookingConfirmed(true);
                   } catch (error) {
-                    console.error('Error creating booking:', error);
-                    alert('Failed to create booking. Please try again.');
+                    console.error('Error in booking flow:', error);
+                    alert('Something went wrong. Please try again.');
+                  } finally {
+                    setIsBookingSubmitting(false);
                   }
                 }}
                 style={{
-                  backgroundColor: 'rgba(222, 49, 81, 1)',
+                  backgroundColor: isBookingSubmitting ? 'rgba(222, 49, 81, 0.7)' : 'rgba(222, 49, 81, 1)',
                   width: '100%',
                   padding: '12px 16px',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--ds-radius-full)',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
                   boxShadow: '0px 1px 2px rgba(31, 41, 55, 0.08)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'opacity 0.2s'
                 }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                onMouseEnter={e => !isBookingSubmitting && (e.currentTarget.style.opacity = '0.9')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
                 <span style={{
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '14px',
                   lineHeight: '20px',
                   letterSpacing: '-0.28px',
                   color: 'white'
-                }}>Book Launch Window</span>
+                }}>{isBookingSubmitting ? 'Securing...' : 'Book Launch Window'}</span>
               </button>
             </div>
           </div>
@@ -1101,7 +1014,7 @@ export function ConfirmationPage() {
             overflow: 'auto'
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{
-              fontFamily: '"Graphik Web", sans-serif',
+              fontFamily: 'var(--ds-font-family)',
               fontWeight: 500,
               fontSize: '20px',
               lineHeight: '28px',
@@ -1136,7 +1049,7 @@ export function ConfirmationPage() {
                     )}
                     {!isFirst && index === 1 && (
                       <div style={{
-                        fontFamily: '"Graphik Web", sans-serif',
+                        fontFamily: 'var(--ds-font-family)',
                         fontWeight: 500,
                         fontSize: '16px',
                         lineHeight: '24px',
@@ -1167,7 +1080,7 @@ export function ConfirmationPage() {
                           flexShrink: 0
                         }} />
                         <div style={{
-                          fontFamily: '"Graphik Web", sans-serif',
+                          fontFamily: 'var(--ds-font-family)',
                           fontSize: '16px',
                           lineHeight: '24px',
                           letterSpacing: '-0.32px',
@@ -1223,7 +1136,7 @@ export function ConfirmationPage() {
                   borderRadius: '12px',
                   border: 'none',
                   cursor: 'pointer',
-                  fontFamily: '"Graphik Web", sans-serif',
+                  fontFamily: 'var(--ds-font-family)',
                   fontWeight: 500,
                   fontSize: '16px',
                   lineHeight: '24px',

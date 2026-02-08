@@ -127,6 +127,7 @@ export const AirbnbUi = () => {
   useEffect(() => {
     async function loadListings() {
       if (!isSupabaseConfigured()) {
+        // Keep showing MOCK_LISTINGS; no fetch attempted
         return;
       }
       try {
@@ -136,8 +137,9 @@ export const AirbnbUi = () => {
         if (data && data.length > 0) {
           setListings(data);
         }
-      } catch {
-        setError(null);
+        // If configured but no data returned, keep current state (mock or empty)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load listings');
       } finally {
         setIsLoading(false);
       }
@@ -180,6 +182,30 @@ export const AirbnbUi = () => {
           who={{ label: 'Who', placeholder: 'Add guests' }}
         />
       </div>
+
+      {!isSupabaseConfigured() && (
+        <div
+          style={{
+            padding: 'var(--ds-spacing-12) var(--ds-spacing-80)',
+            backgroundColor: 'var(--ds-surface-header)',
+            borderBottom: '1px solid var(--ds-border-light)',
+            fontSize: 'var(--ds-text-14)',
+            color: 'var(--ds-text-secondary)',
+          }}
+          role="status"
+        >
+          Using demo data. To load from Supabase: add{' '}
+          <code style={{ background: 'var(--ds-border-light)', padding: '2px 6px', borderRadius: 4 }}>
+            VITE_SUPABASE_URL
+          </code>{' '}
+          and{' '}
+          <code style={{ background: 'var(--ds-border-light)', padding: '2px 6px', borderRadius: 4 }}>
+            VITE_SUPABASE_ANON_KEY
+          </code>{' '}
+          to <code style={{ background: 'var(--ds-border-light)', padding: '2px 6px', borderRadius: 4 }}>.env.local</code> (see{' '}
+          <code>.env.example</code>), then restart the dev server.
+        </div>
+      )}
 
       <main
         style={{

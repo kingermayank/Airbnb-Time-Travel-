@@ -20,6 +20,8 @@ export interface HeaderProps {
   navItems: NavItem[];
   activeNavLabel?: string;
   onNavClick?: (label: string) => void;
+  /** Optional callback when the logo/brand area is clicked (e.g. navigate home). */
+  onLogoClick?: () => void;
   rightSlot?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -47,6 +49,7 @@ export function Header({
   navItems,
   activeNavLabel,
   onNavClick,
+  onLogoClick,
   rightSlot,
   className,
   style,
@@ -54,10 +57,14 @@ export function Header({
   return (
     <header className={className} style={{ ...headerStyle, ...style }}>
       <div
+        role={onLogoClick ? 'button' : undefined}
+        onClick={onLogoClick}
+        onKeyDown={onLogoClick ? (e) => e.key === 'Enter' && onLogoClick() : undefined}
+        tabIndex={onLogoClick ? 0 : undefined}
         style={{
           display: 'flex',
           alignItems: 'center',
-          cursor: 'pointer',
+          cursor: onLogoClick ? 'pointer' : 'default',
           flex: 1,
         }}
       >
