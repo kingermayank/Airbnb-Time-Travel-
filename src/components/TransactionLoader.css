@@ -1,0 +1,47 @@
+.transaction-loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 200px;
+}
+
+.bouncing-dots-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.bouncing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.transaction-dot {
+  background-color: rgba(34, 34, 34, 1);
+}
+
+.bouncing-dot-1 {
+  animation-delay: 0ms;
+}
+
+.bouncing-dot-2 {
+  animation-delay: 200ms;
+}
+
+.bouncing-dot-3 {
+  animation-delay: 400ms;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.5);
+  }
+}
+

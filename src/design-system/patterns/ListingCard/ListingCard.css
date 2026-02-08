@@ -1,0 +1,33 @@
+/* Heart icon: scale on hover (110%), applied to the icon so the graphic grows while hovering the button */
+.ds-listing-card-heart-icon {
+  transition: transform 0.2s ease;
+  display: inline-flex;
+}
+.ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
+  transform: scale(1.10);
+}
+
+/* Micro-interaction: gentle pop when heart is liked (runs on click, not on hover) */
+.ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-icon {
+  animation: ds-heart-liked-pop 0.4s ease;
+}
+
+@keyframes ds-heart-liked-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12);
+  }
+  70% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Smooth fill/stroke transition when toggling liked (applied to Heart via wrapper) */
+.ds-listing-card-heart-icon svg {
+  transition: fill 0.28s ease, stroke 0.28s ease;
+}

@@ -1,0 +1,143 @@
+/**
+ * Design system tokens
+ * Single source of truth for colors, spacing, typography, radii, and shadows.
+ * Aligned with Figma: https://www.figma.com/design/i86DhDKpgmbt6yhKbCqu3s/airbnb
+ */
+
+:root {
+  /* ---- Colors (semantic, ds- prefix) ---- */
+  --ds-primary: #222222;
+  --ds-primary-foreground: #ffffff;
+  --ds-secondary: #ebebeb;
+  --ds-secondary-hover: #ebebeb;
+  --ds-accent: #ff385c;
+  --ds-accent-hover: #e31c5f;
+  /* Reserve button gradient (Figma pricing card 283-2976): pink to reddish-pink */
+  --ds-button-reserve-gradient: linear-gradient(90deg, #ff385c 0%, #e31c5f 100%);
+  --ds-surface: #ffffff;
+  --ds-surface-elevated: #ffffff;
+  --ds-background: #ffffff;
+  --ds-text-primary: #222222;
+  --ds-text-secondary: #717171;
+  --ds-text-nav-inactive: #6a6a6a;
+  --ds-text-muted: rgba(0, 0, 0, 0.5);
+  --ds-border: rgba(217, 217, 217, 1);
+  --ds-border-light: #ebebeb;
+  --ds-divider: rgba(217, 217, 217, 1);
+  --ds-overlay: rgba(0, 0, 0, 0.5);
+  --ds-overlay-hover: rgba(0, 0, 0, 0.08);
+
+  /* Icon button: muted default; hover uses --ds-overlay-hover (8% black). No press, no accent. */
+  --ds-surface-icon-button: #f2f2f2;
+  /* Icon on dark/photo backgrounds (e.g. listing card heart) */
+  --ds-icon-white: #ffffff;
+  /* Listing card heart: interior when unfilled (30% black opacity) */
+  --ds-heart-interior-unfilled: rgba(0, 0, 0, 0.3);
+  /* Ghost text button hover (e.g. "Become a host") – pill fill per Figma */
+  --ds-surface-ghost-hover: #f2f2f2;
+
+  /* Header and search bar: shared light gray background (no divider below header) */
+  --ds-surface-header: rgba(251, 251, 251, 1);
+
+  /* Header (Figma 307-4788): navbar active, coming soon pill (gradient #354668 → #657E9B, radius 8 16 2 16) */
+  --ds-navbar-active: #222222;
+  --ds-header-coming-soon-glow: 0 0 14px rgba(120, 180, 255, 0.45);
+
+  /* ---- Spacing (ds- prefix, match Figma) ---- */
+  --ds-spacing-0: 0;
+  --ds-spacing-2: 2px;
+  --ds-spacing-4: 4px;
+  --ds-spacing-6: 6px;
+  --ds-spacing-8: 8px;
+  --ds-spacing-10: 10px;
+  --ds-spacing-12: 12px;
+  --ds-spacing-14: 14px;
+  --ds-spacing-16: 16px;
+  --ds-spacing-20: 20px;
+  --ds-spacing-24: 24px;
+  --ds-spacing-28: 28px;
+  --ds-spacing-32: 32px;
+  --ds-spacing-40: 40px;
+  --ds-spacing-48: 48px;
+  --ds-spacing-56: 56px;
+  --ds-spacing-64: 64px;
+  --ds-spacing-80: 80px;
+  --ds-spacing-96: 96px;
+  --ds-spacing-112: 112px;
+  --ds-spacing-128: 128px;
+
+  /* ---- Typography ---- */
+  --ds-font-family: 'Figtree', sans-serif;
+  --ds-font-display: 'Figtree', sans-serif;
+  --ds-font-heading: 'Figtree', sans-serif;
+  --ds-font-body: 'Figtree', sans-serif;
+  --ds-letter-spacing: -0.01em;
+
+  /* Font sizes */
+  --ds-text-10: 10px;
+  --ds-text-11: 11px;
+  --ds-text-12: 12px;
+  --ds-text-14: 14px;
+  --ds-text-16: 16px;
+  --ds-text-18: 18px;
+  --ds-text-20: 20px;
+  --ds-text-22: 22px;
+  --ds-text-24: 24px;
+  --ds-text-26: 26px;
+  --ds-text-30: 30px;
+  --ds-text-32: 32px;
+
+  /* Line heights */
+  --ds-leading-10: 10px;
+  --ds-leading-12: 12px;
+  --ds-leading-14: 14px;
+  --ds-leading-16: 16px;
+  --ds-leading-18: 18px;
+  --ds-leading-20: 20px;
+  --ds-leading-22: 22px;
+  --ds-leading-24: 24px;
+  --ds-leading-28: 28px;
+  --ds-leading-30: 36px;
+  --ds-leading-32: 32px;
+
+  /* Font weights */
+  --ds-font-regular: 400;
+  --ds-font-medium: 500;
+  --ds-font-semibold: 600;
+  --ds-font-bold: 700;
+
+  /* ---- Radii ---- */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+  --ds-radius-xl: 24px;
+  --ds-radius-full: 3000px;
+  /* Booking card (Figma 283-2976) */
+  --ds-radius-booking-card: 12px;
+  --ds-booking-card-padding: 24px;
+
+  /* ---- Shadows ---- */
+  --ds-shadow-badge: 0px 3px 4px rgba(0, 0, 0, 0.16);
+  --ds-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Booking/pricing card (Figma 283-2976): subtle elevation */
+  --ds-shadow-booking-card: 0 6px 16px rgba(0, 0, 0, 0.12);
+  --ds-shadow-focus: 0 0 0 3px rgba(255, 56, 92, 0.2);
+
+  /* Listing card: Guest favorite pill position (1px less top than standard spacing-12) */
+  --ds-listing-card-badge-inset-top: 11px;
+  --ds-listing-card-badge-inset-left: var(--ds-spacing-12);
+
+  /* Badge (e.g. Guest favorite pill): vertical padding (original + 1px each) */
+  --ds-badge-padding-top: 6px;
+  --ds-badge-padding-bottom: 5px;
+
+  /* ---- Listing detail section / content spacing ---- */
+  --ds-section-padding-y: 24px;
+  --ds-section-divider: 1px solid var(--ds-border-light);
+  --ds-content-gap-sm: 16px;
+  --ds-content-gap-md: 24px;
+
+  /* Host card (Figma 283-3049): exact dimensions */
+  --ds-host-card-width: 370px;
+  --ds-host-card-height: 216px;
+}

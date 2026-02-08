@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+@import './design-system/tokens/index.css';
 @import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
@@ -134,7 +136,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body);
+    font-family: var(--ds-font-family), var(--font-body);
   }
   h1,
   h2,
@@ -142,7 +144,7 @@ body {
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading);
+    font-family: var(--ds-font-heading), var(--font-heading);
   }
   html,
   body,

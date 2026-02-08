@@ -1,0 +1,56 @@
+/* Figma 307-4788: brand name – warpbnb, same style as logo (pink/coral, semibold, lowercase) */
+.ds-header-brand-name {
+  font-family: var(--ds-font-family);
+  font-size: 20px;
+  font-weight: var(--ds-font-semibold);
+  line-height: 1.2;
+  color: #ff385c;
+  text-transform: lowercase;
+  letter-spacing: -0.01em;
+}
+
+/* Nav tab hover */
+.ds-header-nav-tab:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
+/* Coming soon pill – Figma: radial gradient #354668 → #657E9B, corner radius 16 16 16 6 */
+.ds-header-coming-soon-badge {
+  position: absolute;
+  background: radial-gradient(circle, #354668 50%, #657E9B 100%);
+  color: #ffffff;
+  font-family: var(--ds-font-family);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: 16px 16px 16px 6px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  box-shadow: var(--ds-header-coming-soon-glow);
+}
+
+/* Position: on top of the label, 10px to the left */
+.ds-header-coming-soon-badge--above-label {
+  bottom: 100%;
+  left: -10px;
+  margin-bottom: 4px;
+}
+
+/* Right-side icon buttons: filled grey, no border (Figma 307-4788) */
+.ds-header-right-icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--ds-surface-icon-button);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+.ds-header-right-icon-btn:hover {
+  background: #ebebeb;
+}

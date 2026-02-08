@@ -1,0 +1,71 @@
+.hero-grid-skeleton {
+  display: flex;
+  gap: 8px;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.skeleton-main {
+  flex: 1 0 0;
+  height: 100%;
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.skeleton-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 0;
+  gap: 8px;
+  height: 100%;
+}
+
+.skeleton-row {
+  display: flex;
+  flex: 1 0 0;
+  gap: 8px;
+  width: 100%;
+}
+
+.skeleton-block {
+  flex: 1 0 0;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-top-left {
+  border-radius: 0;
+}
+
+.skeleton-top-right {
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.skeleton-bottom-left {
+  border-radius: 0;
+}
+
+.skeleton-bottom-right {
+  border-bottom-right-radius: 16px;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
