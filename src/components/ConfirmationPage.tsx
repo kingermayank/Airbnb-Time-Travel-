@@ -1,30 +1,33 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
 import { Header, Button } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 
-// Teleportation method options – images from public/images/vehicles/
+// Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
   {
     id: 'delorean',
     name: 'Back to the Future DeLorean',
     description: 'Hit 88 miles per hour and break the space-time continuum—just like Marty and Doc Brown. Roads required. Lightning optional.',
-    icon: '/images/vehicles/delorean.png'
+    icon: '/images/vehicles/delorean.png',
+    video: '/images/vehicles/delorean.mp4'
   },
   {
     id: 'tardis',
     name: 'TARDIS Unit',
     description: 'Bigger on the inside. Interdimensional police box piloted across space and time by The Doctor. Expect surprising landings and British charm.',
-    icon: '/images/vehicles/tardis.png'
+    icon: '/images/vehicles/tardis.png',
+    video: '/images/vehicles/tardis.mp4'
   },
   {
     id: 'time-stone',
     name: 'Doctor Strange\'s Time Stone',
     description: 'Manipulate time itself using the Eye of Agamotto. Loop, rewind, or fast-forward to your destination with sorcerer-level precision.',
-    icon: '/images/vehicles/time-stone.png'
+    icon: '/images/vehicles/timestone.png',
+    video: '/images/vehicles/timestone.mp4'
   }
 ];
 
@@ -81,7 +84,25 @@ export function ConfirmationPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [tempSelectedPayment, setTempSelectedPayment] = useState(PAYMENT_METHODS[0]);
   const [selectedTeleportation, setSelectedTeleportation] = useState('tardis');
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const vehicleVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const [insuranceSelected, setInsuranceSelected] = useState(false);
+
+  // When playingVideoId is set, start that video at 2x; pause others at first frame
+  useEffect(() => {
+    TELEPORTATION_METHODS.forEach((m) => {
+      const el = vehicleVideoRefs.current[m.id];
+      if (!el) return;
+      if (m.id === playingVideoId) {
+        el.playbackRate = 2;
+        el.currentTime = 0;
+        el.play().catch(() => {});
+      } else {
+        el.pause();
+        el.currentTime = 0;
+      }
+    });
+  }, [playingVideoId]);
   const [guestCount, setGuestCount] = useState(1);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
@@ -461,28 +482,64 @@ export function ConfirmationPage() {
               }}>
                 {TELEPORTATION_METHODS.map((method) => {
                   const isSelected = selectedTeleportation === method.id;
+                  const handleClick = () => {
+                    setSelectedTeleportation(method.id);
+                    setPlayingVideoId(method.id);
+                  };
                   return (
                     <div
                       key={method.id}
-                      onClick={() => setSelectedTeleportation(method.id)}
+                      onClick={handleClick}
                       style={{
                         border: isSelected ? '2px solid rgba(34, 34, 34, 1)' : '2px solid rgba(217, 217, 217, 1)',
                         borderRadius: '16px',
                         padding: '16px',
-                        backgroundColor: isSelected ? 'rgba(247, 247, 247, 1)' : 'white',
+                        backgroundColor: '#FFF',
                         cursor: 'pointer',
                         display: 'flex',
                         gap: '16px',
                         alignItems: 'center'
                       }}
                     >
-                      <img src={method.icon} alt={method.name} style={{
-                        width: '64px',
-                        height: '64px',
+                      <div style={{
+                        width: '72px',
+                        height: '72px',
                         borderRadius: '8px',
-                        objectFit: 'cover',
-                        flexShrink: 0
-                      }} />
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(0, 0, 0, 0.03)'
+                      }}>
+                        <video
+                          ref={(el) => { vehicleVideoRefs.current[method.id] = el; }}
+                          src={method.video}
+                          preload="auto"
+                          playsInline
+                          muted
+                          onLoadedMetadata={(e) => {
+                            const v = e.currentTarget;
+                            if (playingVideoId !== method.id) {
+                              v.currentTime = 0;
+                              v.pause();
+                            }
+                          }}
+                          onEnded={() => {
+                            const video = vehicleVideoRefs.current[method.id];
+                            if (video) {
+                              video.currentTime = 0;
+                              video.pause();
+                            }
+                            setPlayingVideoId(null);
+                          }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
                       <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -672,17 +729,17 @@ export function ConfirmationPage() {
                     lineHeight: '26px',
                     letterSpacing: '-0.36px',
                     color: 'rgba(34, 34, 34, 1)',
-                    marginBottom: '6px'
+                    marginBottom: '2px'
                   }}>
                     {listing.title}
                   </div>
                   <div style={{
                     display: 'flex',
-                    gap: '6px',
+                    gap: '4px',
                     alignItems: 'center'
                   }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF395C"/>
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#000"/>
                     </svg>
                     <div style={{
                       fontFamily: 'var(--ds-font-family)',

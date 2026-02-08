@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
-import type { ListingDetails, Amenity, ReviewBadge, ReviewBadgeType, HostBadge, ThingsToKnow } from '../types/database';
+import type { ListingDetails, Amenity, HostBadge, ThingsToKnow } from '../types/database';
 
 // Duration options for teleportation
 const DURATION_OPTIONS = [
@@ -124,82 +124,6 @@ const headerRightSlot = (
     </button>
   </div>
 );
-
-// ============================================================================
-// REVIEW BADGE COMPONENTS (Airbnb-style red icons)
-// ============================================================================
-
-// Review badge icon component with Airbnb red color (#FF385C)
-function ReviewBadgeIcon({ type }: { type: ReviewBadgeType }) {
-  const iconStyle = { color: '#FF385C', width: 14, height: 14 };
-
-  switch (type) {
-    case 'verified_time_traveler':
-      return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={iconStyle}>
-          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF385C" stroke="#FF385C" strokeWidth="1.5"/>
-          <path d="M9 12L11 14L15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-    case 'paradox_free_stay':
-      return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={iconStyle}>
-          <circle cx="12" cy="12" r="10" fill="#FF385C"/>
-          <path d="M8 12C8 12 10 8 12 8C14 8 14 12 12 12C10 12 10 16 12 16C14 16 16 12 16 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-      );
-    case 'survived_the_trip':
-      return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={iconStyle}>
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="#FF385C"/>
-          <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      );
-    case 'first_dimensional_visitor':
-      return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={iconStyle}>
-          <rect x="3" y="3" width="18" height="18" rx="3" fill="#FF385C"/>
-          <path d="M12 7V12L15 15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-          <circle cx="12" cy="12" r="1" fill="white"/>
-        </svg>
-      );
-    case 'temporal_regular':
-      return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={iconStyle}>
-          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF385C"/>
-          <text x="12" y="14" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">3+</text>
-        </svg>
-      );
-    default:
-      return <BadgeCheck size={14} style={iconStyle} />;
-  }
-}
-
-// Review badge pill component
-function ReviewBadgePill({ badge }: { badge: ReviewBadge }) {
-  return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '4px',
-      padding: '2px 8px',
-      backgroundColor: '#FFF0F3',
-      borderRadius: '12px',
-      border: '1px solid #FFD9E0',
-    }}>
-      <ReviewBadgeIcon type={badge.type} />
-      <span style={{
-        fontFamily: '"Figtree", sans-serif',
-        fontSize: '11px',
-        fontWeight: 500,
-        color: '#FF385C',
-        whiteSpace: 'nowrap',
-      }}>
-        {badge.label}
-      </span>
-    </div>
-  );
-}
 
 // ============================================================================
 // HOST BADGE COMPONENTS (Airbnb-style)
@@ -1128,8 +1052,6 @@ export function ListingDetailPage() {
             {listing.reviews.length > 0 && (
               <div id="reviews-section" style={{
                 paddingBottom: '24px',
-                borderBottom: '1px solid #EBEBEB',
-                marginBottom: '24px',
               }}>
                 <div style={{
                   display: 'flex',
@@ -1213,23 +1135,6 @@ export function ListingDetailPage() {
                         </div>
                       </div>
 
-                      {/* Review Badges */}
-                      {(() => {
-                        const reviewBadges = parseBadges(review.badges);
-                        return reviewBadges && reviewBadges.length > 0 && (
-                          <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '6px',
-                            marginBottom: '12px',
-                          }}>
-                            {reviewBadges.map((badge, idx) => (
-                              <ReviewBadgePill key={idx} badge={badge} />
-                            ))}
-                          </div>
-                        );
-                      })()}
-
                       {/* Review Comment */}
                       <p style={{
                         fontFamily: '"Figtree", sans-serif',
@@ -1288,133 +1193,11 @@ export function ListingDetailPage() {
               </div>
             )}
 
-            {/* Things to Know */}
-            {thingsToKnow && (
-              <div style={{ paddingBottom: '48px' }}>
-                <h3 style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 600,
-                  color: '#222',
-                  marginBottom: '24px',
-                }}>
-                  Things to know
-                </h3>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: '24px',
-                }}>
-                  {/* House Rules */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      House rules
-                    </h4>
-                    {(thingsToKnow.house_rules || []).map((rule, idx) => {
-                      const IconComponent = getThingsToKnowIcon(rule.icon);
-                      return (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          marginBottom: '12px',
-                        }}>
-                          <IconComponent size={18} color="#222" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          <span style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#222',
-                            lineHeight: '20px',
-                          }}>
-                            {rule.rule}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Safety */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      Safety & property
-                    </h4>
-                    {(thingsToKnow.safety_and_property || []).map((item, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        marginBottom: '12px',
-                      }}>
-                        {item.available ? (
-                          <CheckCircle size={18} color="#008A05" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        ) : (
-                          <XCircle size={18} color="#C13515" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        )}
-                        <div>
-                          <span style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#222',
-                            lineHeight: '20px',
-                          }}>
-                            {item.item}
-                          </span>
-                          {item.note && (
-                            <div style={{
-                              fontFamily: '"Figtree", sans-serif',
-                              fontSize: '12px',
-                              color: '#717171',
-                              marginTop: '2px',
-                            }}>
-                              {item.note}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Cancellation */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      Cancellation policy
-                    </h4>
-                    <p style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '14px',
-                      color: '#222',
-                      lineHeight: '20px',
-                      margin: 0,
-                    }}>
-                      {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Host Section - Card Style */}
+            {/* Meet your host - Card Style */}
             {listing.hosts && (
               <div style={{
-                paddingTop: '48px',
+                paddingTop: '24px',
+                paddingBottom: '24px',
                 borderTop: '1px solid #EBEBEB',
               }}>
                 <h2 style={{
@@ -1641,6 +1424,129 @@ export function ListingDetailPage() {
                         ))}
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Things to Know */}
+            {thingsToKnow && (
+              <div style={{ paddingTop: '48px', borderTop: '1px solid #EBEBEB', paddingBottom: '48px' }}>
+                <h3 style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: '#222',
+                  marginBottom: '24px',
+                }}>
+                  Things to know
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: '24px',
+                }}>
+                  {/* House Rules */}
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                    }}>
+                      House rules
+                    </h4>
+                    {(thingsToKnow.house_rules || []).map((rule, idx) => {
+                      const IconComponent = getThingsToKnowIcon(rule.icon);
+                      return (
+                        <div key={idx} style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                          marginBottom: '12px',
+                        }}>
+                          <IconComponent size={18} color="#222" style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            color: '#222',
+                            lineHeight: '20px',
+                          }}>
+                            {rule.rule}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Safety */}
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                    }}>
+                      Safety & property
+                    </h4>
+                    {(thingsToKnow.safety_and_property || []).map((item, idx) => (
+                      <div key={idx} style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        marginBottom: '12px',
+                      }}>
+                        {item.available ? (
+                          <CheckCircle size={18} color="#008A05" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        ) : (
+                          <XCircle size={18} color="#C13515" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        )}
+                        <div>
+                          <span style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            color: '#222',
+                            lineHeight: '20px',
+                          }}>
+                            {item.item}
+                          </span>
+                          {item.note && (
+                            <div style={{
+                              fontFamily: '"Figtree", sans-serif',
+                              fontSize: '12px',
+                              color: '#717171',
+                              marginTop: '2px',
+                            }}>
+                              {item.note}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Cancellation */}
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                    }}>
+                      Cancellation policy
+                    </h4>
+                    <p style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '14px',
+                      color: '#222',
+                      lineHeight: '20px',
+                      margin: 0,
+                    }}>
+                      {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
+                    </p>
                   </div>
                 </div>
               </div>
