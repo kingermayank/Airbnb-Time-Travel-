@@ -541,7 +541,7 @@ export function ListingDetailPage() {
           rightSlot={<HeaderRightSlotWithUserMenu />}
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-          <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+          <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>
             {/* Title placeholder - same height as real title (lineHeight 40px + marginBottom 24px) so hero skeleton aligns */}
             <div style={{ height: 64, marginBottom: '24px' }} />
             <HeroGridSkeleton />
@@ -665,7 +665,7 @@ export function ListingDetailPage() {
           rightSlot={<HeaderRightSlotWithUserMenu />}
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-        <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+        <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>
         {/* Title */}
         <h1 style={{
           fontFamily: '"Figtree", sans-serif',
@@ -890,10 +890,18 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                      {idx === 0 && <DoorOpen size={24} color="#222" />}
-                      {idx === 1 && <Star size={24} color="#222" />}
-                      {idx === 2 && <Clock size={24} color="#222" />}
-                      {idx === 3 && <Shield size={24} color="#222" />}
+                      {idx === 0 && (
+                        <DoorOpen size={24} color="#222" strokeWidth={1.5} />
+                      )}
+                      {idx === 1 && (
+                        <Star size={24} color="#222" strokeWidth={1.5} />
+                      )}
+                      {idx === 2 && (
+                        <Clock size={24} color="#222" strokeWidth={1.5} />
+                      )}
+                      {idx === 3 && (
+                        <Shield size={24} color="#222" strokeWidth={1.5} />
+                      )}
                     </div>
                     <div>
                       <div style={{
@@ -1037,7 +1045,7 @@ export function ListingDetailPage() {
                       border: '1px solid #EBEBEB',
                       borderRadius: '12px',
                     }}>
-                      <Bed size={24} color="#222" style={{ marginBottom: '16px' }} />
+          <Bed size={24} color="#222" strokeWidth={1.5} style={{ marginBottom: '16px' }} />
                       <div style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '16px',
@@ -1086,11 +1094,12 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '16px',
                     }}>
-                      {amenity.icon_url ? (
-                        <img src={amenity.icon_url} alt="" width={24} height={24} style={{ flexShrink: 0 }} />
-                      ) : (
-                        <IconComponent size={24} color="#222" />
-                      )}
+                      <IconComponent
+                        size={24}
+                        color="#222"
+                        strokeWidth={1.5}
+                        style={{ flexShrink: 0 }}
+                      />
                       <span style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '16px',
@@ -1177,11 +1186,12 @@ export function ListingDetailPage() {
                           paddingTop: '16px',
                           paddingBottom: '16px',
                         }}>
-                          {amenity.icon_url ? (
-                            <img src={amenity.icon_url} alt="" width={24} height={24} style={{ flexShrink: 0 }} />
-                          ) : (
-                            <IconComponent size={24} color="#222" style={{ flexShrink: 0 }} />
-                          )}
+                          <IconComponent
+                            size={24}
+                            color="#222"
+                            strokeWidth={1.5}
+                            style={{ flexShrink: 0 }}
+                          />
                           <span style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '16px',
@@ -1838,7 +1848,7 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <Key size={18} color="#222" style={{ flexShrink: 0 }} />
+                      <Key size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
                       House rules
                     </h4>
                     {(thingsToKnow.house_rules || []).map((rule, idx) => (
@@ -1868,7 +1878,7 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <Shield size={18} color="#222" style={{ flexShrink: 0 }} />
+                      <Shield size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
                       Safety
                     </h4>
                     {(thingsToKnow.safety_and_property || []).map((item, idx) => (
@@ -1908,8 +1918,8 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <FileText size={18} color="#222" style={{ flexShrink: 0 }} />
-                      Property Cancellation Policy
+                      <FileText size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      Cancellation Policy
                     </h4>
                     <p style={{
                       fontFamily: '"Figtree", sans-serif',
