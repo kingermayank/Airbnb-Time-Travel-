@@ -1,0 +1,1 @@
+.ds-icon-button{transition:box-shadow .2s ease}.ds-icon-button:hover:not(:disabled){box-shadow:inset 0 0 0 999px var(--ds-overlay-hover)}.ds-icon-button:disabled{cursor:not-allowed;opacity:.6}

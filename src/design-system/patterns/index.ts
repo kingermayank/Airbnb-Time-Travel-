@@ -19,6 +19,7 @@ export { ThingsToKnow } from './ThingsToKnow';
 export { ReviewsSection } from './ReviewsSection';
 export { ListingHeroGallery } from './ListingHeroGallery';
 export { Footer } from './Footer';
+export { UserMenu } from './UserMenu';
 
 export type { HeaderProps, NavItem } from './Header';
 export type { SearchBarProps, EraOption } from './SearchBar';
@@ -45,3 +46,4 @@ export type { ThingsToKnowProps, ThingsToKnowBlock } from './ThingsToKnow';
 export type { ReviewsSectionProps } from './ReviewsSection';
 export type { ListingHeroGalleryProps, ListingHeroGalleryImage } from './ListingHeroGallery';
 export type { FooterProps, FooterLink } from './Footer';
+export type { UserMenuProps, UserMenuItem } from './UserMenu';

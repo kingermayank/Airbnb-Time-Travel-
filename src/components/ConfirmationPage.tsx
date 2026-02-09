@@ -2,9 +2,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
-import { Header, Button } from '../design-system';
+import { Header, Button, UserMenu } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
-import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
@@ -68,9 +68,108 @@ const PAYMENT_METHODS = [
 ];
 
 const CONFIRMATION_NAV_ITEMS = [
-  { label: 'Time Travel', iconUrl: TIME_TRAVEL_ICON_URL },
+  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
+
+function HeaderRightSlotWithUserMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const navigate = useNavigate();
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--ds-spacing-12)',
+      }}
+    >
+      <Button
+        variant="ghost"
+        size="md"
+        style={{ color: 'var(--ds-navbar-active)' }}
+        onClick={() => navigate('/')}
+      >
+        Become a host
+      </Button>
+      <button
+        type="button"
+        className="ds-header-right-icon-btn"
+        aria-label="Help"
+        style={{ border: 'none' }}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ color: 'var(--ds-navbar-active)' }}
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="ds-header-right-icon-btn"
+        aria-label="Menu"
+        style={{ border: 'none' }}
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ color: 'var(--ds-navbar-active)' }}
+        >
+          <line x1="4" x2="20" y1="12" y2="12" />
+          <line x1="4" x2="20" y1="6" y2="6" />
+          <line x1="4" x2="20" y1="18" y2="18" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 30,
+          }}
+        >
+          <UserMenu />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ConfirmationPage() {
   const { id } = useParams<{ id: string }>();
@@ -283,20 +382,6 @@ export function ConfirmationPage() {
     );
   }
 
-  const headerRightSlot = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ds-spacing-12)' }}>
-      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }} onClick={() => navigate('/')}>
-        Become a host
-      </Button>
-      <button type="button" className="ds-header-right-icon-btn" aria-label="Help" style={{ border: 'none' }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ds-navbar-active)' }}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-      </button>
-      <button type="button" className="ds-header-right-icon-btn" aria-label="Menu" style={{ border: 'none' }}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ds-navbar-active)' }}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-      </button>
-    </div>
-  );
-
   return (
     <div style={{
       width: '100%',
@@ -310,9 +395,9 @@ export function ConfirmationPage() {
           brandName="warpbnb"
           navItems={CONFIRMATION_NAV_ITEMS}
           activeNavLabel="Time Travel"
-          onNavClick={(label) => label === 'Time Travel' ? undefined : navigate('/')}
+          onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
           onLogoClick={() => navigate('/')}
-          rightSlot={headerRightSlot}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
         />
       </div>
 

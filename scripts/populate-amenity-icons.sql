@@ -316,6 +316,106 @@ UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/city-variant-out
 WHERE LOWER(name) LIKE '%nyc atmosphere%' OR LOWER(name) LIKE '%classic nyc%';
 
 -- ============================================================================
+-- ADDITIONAL AMENITIES (fill all remaining NULL with relevant Iconify icons)
+-- Using lucide or mdi prefix for consistency; color #222222
+-- ============================================================================
+
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/weight-lifter.svg?color=%23222222' WHERE name = '1/6 gravity amenities';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/flask-outline.svg?color=%23222222' WHERE name = '1953 research equipment';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/clock-outline.svg?color=%23222222' WHERE name = 'Analog clock collection';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/leaf.svg?color=%23222222' WHERE name = 'Authentic rainforest';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Basic bunks';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/leaf.svg?color=%23222222' WHERE name = 'Berry foraging';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/dice-multiple.svg?color=%23222222' WHERE name = 'Board games';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/anchor.svg?color=%23222222' WHERE name = 'Boat parking';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/calendar.svg?color=%23222222' WHERE name = 'Calendar (subjective)';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Capsule sleeping pod';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/cassette.svg?color=%23222222' WHERE name = 'Cassette deck';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/palette-outline.svg?color=%23222222' WHERE name = 'Cave paintings';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/silverware-fork-knife.svg?color=%23222222' WHERE name = 'Classified cafeteria';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/air-conditioner.svg?color=%23222222' WHERE name = 'Climate control';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/utensils-crossed.svg?color=%23222222' WHERE name = 'Compact kitchen';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/compass.svg?color=%23222222' WHERE name = 'Compass (unreliable)';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/robot-outline.svg?color=%23222222' WHERE name = 'Conservation AI guide';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/television.svg?color=%23222222' WHERE name = 'CRT television';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/star.svg?color=%23222222' WHERE name = 'Cultural merit system';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/water.svg?color=%23222222' WHERE name = 'Desalination system';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/desk.svg?color=%23222222' WHERE name = 'Desk workspace';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/diving-scuba-mask.svg?color=%23222222' WHERE name = 'Diving equipment';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/earth.svg?color=%23222222' WHERE name = 'Earth views';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/leaf.svg?color=%23222222' WHERE name = 'Eco-friendly systems';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/book-open.svg?color=%23222222' WHERE name = 'Educational materials';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/school-outline.svg?color=%23222222' WHERE name = 'Educational programs';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/rocket-launch.svg?color=%23222222' WHERE name = 'Emergency ascent capsule';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/rocket-outline.svg?color=%23222222' WHERE name = 'Emergency evacuation pod';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/lifebuoy.svg?color=%23222222' WHERE name = 'Emergency flotation';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/medical-bag.svg?color=%23222222' WHERE name = 'Emergency supplies';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/zap.svg?color=%23222222' WHERE name = 'Emergency transport';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/shield-lock-outline.svg?color=%23222222' WHERE name = 'Entrance protection';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/alert-circle-outline.svg?color=%23222222' WHERE name = 'Existential dread';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/fax.svg?color=%23222222' WHERE name = 'Fax machine';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/flame.svg?color=%23222222' WHERE name = 'Fire pit';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/medical-bag.svg?color=%23222222' WHERE name = 'First aid';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Fur bedding';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/store-outline.svg?color=%23222222' WHERE name = 'Gift shop access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/sofa-outline.svg?color=%23222222' WHERE name = 'Gimbal-mounted furniture';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/airplane.svg?color=%23222222' WHERE name = 'Hangar views (restricted)';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/rocket-outline.svg?color=%23222222' WHERE name = 'Historic Apollo site nearby';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/map-marker.svg?color=%23222222' WHERE name = 'Historic location';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/star-four-points-outline.svg?color=%23222222' WHERE name = 'Holodeck privileges';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/thermometer.svg?color=%23222222' WHERE name = 'Hot water';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/binoculars.svg?color=%23222222' WHERE name = 'Hunting guide (Grok)';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/noodles.svg?color=%23222222' WHERE name = 'Instant ramen selection';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/toilet.svg?color=%23222222' WHERE name = 'Japanese toilet';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/utensils-crossed.svg?color=%23222222' WHERE name = 'Kitchen';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/lifebuoy.svg?color=%23222222' WHERE name = 'Life jackets';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/ferry.svg?color=%23222222' WHERE name = 'Life rafts';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/store-outline.svg?color=%23222222' WHERE name = 'Local market access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/hot-tub.svg?color=%23222222' WHERE name = 'Low-gravity spa';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Mammoth-fur comfort';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Memory foam mattress';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/silverware-fork-knife.svg?color=%23222222' WHERE name = 'Mess hall';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Military bunks';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/radio-tower.svg?color=%23222222' WHERE name = 'Monitored communications';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/bed-outline.svg?color=%23222222' WHERE name = 'Mosquito net';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/eye.svg?color=%23222222' WHERE name = 'Mystery atmosphere';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/flower-outline.svg?color=%23222222' WHERE name = 'Native flora access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/lightbulb-outline.svg?color=%23222222' WHERE name = 'Neon ambient lighting';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/telescope.svg?color=%23222222' WHERE name = 'Night sky observation';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/pillar.svg?color=%23222222' WHERE name = 'Original art deco architecture';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/star-four-points-outline.svg?color=%23222222' WHERE name = 'Post-scarcity living';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/shield-lock.svg?color=%23222222' WHERE name = 'Predator-resistant entrance';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/door-closed-lock.svg?color=%23222222' WHERE name = 'Private airlock';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/shield-outline.svg?color=%23222222' WHERE name = 'Radiation shielding';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/radio.svg?color=%23222222' WHERE name = 'Radio communication';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/weather-rainy.svg?color=%23222222' WHERE name = 'Rain view window';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/eye-off-outline.svg?color=%23222222' WHERE name = 'Redacted amenities';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/cpu.svg?color=%23222222' WHERE name = 'Replicator access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/book-open-variant.svg?color=%23222222' WHERE name = 'Research logs';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/gamepad-variant-outline.svg?color=%23222222' WHERE name = 'Retro gaming console';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/waves.svg?color=%23222222' WHERE name = 'River access nearby';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/robot-outline.svg?color=%23222222' WHERE name = 'Robot butler service';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/sofa-outline.svg?color=%23222222' WHERE name = 'Rock seating';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/medical-bag.svg?color=%23222222' WHERE name = 'Seasickness remedies';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/smoke-detector-outline.svg?color=%23222222' WHERE name = 'Smoke ventilation';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/leaf.svg?color=%23222222' WHERE name = 'Spirit journey berries (extra)';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/gauge.svg?color=%23222222' WHERE name = 'Stability rating 7.2';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/clock-alert-outline.svg?color=%23222222' WHERE name = 'Temporal anomaly proximity';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/towel.svg?color=%23222222' WHERE name = 'Towels provided';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/zap.svg?color=%23222222' WHERE name = 'Transporter access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/waves.svg?color=%23222222' WHERE name = 'Underwater views';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/globe.svg?color=%23222222' WHERE name = 'Universal translator';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/robot-outline.svg?color=%23222222' WHERE name = 'Unusual housekeeping';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/candy.svg?color=%23222222' WHERE name = 'Vending machine access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/television.svg?color=%23222222' WHERE name = 'VHS player';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/desk.svg?color=%23222222' WHERE name = 'Vintage computer terminal';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/robot-industrial-outline.svg?color=%23222222' WHERE name = 'Vintage moon rover access';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/account-group-outline.svg?color=%23222222' WHERE name = 'Vulcan neighbors';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/lucide/wifi.svg?color=%23222222' WHERE name = 'Wi-Fi';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/binoculars.svg?color=%23222222' WHERE name = 'Wildlife observation';
+UPDATE amenities SET icon_url = 'https://api.iconify.design/mdi/fish.svg?color=%23222222' WHERE name = 'Window fishing';
+
+-- ============================================================================
 -- FALLBACK: Set default icon for any amenities still without icons
 -- ============================================================================
 

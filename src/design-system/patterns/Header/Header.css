@@ -9,10 +9,6 @@
   letter-spacing: -0.01em;
 }
 
-/* Nav tab hover */
-.ds-header-nav-tab:hover:not(:disabled) {
-  opacity: 0.7;
-}
 
 /* Coming soon pill – Figma: radial gradient #354668 → #657E9B, corner radius 16 16 16 6 */
 .ds-header-coming-soon-badge {

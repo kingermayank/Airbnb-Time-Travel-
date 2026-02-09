@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Text } from '../../foundations/Text';
 import './Header.css';
 
@@ -7,6 +7,10 @@ import './Header.css';
 export interface NavItem {
   label: string;
   iconUrl?: string;
+  /** Video URL for hover-to-play icon (e.g. Time Travel portal). Shows first frame by default. */
+  iconVideoUrl?: string;
+  /** Optional poster image URL when using iconVideoUrl (first frame). */
+  iconPosterUrl?: string;
   /** When true, tab is non-clickable and shown as "Coming soon". */
   disabled?: boolean;
 }
@@ -25,6 +29,55 @@ export interface HeaderProps {
   rightSlot?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+}
+
+const iconBoxStyle: React.CSSProperties = {
+  width: 48,
+  height: 48,
+  overflow: 'hidden',
+  position: 'relative',
+};
+
+function NavIconVideo({
+  videoUrl,
+  posterUrl,
+}: {
+  videoUrl: string;
+  posterUrl?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleMouseEnter = () => {
+    videoRef.current?.play();
+  };
+
+  const handleMouseLeave = () => {
+    videoRef.current?.pause();
+  };
+
+  return (
+    <div
+      className="ds-header-nav-icon-video"
+      style={iconBoxStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={posterUrl}
+        preload="auto"
+        muted
+        loop
+        playsInline
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        onLoadedMetadata={(e) => {
+          const v = e.currentTarget;
+          if (v.currentTime !== 0) v.currentTime = 0;
+        }}
+      />
+    </div>
+  );
 }
 
 const headerStyle: React.CSSProperties = {
@@ -122,7 +175,12 @@ export function Header({
                   position: 'relative',
                 }}
               >
-                {item.iconUrl && (
+                {item.iconVideoUrl ? (
+                  <NavIconVideo
+                    videoUrl={item.iconVideoUrl}
+                    posterUrl={item.iconPosterUrl}
+                  />
+                ) : item.iconUrl ? (
                   <div
                     style={{
                       width: 48,
@@ -137,8 +195,8 @@ export function Header({
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
                   </div>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, position: 'relative' }}>
+                ) : null}
+                <div className="ds-header-nav-label" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, position: 'relative' }}>
                   {isDisabled && (
                     <span className="ds-header-coming-soon-badge ds-header-coming-soon-badge--above-label">COMING SOON</span>
                   )}

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
-import { Header, SearchField, ListingCard, Button, Footer } from '../../design-system';
-import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
+import { Header, SearchField, ListingCard, Button, Footer, UserMenu } from '../../design-system';
+import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
 import { HelpCircle, Menu } from 'lucide-react';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
 
@@ -100,23 +100,67 @@ const MOCK_LISTINGS: ListingCardType[] = [
 ];
 
 const FIGMA_NAV_ITEMS = [
-  { label: 'Time Travel', iconUrl: TIME_TRAVEL_ICON_URL },
+  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
-const headerRightSlot = (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ds-spacing-12)' }}>
-    <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-      Become a host
-    </Button>
-    <button type="button" className="ds-header-right-icon-btn" aria-label="Help">
-      <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-    </button>
-    <button type="button" className="ds-header-right-icon-btn" aria-label="Menu">
-      <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-    </button>
-  </div>
-);
+function HeaderRightSlotWithUserMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--ds-spacing-12)',
+      }}
+    >
+      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
+        Become a host
+      </Button>
+      <button type="button" className="ds-header-right-icon-btn" aria-label="Help">
+        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+      </button>
+      <button
+        type="button"
+        className="ds-header-right-icon-btn"
+        aria-label="Menu"
+        onClick={() => setIsOpen(prev => !prev)}
+      >
+        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+      </button>
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 30,
+          }}
+        >
+          <UserMenu />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const AirbnbUi = () => {
   const navigate = useNavigate();
@@ -162,7 +206,7 @@ export const AirbnbUi = () => {
         navItems={FIGMA_NAV_ITEMS}
         activeNavLabel="Time Travel"
         onNavClick={() => {}}
-        rightSlot={headerRightSlot}
+        rightSlot={<HeaderRightSlotWithUserMenu />}
       />
 
       <div
