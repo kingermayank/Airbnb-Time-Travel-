@@ -28,6 +28,13 @@ export const Default: Story = {
 };
 
 export const Multiple: Story = {
+  // Base args to satisfy StoryObj typing; render below shows multiple examples
+  args: {
+    icon: <DoorOpen size={24} color="var(--ds-text-primary)" />,
+    title: 'Entire Colony Pod',
+    description:
+      "A private fully pressurized Mars habitat with no shared modules, complete autonomy.",
+  },
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--ds-content-gap-md)' }}>
       <ListingHighlight

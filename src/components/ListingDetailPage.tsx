@@ -1,7 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
-import type { ListingDetails, Amenity, HostBadge, ThingsToKnow } from '../types/database';
+import type {
+  ListingDetails,
+  Amenity,
+  HostBadge,
+  ThingsToKnow,
+  ReviewBadge,
+} from '../types/database';
 
 // Duration options for teleportation
 const DURATION_OPTIONS = [
@@ -12,8 +18,8 @@ const DURATION_OPTIONS = [
   { value: 48, label: '2 days', multiplier: 7 },
   { value: 72, label: '3 days', multiplier: 9 },
 ];
-import { Header, Button } from '../design-system';
-import { TIME_TRAVEL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { Header, Button, UserMenu } from '../design-system';
+import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { PhotoViewer } from './PhotoViewer';
 import { motion } from 'framer-motion';
 import { HeroGridSkeleton } from './HeroGridSkeleton';
@@ -109,23 +115,73 @@ import {
 } from 'lucide-react';
 
 const FIGMA_NAV_ITEMS = [
-  { label: 'Time Travel', iconUrl: TIME_TRAVEL_ICON_URL },
+  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
-const headerRightSlot = (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ds-spacing-12)' }}>
-    <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-      Become a host
-    </Button>
-    <button type="button" className="ds-header-right-icon-btn" aria-label="Help" style={{ border: 'none' }}>
-      <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-    </button>
-    <button type="button" className="ds-header-right-icon-btn" aria-label="Menu" style={{ border: 'none' }}>
-      <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-    </button>
-  </div>
-);
+function HeaderRightSlotWithUserMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--ds-spacing-12)',
+      }}
+    >
+      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
+        Become a host
+      </Button>
+      <button
+        type="button"
+        className="ds-header-right-icon-btn"
+        aria-label="Help"
+        style={{ border: 'none' }}
+      >
+        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+      </button>
+      <button
+        type="button"
+        className="ds-header-right-icon-btn"
+        aria-label="Menu"
+        style={{ border: 'none' }}
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+      </button>
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 30,
+          }}
+        >
+          <UserMenu />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ============================================================================
 // HOST BADGE COMPONENTS (Airbnb-style)
@@ -482,7 +538,7 @@ export function ListingDetailPage() {
           activeNavLabel="Time Travel"
           onNavClick={() => {}}
           onLogoClick={() => navigate('/')}
-          rightSlot={headerRightSlot}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
           <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
@@ -606,7 +662,7 @@ export function ListingDetailPage() {
           activeNavLabel="Time Travel"
           onNavClick={() => {}}
           onLogoClick={() => navigate('/')}
-          rightSlot={headerRightSlot}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
         <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
@@ -1030,7 +1086,11 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '16px',
                     }}>
-                      <IconComponent size={24} color="#222" />
+                      {amenity.icon_url ? (
+                        <img src={amenity.icon_url} alt="" width={24} height={24} style={{ flexShrink: 0 }} />
+                      ) : (
+                        <IconComponent size={24} color="#222" />
+                      )}
                       <span style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '16px',
@@ -1117,7 +1177,11 @@ export function ListingDetailPage() {
                           paddingTop: '16px',
                           paddingBottom: '16px',
                         }}>
-                          <IconComponent size={24} color="#222" style={{ flexShrink: 0 }} />
+                          {amenity.icon_url ? (
+                            <img src={amenity.icon_url} alt="" width={24} height={24} style={{ flexShrink: 0 }} />
+                          ) : (
+                            <IconComponent size={24} color="#222" style={{ flexShrink: 0 }} />
+                          )}
                           <span style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '16px',

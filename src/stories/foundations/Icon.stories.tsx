@@ -80,6 +80,12 @@ export const WhiteColor: Story = {
 };
 
 export const AllSizesAndColors: Story = {
+  // Provide base args to satisfy StoryObj typing even though we override render
+  args: {
+    size: 'md',
+    color: 'muted',
+    children: <Heart />,
+  },
   render: () => {
     const sizes = ['sm', 'md', 'lg'] as const;
     const colors = ['primary', 'muted', 'accent', 'white'] as const;

@@ -13,6 +13,27 @@ export interface Host {
   description: string | null;
   created_at: string;
   updated_at: string;
+  // Optional badges JSON (string or parsed array) used by ListingDetailPage
+  badges?: HostBadge[] | string | null;
+}
+
+// Host badge used for "Meet your host" section in ListingDetailPage
+export interface HostBadge {
+  type: string;
+  label: string;
+}
+
+// Generic review badge structure (used for parsing host badges safely)
+export interface ReviewBadge {
+  type: string;
+  label: string;
+}
+
+// Structured "things to know" block used by ListingDetailPage
+export interface ThingsToKnow {
+  house_rules?: Array<string | { rule: string }>;
+  safety_and_property?: Array<{ item: string; note?: string | null }>;
+  cancellation_highlight?: string | null;
 }
 
 export interface KeyFeature {
@@ -44,13 +65,17 @@ export interface Listing {
   location_description: string | null;
   short_description: string | null;
   full_description: string | null;
-  key_features: KeyFeature[] | null;
+  // May be stored as JSON string in the DB; UI code parses strings at runtime
+  key_features: KeyFeature[] | string | null;
   cancellation_policy: string | null;
   weekly_discount_percent: number | null;
   cleaning_fee: number | null;
   service_fee_percent: number | null;
   occupancy_tax_percent: number | null;
-  sleeping_arrangements: SleepingArrangement[] | null;
+  // May be stored as JSON string in the DB; UI code parses strings at runtime
+  sleeping_arrangements: SleepingArrangement[] | string | null;
+  // "Things to know" section – string when coming directly from Supabase JSON column
+  things_to_know?: ThingsToKnow | string | null;
   created_at: string;
   updated_at: string;
 }
