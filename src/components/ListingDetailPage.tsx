@@ -369,10 +369,10 @@ export function ListingDetailPage() {
   const [guestCount, setGuestCount] = useState(1);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
-  const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const guestDropdownRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1022,7 +1022,7 @@ export function ListingDetailPage() {
                 gridTemplateColumns: '1fr 1fr',
                 gap: '16px',
               }}>
-                {listing.amenities.slice(0, showAllAmenities ? undefined : 10).map((amenity) => {
+                {listing.amenities.slice(0, 10).map((amenity) => {
                   const IconComponent = getAmenityIcon(amenity.name);
                   return (
                     <div key={amenity.id} style={{
@@ -1042,17 +1042,103 @@ export function ListingDetailPage() {
                   );
                 })}
               </div>
-              {listing.amenities.length > 10 && !showAllAmenities && (
+              {listing.amenities.length > 10 && (
                 <Button
                   variant="secondary"
                   size="lg"
-                  onClick={() => setShowAllAmenities(true)}
+                  onClick={() => setShowAmenitiesModal(true)}
                   style={{ marginTop: '24px' }}
                 >
                   Show all {listing.amenities.length} amenities
                 </Button>
               )}
             </div>
+
+            {/* Amenities modal (all amenities) */}
+            <Modal
+              isOpen={showAmenitiesModal}
+              onClose={() => setShowAmenitiesModal(false)}
+            >
+              <div style={{
+                padding: '24px',
+                width: '720px',
+                maxWidth: '100%',
+                maxHeight: '85vh',
+                overflow: 'auto',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: '16px',
+                  marginBottom: '24px',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAmenitiesModal(false)}
+                    aria-label="Close"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      lineHeight: 1,
+                      color: '#222',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <h2 style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '28px',
+                    fontWeight: 600,
+                    color: '#222',
+                    margin: 0,
+                    lineHeight: 1.25,
+                    textAlign: 'left',
+                  }}>
+                    What this place offers
+                  </h2>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}>
+                  {listing.amenities.map((amenity, idx) => {
+                    const IconComponent = getAmenityIcon(amenity.name);
+                    return (
+                      <div key={amenity.id}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          paddingTop: '16px',
+                          paddingBottom: '16px',
+                        }}>
+                          <IconComponent size={24} color="#222" style={{ flexShrink: 0 }} />
+                          <span style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '16px',
+                            color: '#222',
+                          }}>
+                            {amenity.name}
+                          </span>
+                        </div>
+                        {idx < listing.amenities.length - 1 && (
+                          <div style={{
+                            height: '1px',
+                            backgroundColor: '#EBEBEB',
+                            width: '100%',
+                          }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Modal>
 
           </div>
 
@@ -1277,7 +1363,7 @@ export function ListingDetailPage() {
                   background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '9999px',
                   fontSize: '16px',
                   fontWeight: 600,
                   cursor: isBooking ? 'not-allowed' : 'pointer',
@@ -1294,103 +1380,10 @@ export function ListingDetailPage() {
                 fontSize: '14px',
                 color: '#717171',
                 textAlign: 'center',
-                marginBottom: '24px',
+                margin: 0,
               }}>
                 You won't be charged yet
               </p>
-
-              {/* Price Breakdown */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                paddingTop: '24px',
-                borderTop: '1px solid #DDDDDD',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                    textDecoration: 'underline',
-                  }}>
-                    ₿{(listing.price_per_night * btcRate).toFixed(6)} × {selectedDuration.label}
-                  </span>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                  }}>
-                    ₿{btcBase}
-                  </span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                    textDecoration: 'underline',
-                  }}>
-                    Temporal service fee
-                  </span>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                  }}>
-                    ₿{(serviceFee * btcRate).toFixed(6)}
-                  </span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                    textDecoration: 'underline',
-                  }}>
-                    Timeline cleaning fee
-                  </span>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '14px',
-                    color: '#222',
-                  }}>
-                    ₿{(cleaningFee * btcRate).toFixed(6)}
-                  </span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  paddingTop: '16px',
-                  borderTop: '1px solid #DDDDDD',
-                }}>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#222',
-                  }}>
-                    Total
-                  </span>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#222',
-                  }}>
-                    ₿{btcTotal}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1547,8 +1540,6 @@ export function ListingDetailPage() {
               <div style={{
                 paddingTop: '24px',
                 paddingBottom: '24px',
-                paddingLeft: '20px',
-                paddingRight: '20px',
                 borderTop: '1px solid #EBEBEB',
               }}>
                 <h2 style={{
@@ -1788,12 +1779,12 @@ export function ListingDetailPage() {
                     </h4>
                     {(thingsToKnow.house_rules || []).map((rule, idx) => (
                       <div key={idx} style={{
-                        marginBottom: '6px',
+                        marginBottom: '2px',
                       }}>
                         <span style={{
                           fontFamily: '"Figtree", sans-serif',
                           fontSize: '14px',
-                          color: '#222',
+                          color: 'var(--ds-text-secondary)',
                           lineHeight: '20px',
                         }}>
                           {typeof rule === 'object' && rule !== null && 'rule' in rule ? rule.rule : String(rule)}
@@ -1818,12 +1809,12 @@ export function ListingDetailPage() {
                     </h4>
                     {(thingsToKnow.safety_and_property || []).map((item, idx) => (
                       <div key={idx} style={{
-                        marginBottom: '6px',
+                        marginBottom: '2px',
                       }}>
                         <span style={{
                           fontFamily: '"Figtree", sans-serif',
                           fontSize: '14px',
-                          color: '#222',
+                          color: 'var(--ds-text-secondary)',
                           lineHeight: '20px',
                         }}>
                           {item.item}
@@ -1832,7 +1823,7 @@ export function ListingDetailPage() {
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '12px',
-                            color: '#717171',
+                            color: 'var(--ds-text-secondary)',
                             marginTop: '2px',
                           }}>
                             {item.note}
@@ -1859,7 +1850,7 @@ export function ListingDetailPage() {
                     <p style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '14px',
-                      color: '#222',
+                      color: 'var(--ds-text-secondary)',
                       lineHeight: '20px',
                       margin: 0,
                     }}>

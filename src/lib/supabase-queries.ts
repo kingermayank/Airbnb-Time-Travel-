@@ -286,6 +286,15 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       .map((item: any) => item.amenities)
       .filter((amenity: Amenity | null) => amenity !== null) as Amenity[];
 
+    // Dedupe reviews by listing_id + reviewer_name + review_date + comment (keep first occurrence)
+    const seen = new Set<string>();
+    const uniqueReviews = (reviewsData || []).filter((r: Review) => {
+      const key = `${r.listing_id}|${r.reviewer_name}|${r.review_date}|${r.comment ?? ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }) as Review[];
+
     // Extract listing data without hosts to avoid duplication
     const { hosts: _, ...listingDataWithoutHosts } = listingData as any;
 
@@ -294,7 +303,7 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       hosts: hostData,
       listing_images: (imagesData || []) as ListingImage[],
       amenities: amenities,
-      reviews: (reviewsData || []) as Review[],
+      reviews: uniqueReviews,
     };
 
     console.log('✅ Listing details assembled successfully:', {
@@ -355,7 +364,7 @@ export async function fetchAmenities(): Promise<Amenity[]> {
 }
 
 /**
- * Fetch reviews for a specific listing
+ * Fetch reviews for a specific listing (deduplicated by reviewer + date + comment)
  */
 export async function fetchListingReviews(listingId: string): Promise<Review[]> {
   const { data, error } = await supabase
@@ -369,7 +378,13 @@ export async function fetchListingReviews(listingId: string): Promise<Review[]> 
     throw error;
   }
 
-  return data || [];
+  const seen = new Set<string>();
+  return (data || []).filter((r: Review) => {
+    const key = `${r.listing_id}|${r.reviewer_name}|${r.review_date}|${r.comment ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**
