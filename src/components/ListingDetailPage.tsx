@@ -103,6 +103,8 @@ import {
   Bot,
   HelpCircle,
   Menu,
+  Key,
+  FileText,
   type LucideIcon
 } from 'lucide-react';
 
@@ -484,6 +486,8 @@ export function ListingDetailPage() {
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
           <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+            {/* Title placeholder - same height as real title (lineHeight 40px + marginBottom 24px) so hero skeleton aligns */}
+            <div style={{ height: 64, marginBottom: '24px' }} />
             <HeroGridSkeleton />
           </div>
         </div>
@@ -685,6 +689,7 @@ export function ListingDetailPage() {
           display: 'grid',
           gridTemplateColumns: '1fr 370px',
           gap: '80px',
+          marginBottom: '32px',
         }}>
           {/* Left Column - Details */}
           <div>
@@ -724,20 +729,23 @@ export function ListingDetailPage() {
                     fontWeight: 600,
                     color: '#222',
                   }}>
-                    {listing.overall_rating.toFixed(2)}
+                    {listing.overall_rating.toFixed(1)}
                   </span>
                   <span style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '16px',
                     color: '#222',
                   }}> · </span>
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '16px',
-                    color: '#222',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                  }} onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                  <span
+                    style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      color: '#222',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
                     {listing.total_reviews ?? listing.reviews?.length ?? 0} reviews
                   </span>
                 </div>
@@ -999,8 +1007,6 @@ export function ListingDetailPage() {
             {/* Amenities */}
             <div style={{
               paddingBottom: '24px',
-              borderBottom: '1px solid #EBEBEB',
-              marginBottom: '24px',
             }}>
               <h3 style={{
                 fontFamily: '"Figtree", sans-serif',
@@ -1048,516 +1054,13 @@ export function ListingDetailPage() {
               )}
             </div>
 
-            {/* Reviews Section */}
-            {listing.reviews.length > 0 && (
-              <div id="reviews-section" style={{
-                paddingBottom: '24px',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '24px',
-                }}>
-                  <Star size={20} fill="#222" color="#222" />
-                  <span style={{
-                    fontFamily: '"Figtree", sans-serif',
-                    fontSize: '22px',
-                    fontWeight: 600,
-                    color: '#222',
-                  }}>
-                    {listing.overall_rating?.toFixed(2)} · {listing.reviews.length} reviews
-                  </span>
-                </div>
-
-                {/* Reviews Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '40px',
-                }}>
-                  {listing.reviews.slice(0, showAllReviews ? undefined : 6).map((review) => (
-                    <div key={review.id}>
-                      {/* Reviewer Info */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        marginBottom: '12px',
-                      }}>
-                        <div style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '50%',
-                          overflow: 'hidden',
-                          backgroundColor: '#E0E0E0',
-                        }}>
-                          {review.reviewer_avatar_url ? (
-                            <img
-                              src={review.reviewer_avatar_url}
-                              alt={review.reviewer_name}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              backgroundColor: '#222',
-                              color: 'white',
-                              fontSize: '20px',
-                              fontWeight: 600,
-                            }}>
-                              {review.reviewer_name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '16px',
-                            fontWeight: 500,
-                            color: '#222',
-                          }}>
-                            {review.reviewer_name}
-                          </div>
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#717171',
-                          }}>
-                            {review.reviewer_city && review.reviewer_era
-                              ? `${review.reviewer_city}, ${review.reviewer_era}`
-                              : new Date(review.review_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Review Comment */}
-                      <p style={{
-                        fontFamily: '"Figtree", sans-serif',
-                        fontSize: '15px',
-                        lineHeight: '22px',
-                        color: '#222',
-                        margin: 0,
-                      }}>
-                        {review.comment}
-                      </p>
-
-                      {/* Cross-timeline response */}
-                      {review.response_to_reviewer && review.response_comment && (
-                        <div style={{
-                          marginTop: '12px',
-                          padding: '12px',
-                          backgroundColor: '#F7F7F7',
-                          borderRadius: '8px',
-                          borderLeft: '3px solid #FF385C',
-                        }}>
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                            color: '#717171',
-                            marginBottom: '4px',
-                          }}>
-                            Response to {review.response_to_reviewer}:
-                          </div>
-                          <p style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            lineHeight: '20px',
-                            color: '#222',
-                            margin: 0,
-                            fontStyle: 'italic',
-                          }}>
-                            {review.response_comment}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {listing.reviews.length > 6 && !showAllReviews && (
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    onClick={() => setShowAllReviews(true)}
-                    style={{ marginTop: '24px' }}
-                  >
-                    Show all {listing.reviews.length} reviews
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* Meet your host - Card Style */}
-            {listing.hosts && (
-              <div style={{
-                paddingTop: '24px',
-                paddingBottom: '24px',
-                borderTop: '1px solid #EBEBEB',
-              }}>
-                <h2 style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 600,
-                  color: '#222',
-                  marginBottom: '24px',
-                }}>
-                  Meet your host
-                </h2>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '80px',
-                  alignItems: 'flex-start',
-                }}>
-                  {/* Left: Host Card */}
-                  <div style={{
-                    width: '220px',
-                    flexShrink: 0,
-                    padding: '24px 32px',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '24px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                  }}>
-                    {/* Host Avatar */}
-                    <div style={{
-                      width: '104px',
-                      height: '104px',
-                      borderRadius: '50%',
-                      overflow: 'hidden',
-                      marginBottom: '12px',
-                    }}>
-                      {listing.hosts.profile_picture_url ? (
-                        <img
-                          src={listing.hosts.profile_picture_url}
-                          alt={listing.hosts.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          backgroundColor: '#222',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '36px',
-                          fontWeight: 600,
-                        }}>
-                          {listing.hosts.name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Host Name */}
-                    <h3 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '28px',
-                      fontWeight: 600,
-                      color: '#222',
-                      marginBottom: '4px',
-                      lineHeight: '32px',
-                    }}>
-                      {listing.hosts.name}
-                    </h3>
-
-                    {/* Superhost indicator */}
-                    {listing.hosts.is_superhost && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        marginBottom: '8px',
-                      }}>
-                        <Star size={12} fill="#222" color="#222" />
-                        <span style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: '#222',
-                        }}>
-                          Superhost
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Host Stats Row */}
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: '16px',
-                      width: '100%',
-                      marginTop: '16px',
-                      paddingTop: '16px',
-                      borderTop: '1px solid #EBEBEB',
-                    }}>
-                      {/* Reviews */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '18px',
-                          fontWeight: 600,
-                          color: '#222',
-                        }}>
-                          {listing.hosts.total_reviews || 0}
-                        </div>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '10px',
-                          color: '#717171',
-                          fontWeight: 400,
-                        }}>
-                          Reviews
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div style={{
-                        width: '1px',
-                        backgroundColor: '#EBEBEB',
-                        alignSelf: 'stretch',
-                      }} />
-
-                      {/* Rating */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '18px',
-                          fontWeight: 600,
-                          color: '#222',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '2px',
-                        }}>
-                          {listing.overall_rating?.toFixed(2) || '—'}
-                          <Star size={12} fill="#222" color="#222" />
-                        </div>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '10px',
-                          color: '#717171',
-                          fontWeight: 400,
-                        }}>
-                          Rating
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div style={{
-                        width: '1px',
-                        backgroundColor: '#EBEBEB',
-                        alignSelf: 'stretch',
-                      }} />
-
-                      {/* Years Hosting */}
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '18px',
-                          fontWeight: 600,
-                          color: '#222',
-                        }}>
-                          {listing.hosts.join_date
-                            ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
-                            : 1}
-                        </div>
-                        <div style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '10px',
-                          color: '#717171',
-                          fontWeight: 400,
-                        }}>
-                          {(listing.hosts.join_date
-                            ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
-                            : 1) === 1 ? 'Year' : 'Years'} hosting
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Host Info */}
-                  <div style={{ flex: 1, paddingTop: '8px' }}>
-                    {/* Host Description */}
-                    {listing.hosts.description ? (
-                      <p style={{
-                        fontFamily: '"Figtree", sans-serif',
-                        fontSize: '16px',
-                        lineHeight: '24px',
-                        color: '#222',
-                        margin: 0,
-                      }}>
-                        {listing.hosts.description}
-                      </p>
-                    ) : (
-                      <p style={{
-                        fontFamily: '"Figtree", sans-serif',
-                        fontSize: '16px',
-                        lineHeight: '24px',
-                        color: '#222',
-                        margin: 0,
-                      }}>
-                        {listing.full_description || listing.short_description}
-                      </p>
-                    )}
-
-                    {/* Host Badges */}
-                    {hostBadges && hostBadges.length > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '8px',
-                        marginTop: '24px',
-                      }}>
-                        {hostBadges.map((badge, idx) => (
-                          <HostBadgePill key={idx} badge={badge} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Things to Know */}
-            {thingsToKnow && (
-              <div style={{ paddingTop: '48px', borderTop: '1px solid #EBEBEB', paddingBottom: '48px' }}>
-                <h3 style={{
-                  fontFamily: '"Figtree", sans-serif',
-                  fontSize: '22px',
-                  fontWeight: 600,
-                  color: '#222',
-                  marginBottom: '24px',
-                }}>
-                  Things to know
-                </h3>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: '24px',
-                }}>
-                  {/* House Rules */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      House rules
-                    </h4>
-                    {(thingsToKnow.house_rules || []).map((rule, idx) => {
-                      const IconComponent = getThingsToKnowIcon(rule.icon);
-                      return (
-                        <div key={idx} style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          marginBottom: '12px',
-                        }}>
-                          <IconComponent size={18} color="#222" style={{ flexShrink: 0, marginTop: '2px' }} />
-                          <span style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#222',
-                            lineHeight: '20px',
-                          }}>
-                            {rule.rule}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Safety */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      Safety & property
-                    </h4>
-                    {(thingsToKnow.safety_and_property || []).map((item, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        marginBottom: '12px',
-                      }}>
-                        {item.available ? (
-                          <CheckCircle size={18} color="#008A05" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        ) : (
-                          <XCircle size={18} color="#C13515" style={{ flexShrink: 0, marginTop: '2px' }} />
-                        )}
-                        <div>
-                          <span style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#222',
-                            lineHeight: '20px',
-                          }}>
-                            {item.item}
-                          </span>
-                          {item.note && (
-                            <div style={{
-                              fontFamily: '"Figtree", sans-serif',
-                              fontSize: '12px',
-                              color: '#717171',
-                              marginTop: '2px',
-                            }}>
-                              {item.note}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Cancellation */}
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                    }}>
-                      Cancellation policy
-                    </h4>
-                    <p style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '14px',
-                      color: '#222',
-                      lineHeight: '20px',
-                      margin: 0,
-                    }}>
-                      {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Column - Booking Card */}
           <div style={{ position: 'relative' }}>
             <div style={{
               position: 'sticky',
-              top: '24px',
+              top: '125px',
               padding: '24px',
               border: '1px solid #DDDDDD',
               borderRadius: '16px',
@@ -1890,6 +1393,482 @@ export function ListingDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Full-width divider between grid and lower sections */}
+        <div style={{ width: '100%', borderTop: '1px solid #EBEBEB' }} />
+
+        {/* Full-width sections: Reviews, Meet your host, Things to know */}
+        <div style={{ width: '100%' }}>
+            {/* Reviews Section */}
+            {listing.reviews.length > 0 && (
+              <div id="reviews-section" style={{
+                paddingTop: '24px',
+                paddingBottom: '24px',
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '24px',
+                }}>
+                  <Star size={20} fill="#222" color="#222" />
+                  <span style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '22px',
+                    fontWeight: 600,
+                    color: '#222',
+                  }}>
+                    {listing.overall_rating?.toFixed(2)} · {listing.reviews.length} reviews
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '40px',
+                }}>
+                  {listing.reviews.slice(0, showAllReviews ? undefined : 6).map((review) => (
+                    <div key={review.id}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '12px',
+                      }}>
+                        <div style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          backgroundColor: '#E0E0E0',
+                        }}>
+                          {review.reviewer_avatar_url ? (
+                            <img
+                              src={review.reviewer_avatar_url}
+                              alt={review.reviewer_name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#222',
+                              color: 'white',
+                              fontSize: '20px',
+                              fontWeight: 600,
+                            }}>
+                              {review.reviewer_name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '16px',
+                            fontWeight: 500,
+                            color: '#222',
+                          }}>
+                            {review.reviewer_name}
+                          </div>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            color: '#717171',
+                          }}>
+                            {review.reviewer_city && review.reviewer_era
+                              ? `${review.reviewer_city}, ${review.reviewer_era}`
+                              : new Date(review.review_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '15px',
+                        lineHeight: '22px',
+                        color: '#222',
+                        margin: 0,
+                      }}>
+                        {review.comment}
+                      </p>
+
+                      {review.response_to_reviewer && review.response_comment && (
+                        <div style={{
+                          marginTop: '12px',
+                          padding: '12px',
+                          backgroundColor: '#F7F7F7',
+                          borderRadius: '8px',
+                          borderLeft: '3px solid #FF385C',
+                        }}>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            color: '#717171',
+                            marginBottom: '4px',
+                          }}>
+                            Response to {review.response_to_reviewer}:
+                          </div>
+                          <p style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            lineHeight: '20px',
+                            color: '#222',
+                            margin: 0,
+                            fontStyle: 'italic',
+                          }}>
+                            {review.response_comment}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {listing.reviews.length > 6 && !showAllReviews && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => setShowAllReviews(true)}
+                    style={{ marginTop: '24px' }}
+                  >
+                    Show all {listing.reviews.length} reviews
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Meet your host - Card Style */}
+            {listing.hosts && (
+              <div style={{
+                paddingTop: '24px',
+                paddingBottom: '24px',
+                paddingLeft: '20px',
+                paddingRight: '20px',
+                borderTop: '1px solid #EBEBEB',
+              }}>
+                <h2 style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: '#222',
+                  marginBottom: '24px',
+                }}>
+                  Meet your host
+                </h2>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '32px',
+                  alignItems: 'flex-start',
+                }}>
+                  <div style={{
+                    width: '400px',
+                    flexShrink: 0,
+                    padding: '24px 0',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '24px',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'stretch',
+                  }}>
+                    {/* Left: 266px - avatar, name, Host */}
+                    <div style={{
+                      width: '266px',
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                    }}>
+                      <div style={{
+                        width: '96px',
+                        height: '96px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        marginBottom: '12px',
+                      }}>
+                        {listing.hosts.profile_picture_url ? (
+                          <img
+                            src={listing.hosts.profile_picture_url}
+                            alt={listing.hosts.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: '#222',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '32px',
+                            fontWeight: 600,
+                          }}>
+                            {listing.hosts.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <h3 style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '22px',
+                        fontWeight: 600,
+                        color: '#222',
+                        marginBottom: '4px',
+                        lineHeight: '28px',
+                      }}>
+                        {listing.hosts.name}
+                      </h3>
+                      <span style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '14px',
+                        color: '#717171',
+                        fontWeight: 400,
+                      }}>
+                        Host
+                      </span>
+                    </div>
+
+                    {/* Right: 134px - Reviews, Rating, Years hosting (stacked, with dividers) */}
+                    <div style={{
+                      width: '134px',
+                      flexShrink: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}>
+                      <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        paddingLeft: '16px',
+                        paddingRight: '20px',
+                        paddingTop: '12px',
+                      }}>
+                        <div style={{
+                          paddingBottom: '12px',
+                        }}>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            color: '#222',
+                          }}>
+                            {listing.hosts.total_reviews ?? 0}
+                          </div>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '12px',
+                            color: '#717171',
+                            fontWeight: 400,
+                          }}>
+                            Reviews
+                          </div>
+                        </div>
+                        <div style={{
+                          paddingTop: '12px',
+                          paddingBottom: '12px',
+                          borderTop: '1px solid #EBEBEB',
+                        }}>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            color: '#222',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}>
+                            {listing.overall_rating?.toFixed(2) ?? '—'}
+                            <Star size={14} fill="#222" color="#222" />
+                          </div>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '12px',
+                            color: '#717171',
+                            fontWeight: 400,
+                          }}>
+                            Rating
+                          </div>
+                        </div>
+                        <div style={{
+                          paddingTop: '12px',
+                          paddingBottom: '12px',
+                          borderTop: '1px solid #EBEBEB',
+                        }}>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            color: '#222',
+                          }}>
+                            {listing.hosts.join_date
+                              ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
+                              : 1}
+                          </div>
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '12px',
+                            color: '#717171',
+                            fontWeight: 400,
+                          }}>
+                            {(listing.hosts.join_date
+                              ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
+                              : 1) === 1 ? 'Year' : 'Years'} hosting
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ flex: 1, paddingTop: '8px' }}>
+                    {listing.hosts.description ? (
+                      <p style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '16px',
+                        lineHeight: '24px',
+                        color: '#222',
+                        margin: 0,
+                      }}>
+                        {listing.hosts.description}
+                      </p>
+                    ) : (
+                      <p style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '16px',
+                        lineHeight: '24px',
+                        color: '#222',
+                        margin: 0,
+                      }}>
+                        {listing.full_description || listing.short_description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Things to Know */}
+            {thingsToKnow && (
+              <div style={{ paddingTop: '48px', borderTop: '1px solid #EBEBEB', paddingBottom: '48px' }}>
+                <h3 style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: '#222',
+                  marginBottom: '24px',
+                }}>
+                  Things to know
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: '24px',
+                }}>
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <Key size={18} color="#222" style={{ flexShrink: 0 }} />
+                      House rules
+                    </h4>
+                    {(thingsToKnow.house_rules || []).map((rule, idx) => (
+                      <div key={idx} style={{
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{
+                          fontFamily: '"Figtree", sans-serif',
+                          fontSize: '14px',
+                          color: '#222',
+                          lineHeight: '20px',
+                        }}>
+                          {typeof rule === 'object' && rule !== null && 'rule' in rule ? rule.rule : String(rule)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <Shield size={18} color="#222" style={{ flexShrink: 0 }} />
+                      Safety
+                    </h4>
+                    {(thingsToKnow.safety_and_property || []).map((item, idx) => (
+                      <div key={idx} style={{
+                        marginBottom: '6px',
+                      }}>
+                        <span style={{
+                          fontFamily: '"Figtree", sans-serif',
+                          fontSize: '14px',
+                          color: '#222',
+                          lineHeight: '20px',
+                        }}>
+                          {item.item}
+                        </span>
+                        {item.note && (
+                          <div style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '12px',
+                            color: '#717171',
+                            marginTop: '2px',
+                          }}>
+                            {item.note}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <FileText size={18} color="#222" style={{ flexShrink: 0 }} />
+                      Property Cancellation Policy
+                    </h4>
+                    <p style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '14px',
+                      color: '#222',
+                      lineHeight: '20px',
+                      margin: 0,
+                    }}>
+                      {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
         </div>
         </div>

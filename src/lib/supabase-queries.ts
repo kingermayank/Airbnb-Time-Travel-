@@ -152,12 +152,6 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
           reviewer_avatar_url: null,
           review_date: new Date().toISOString(),
           rating_overall: 5,
-          rating_cleanliness: 5,
-          rating_accuracy: 5,
-          rating_communication: 5,
-          rating_location: 5,
-          rating_checkin: 5,
-          rating_value: 5,
           comment: "Absolutely incredible experience! The views of Mars are breathtaking. The life support systems worked flawlessly. Highly recommend!",
           created_at: new Date().toISOString()
         },
@@ -168,12 +162,6 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
           reviewer_avatar_url: null,
           review_date: new Date().toISOString(),
           rating_overall: 5,
-          rating_cleanliness: 5,
-          rating_accuracy: 5,
-          rating_communication: 4,
-          rating_location: 5,
-          rating_checkin: 5,
-          rating_value: 4,
           comment: "One small step for man, one giant leap for Airbnb! The pod was exactly as described. The rover tour was amazing.",
           created_at: new Date().toISOString()
         }

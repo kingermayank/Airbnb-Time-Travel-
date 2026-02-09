@@ -85,14 +85,12 @@ export interface Review {
   reviewer_avatar_url: string | null;
   review_date: string;
   rating_overall: number | null;
-  rating_cleanliness: number | null;
-  rating_accuracy: number | null;
-  rating_communication: number | null;
-  rating_location: number | null;
-  rating_checkin: number | null;
-  rating_value: number | null;
   comment: string | null;
   created_at: string;
+  reviewer_city?: string | null;
+  reviewer_era?: string | null;
+  response_to_reviewer?: string | null;
+  response_comment?: string | null;
 }
 
 // Extended types for queries with joins

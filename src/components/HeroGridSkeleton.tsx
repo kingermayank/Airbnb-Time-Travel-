@@ -3,22 +3,14 @@ import './HeroGridSkeleton.css';
 export function HeroGridSkeleton() {
   return (
     <div className="hero-grid-skeleton">
-      {/* Left large block */}
+      {/* Main image - spans 2 rows (matches gridRow: span 2) */}
       <div className="skeleton-block skeleton-main" />
-      
-      {/* Right 2x2 grid */}
-      <div className="skeleton-grid">
-        {/* Top Row */}
-        <div className="skeleton-row">
-          <div className="skeleton-block skeleton-top-left" />
-          <div className="skeleton-block skeleton-top-right" />
-        </div>
-        {/* Bottom Row */}
-        <div className="skeleton-row">
-          <div className="skeleton-block skeleton-bottom-left" />
-          <div className="skeleton-block skeleton-bottom-right" />
-        </div>
-      </div>
+      {/* Top right */}
+      <div className="skeleton-block skeleton-top-left" />
+      <div className="skeleton-block skeleton-top-right" />
+      {/* Bottom right */}
+      <div className="skeleton-block skeleton-bottom-left" />
+      <div className="skeleton-block skeleton-bottom-right" />
     </div>
   );
 }
