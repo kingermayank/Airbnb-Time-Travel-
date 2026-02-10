@@ -92,6 +92,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
+    logoUrl: '/images/warp.svg',
     brandName: 'warpbnb',
     navItems: FIGMA_NAV_ITEMS,
     activeNavLabel: 'Time Travel',
@@ -101,6 +102,7 @@ export const Default: Story = {
 
 export const NoActiveTab: Story = {
   args: {
+    logoUrl: '/images/warp.svg',
     brandName: 'warpbnb',
     navItems: FIGMA_NAV_ITEMS,
     activeNavLabel: undefined,

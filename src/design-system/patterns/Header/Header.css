@@ -50,3 +50,8 @@
 .ds-header-right-icon-btn:hover {
   background: #ebebeb;
 }
+
+/* Divider below header (variant: showDivider), e.g. Listing Details page */
+.ds-header-divider {
+  flex-shrink: 0;
+}

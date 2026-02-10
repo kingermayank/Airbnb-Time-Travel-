@@ -46,4 +46,4 @@ export type { ThingsToKnowProps, ThingsToKnowBlock } from './ThingsToKnow';
 export type { ReviewsSectionProps } from './ReviewsSection';
 export type { ListingHeroGalleryProps, ListingHeroGalleryImage } from './ListingHeroGallery';
 export type { FooterProps, FooterLink } from './Footer';
-export type { UserMenuProps, UserMenuItem } from './UserMenu';
+export type { UserMenuProps, UserMenuItem, UserMenuItemIcon } from './UserMenu';

@@ -27,6 +27,8 @@ export interface HeaderProps {
   /** Optional callback when the logo/brand area is clicked (e.g. navigate home). */
   onLogoClick?: () => void;
   rightSlot?: React.ReactNode;
+  /** When true, renders a 1px divider line below the header (e.g. for Listing Details page). */
+  showDivider?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -95,8 +97,21 @@ const headerStyle: React.CSSProperties = {
   zIndex: 10,
 };
 
+const headerWrapperWithDividerStyle: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+  backgroundColor: 'var(--ds-surface-header)',
+};
+
+const headerDividerStyle: React.CSSProperties = {
+  width: '100%',
+  height: 1,
+  backgroundColor: 'var(--ds-divider)',
+};
+
 export function Header({
-  logoUrl = 'https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/c976b0ad-ec40-4b9b-92cf-fc5026868616.svg',
+  logoUrl = '/images/warp.svg',
   logoTextUrl,
   brandName = 'warpbnb',
   navItems,
@@ -104,11 +119,19 @@ export function Header({
   onNavClick,
   onLogoClick,
   rightSlot,
+  showDivider = false,
   className,
   style,
 }: HeaderProps) {
-  return (
-    <header className={className} style={{ ...headerStyle, ...style }}>
+  const headerEl = (
+    <header
+      className={className}
+      style={{
+        ...headerStyle,
+        ...(showDivider ? { position: 'relative' as const, top: 'auto', zIndex: 'auto' } : {}),
+        ...style,
+      }}
+    >
       <div
         role={onLogoClick ? 'button' : undefined}
         onClick={onLogoClick}
@@ -121,7 +144,7 @@ export function Header({
           flex: 1,
         }}
       >
-        <img src={logoUrl} alt={brandName} style={{ width: 40, height: 40 }} />
+        <img src={logoUrl} alt={brandName} style={{ width: 44, height: 44 }} />
         {logoTextUrl ? (
           <img
             src={logoTextUrl}
@@ -244,4 +267,15 @@ export function Header({
       </div>
     </header>
   );
+
+  if (showDivider) {
+    return (
+      <div style={headerWrapperWithDividerStyle}>
+        {headerEl}
+        <div className="ds-header-divider" style={headerDividerStyle} aria-hidden />
+      </div>
+    );
+  }
+
+  return headerEl;
 }

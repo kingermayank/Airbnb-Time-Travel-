@@ -1,15 +1,30 @@
 import React from 'react';
-import { Circle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MessageSquare, CircleHelp, LifeBuoy, Circle, type LucideIcon } from 'lucide-react';
 import userPng from './user.png';
 import './UserMenu.css';
 
+/** Icon key for menu items. Use semantic icons per icon-design skill. */
+export type UserMenuItemIcon = 'messageSquare' | 'circleHelp' | 'lifeBuoy' | 'circle';
+
 export interface UserMenuItem {
   label: string;
+  /** Semantic icon for this item. Defaults to circle if omitted. */
+  icon?: UserMenuItemIcon;
+  /** Path to navigate to when clicked (uses React Router Link). When set, onClick is still called after navigation if provided. */
+  to?: string;
   onClick?: () => void;
 }
 
+const MENU_ICON_MAP: Record<UserMenuItemIcon, LucideIcon> = {
+  messageSquare: MessageSquare,
+  circleHelp: CircleHelp,
+  lifeBuoy: LifeBuoy,
+  circle: Circle,
+};
+
 export interface UserMenuProps {
-  /** Main menu items (Wishlists, What is this?, etc.) shown with circle icon. */
+  /** Main menu items (Help center, Frequently asked questions, Give feedback by default) with semantic icons. */
   menuItems?: UserMenuItem[];
   /** "Become a host" block: title. */
   becomeAHostTitle?: string;
@@ -28,21 +43,20 @@ export interface UserMenuProps {
 }
 
 const DEFAULT_MENU_ITEMS: UserMenuItem[] = [
-  { label: 'Wishlists' },
-  { label: 'What is this?' },
-  { label: 'How did I build this?' },
-  { label: 'Share' },
+  { label: 'Help center', icon: 'lifeBuoy' },
+  { label: 'Frequently asked questions', icon: 'circleHelp', to: '/faq' },
+  { label: 'Give feedback', icon: 'messageSquare', to: '/feedback' },
 ];
 
 /**
  * User account dropdown menu (Figma 283-4167).
- * Sections: menu items (with circle icon), optional "Become a host" CTA, and Log out.
+ * Sections: menu items (with semantic icons), optional "Become a host" CTA, and Log out.
  * Image asset for the CTA can be left blank and added later.
  */
 export function UserMenu({
   menuItems = DEFAULT_MENU_ITEMS,
   becomeAHostTitle = 'Become a host',
-  becomeAHostDescription = "Start hosting and earn extra income if you're okay.",
+  becomeAHostDescription = "Start hosting. Only if you're okay with guests from other timelines.",
   becomeAHostImageSrc = userPng,
   onBecomeAHostClick,
   logOutLabel = 'Log out',
@@ -58,20 +72,41 @@ export function UserMenu({
       aria-label="Account menu"
     >
       <div className="ds-user-menu__section">
-        {menuItems.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            className="ds-user-menu__item"
-            role="menuitem"
-            onClick={item.onClick}
-          >
-            <span className="ds-user-menu__item-icon" aria-hidden>
-              <Circle size={16} strokeWidth={1.5} stroke="currentColor" fill="none" />
-            </span>
-            {item.label}
-          </button>
-        ))}
+        {menuItems.map((item) => {
+          const IconComponent = MENU_ICON_MAP[item.icon ?? 'circle'];
+          const content = (
+            <>
+              <span className="ds-user-menu__item-icon" aria-hidden>
+                <IconComponent size={16} strokeWidth={2.5} stroke="currentColor" fill="none" />
+              </span>
+              {item.label}
+            </>
+          );
+          if (item.to) {
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="ds-user-menu__item ds-user-menu__item--link"
+                role="menuitem"
+                onClick={item.onClick}
+              >
+                {content}
+              </Link>
+            );
+          }
+          return (
+            <button
+              key={item.label}
+              type="button"
+              className="ds-user-menu__item"
+              role="menuitem"
+              onClick={item.onClick}
+            >
+              {content}
+            </button>
+          );
+        })}
       </div>
 
       {(becomeAHostTitle || becomeAHostDescription) && (

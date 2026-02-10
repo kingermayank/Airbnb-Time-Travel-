@@ -5,39 +5,44 @@
  */
 
 .ds-user-menu {
-  min-width: 240px;
-  max-width: 320px;
+  min-width: 266px;
+  max-width: 346px;
   background: var(--ds-surface);
   border-radius: var(--ds-radius-lg);
   box-shadow: var(--ds-shadow-dropdown);
-  padding: var(--ds-spacing-16) 0;
+  padding: var(--ds-spacing-12) 0;
 }
 
 .ds-user-menu__section {
-  padding: 0 var(--ds-spacing-16);
+  padding: 0;
 }
 
 .ds-user-menu__item {
   display: flex;
   align-items: center;
   gap: var(--ds-spacing-8);
-  padding: var(--ds-spacing-12) 0;
+  padding: var(--ds-spacing-8) var(--ds-spacing-16);
   width: 100%;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
   font-family: var(--ds-font-family);
-  font-size: var(--ds-text-16);
-  line-height: var(--ds-leading-20);
+  font-size: var(--ds-text-14);
+  line-height: var(--ds-leading-18);
   font-weight: var(--ds-font-regular);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
   transition: background-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .ds-user-menu__item:hover {
   background-color: var(--ds-surface-ghost-hover);
+}
+
+.ds-user-menu__item--link {
+  text-decoration: none;
 }
 
 .ds-user-menu__item-icon {
@@ -47,11 +52,16 @@
   color: var(--ds-text-primary);
 }
 
+.ds-user-menu__item-icon svg {
+  stroke-width: 2.5px;
+}
+
 .ds-user-menu__divider {
   height: 1px;
-  width: 100%;
+  width: calc(100% - var(--ds-spacing-16) * 2);
+  max-width: 100%;
+  margin: var(--ds-spacing-8) var(--ds-spacing-16);
   background-color: var(--ds-border-light);
-  margin: var(--ds-spacing-16) 0;
   border: none;
   padding: 0;
 }
@@ -60,14 +70,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ds-spacing-16);
-  padding: var(--ds-spacing-16) 0;
+  gap: var(--ds-spacing-4);
+  padding: var(--ds-spacing-6) var(--ds-spacing-16);
   width: 100%;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
   transition: background-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .ds-user-menu__cta:hover {
@@ -81,18 +92,18 @@
 
 .ds-user-menu__cta-title {
   font-family: var(--ds-font-family);
-  font-size: var(--ds-text-16);
-  line-height: var(--ds-leading-20);
+  font-size: var(--ds-text-14);
+  line-height: var(--ds-leading-18);
   font-weight: var(--ds-font-medium);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
-  margin: 0 0 var(--ds-spacing-4) 0;
+  margin: 0 0 var(--ds-spacing-2) 0;
 }
 
 .ds-user-menu__cta-description {
   font-family: var(--ds-font-family);
-  font-size: var(--ds-text-14);
-  line-height: var(--ds-leading-18);
+  font-size: var(--ds-text-12);
+  line-height: var(--ds-leading-16);
   font-weight: var(--ds-font-regular);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-secondary);
@@ -113,19 +124,20 @@
 .ds-user-menu__logout {
   display: flex;
   align-items: center;
-  padding: var(--ds-spacing-12) var(--ds-spacing-16);
+  padding: var(--ds-spacing-8) var(--ds-spacing-16);
   width: 100%;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
   font-family: var(--ds-font-family);
-  font-size: var(--ds-text-16);
-  line-height: var(--ds-leading-20);
+  font-size: var(--ds-text-14);
+  line-height: var(--ds-leading-18);
   font-weight: var(--ds-font-regular);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
   transition: background-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .ds-user-menu__logout:hover {

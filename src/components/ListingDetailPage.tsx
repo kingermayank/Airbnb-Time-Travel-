@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
 import type {
@@ -122,6 +122,7 @@ const FIGMA_NAV_ITEMS = [
 function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -136,6 +137,10 @@ function HeaderRightSlotWithUserMenu() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   return (
     <div
@@ -539,6 +544,7 @@ export function ListingDetailPage() {
           onNavClick={() => {}}
           onLogoClick={() => navigate('/')}
           rightSlot={<HeaderRightSlotWithUserMenu />}
+          showDivider
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
           <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>
@@ -663,6 +669,7 @@ export function ListingDetailPage() {
           onNavClick={() => {}}
           onLogoClick={() => navigate('/')}
           rightSlot={<HeaderRightSlotWithUserMenu />}
+          showDivider
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
         <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>

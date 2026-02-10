@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
@@ -75,6 +75,7 @@ const CONFIRMATION_NAV_ITEMS = [
 function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,6 +90,10 @@ function HeaderRightSlotWithUserMenu() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   const navigate = useNavigate();
 

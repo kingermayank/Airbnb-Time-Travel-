@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
@@ -107,6 +107,7 @@ const FIGMA_NAV_ITEMS = [
 function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -121,6 +122,10 @@ function HeaderRightSlotWithUserMenu() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   return (
     <div
