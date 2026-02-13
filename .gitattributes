@@ -1,3 +1,0 @@
-images/listing_images/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-images/listing_images/**/*.png filter=lfs diff=lfs merge=lfs -text
-images/listing_images/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
