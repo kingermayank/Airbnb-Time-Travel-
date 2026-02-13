@@ -50,16 +50,9 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 40 }}
             transition={{
-              enter: {
-                type: 'spring',
-                stiffness: 600,
-                damping: 45,
-                duration: 0.2,
-              },
-              exit: {
-                duration: 0.1,
-                ease: 'easeIn',
-              },
+              type: 'spring',
+              stiffness: 600,
+              damping: 45,
             }}
             style={{
               backgroundColor: 'rgb(255, 255, 255)',
