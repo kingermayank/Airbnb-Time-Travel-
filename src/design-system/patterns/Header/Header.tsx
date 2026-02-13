@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Text } from '../../foundations/Text';
+import { useDeviceType } from '../../../hooks/use-mobile';
 import './Header.css';
 
 /** Header pattern aligned to Figma 307-4788 (Header navigation). */
@@ -29,6 +30,8 @@ export interface HeaderProps {
   rightSlot?: React.ReactNode;
   /** When true, renders a 1px divider line below the header (e.g. for Listing Details page). */
   showDivider?: boolean;
+  /** When true, renders a divider at the bottom of the sticky header when search bar area has scrolled past. */
+  showDividerOnScroll?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -82,14 +85,11 @@ function NavIconVideo({
   );
 }
 
-const headerStyle: React.CSSProperties = {
+const headerBaseStyle: React.CSSProperties = {
   width: '100%',
-  height: 101,
   display: 'flex',
-  flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: '0 var(--ds-spacing-40)',
   backgroundColor: 'var(--ds-surface-header)',
   boxSizing: 'border-box',
   position: 'sticky',
@@ -110,6 +110,12 @@ const headerDividerStyle: React.CSSProperties = {
   backgroundColor: 'var(--ds-divider)',
 };
 
+const headerScrollDividerStyle: React.CSSProperties = {
+  width: '100%',
+  height: 1,
+  backgroundColor: 'var(--ds-border-light)',
+};
+
 export function Header({
   logoUrl = '/images/warp.svg',
   logoTextUrl,
@@ -120,9 +126,22 @@ export function Header({
   onLogoClick,
   rightSlot,
   showDivider = false,
+  showDividerOnScroll = false,
   className,
   style,
 }: HeaderProps) {
+  const { isMobile } = useDeviceType();
+
+  const headerStyle: React.CSSProperties = {
+    ...headerBaseStyle,
+    // Mobile-first: column layout, auto height, compact horizontal padding
+    flexDirection: isMobile ? 'column' : 'row',
+    height: isMobile ? 'auto' : 101,
+    padding: isMobile ? '0 var(--ds-spacing-16)' : '0 var(--ds-spacing-40)',
+    paddingTop: isMobile ? 8 : 0,
+    gap: isMobile ? 'var(--ds-spacing-8)' : 0,
+  };
+
   const headerEl = (
     <header
       className={className}
@@ -161,9 +180,13 @@ export function Header({
       <nav
         style={{
           display: 'flex',
-          gap: 'var(--ds-spacing-32)',
-          height: '100%',
+          gap: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-32)',
           alignItems: 'center',
+          justifyContent: isMobile ? 'center' : undefined,
+          // On mobile, make the nav horizontally scrollable so tabs don't overflow
+          width: isMobile ? '100%' : 'auto',
+          overflowX: isMobile ? 'auto' : 'visible',
+          padding: isMobile ? '0 0 var(--ds-spacing-8)' : 0,
         }}
       >
         {navItems.map((item) => {
@@ -184,10 +207,11 @@ export function Header({
                 background: 'none',
                 border: 'none',
                 cursor: isDisabled ? 'default' : 'pointer',
-                padding: 'var(--ds-spacing-8) 0 0 0',
-                height: 80,
+                padding: isMobile ? 'var(--ds-spacing-4) 0 0 0' : 'var(--ds-spacing-8) 0 0 0',
+                height: isMobile ? 72 : 80,
                 justifyContent: 'center',
-                transition: 'opacity 0.2s',
+                transition: 'opacity 0.2s ease, transform 0.1s ease',
+                flex: isMobile ? '0 0 auto' : undefined,
               }}
             >
               <div
@@ -260,7 +284,8 @@ export function Header({
           justifyContent: 'flex-end',
           alignItems: 'center',
           gap: 'var(--ds-spacing-12)',
-          flex: 1,
+          flex: isMobile ? '0 0 auto' : 1,
+          width: isMobile ? '100%' : 'auto',
         }}
       >
         {rightSlot}
@@ -268,11 +293,22 @@ export function Header({
     </header>
   );
 
+  // Handle static divider (showDivider prop)
   if (showDivider) {
     return (
       <div style={headerWrapperWithDividerStyle}>
         {headerEl}
         <div className="ds-header-divider" style={headerDividerStyle} aria-hidden />
+      </div>
+    );
+  }
+
+  // Handle scroll-based divider (showDividerOnScroll prop)
+  if (showDividerOnScroll) {
+    return (
+      <div style={headerWrapperWithDividerStyle}>
+        {headerEl}
+        <div className="ds-header-divider" style={headerScrollDividerStyle} aria-hidden />
       </div>
     );
   }

@@ -11,24 +11,28 @@ const FAQ_NAV_ITEMS = [
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
-    question: 'How does time travel booking work?',
+    question: 'Is any of this real?',
     answer:
-      'Select your destination era, choose a listing, pick your travel duration and teleportation method, and complete the booking. You’ll receive a confirmation and timeline coordinates before departure.',
+      'No. Warpbnb is a fictional side project. Time travel is not real. All listings, hosts, and images shown here are AI-generated and speculative. They’re used to explore visual consistency, storytelling, and design–engineering.',
   },
   {
-    question: 'What if I need to cancel or change my trip?',
-    answer:
-      'You can modify or cancel your reservation from your account up to 24 hours before your scheduled departure. Refunds are processed in the same currency you used at booking.',
+    question: 'Can I host my own listing?',
+    answer: 'Host applications will open soon. Waiting on a minor temporal realignment.',
   },
   {
-    question: 'Are there any age or eligibility requirements?',
+    question: 'Is this affiliated with Airbnb?',
     answer:
-      'Travelers must be at least 18 years old and hold a valid Temporal Pass. Some eras may have additional restrictions; check the listing details before booking.',
+      'This project is not affiliated with, endorsed by, or connected to Airbnb in any way. It’s a speculative reinterpretation inspired by familiar patterns, nothing more.',
   },
   {
-    question: 'How do I get help during my trip?',
+    question: 'How long did this take to build?',
     answer:
-      'Each listing has an in-era support contact. You can also reach our 24/7 support team through the Help center or the app’s emergency timeline beacon.',
+      'About two weeks, mostly at night, with a mix of curiosity, caffeine, and questionable sleep decisions.',
+  },
+  {
+    question: 'How did you build this?',
+    answer:
+      'A mix of tools, experimentation, and iteration. Primarily Figma for planning and UI design; Cursor plus Claude Code for building; multiple AI models (Nano Banana Pro, Flux Schnell, Luma Photon) for image generation; Supabase for backend; and various tools for motion, image refinement, and layout exploration. A full breakdown of the process is planned for an upcoming newsletter post.',
   },
 ];
 
@@ -78,6 +82,7 @@ function HeaderRightSlotWithUserMenu() {
         className="ds-header-right-icon-btn"
         aria-label="Help"
         style={{ border: 'none' }}
+        onClick={() => navigate('/faq')}
       >
         <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
       </button>
@@ -92,6 +97,7 @@ function HeaderRightSlotWithUserMenu() {
       </button>
       {isOpen && (
         <div
+          className="ds-user-menu-wrapper"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -132,13 +138,21 @@ export function FaqPage() {
       <main
         style={{
           width: '100%',
-          maxWidth: 800,
+          maxWidth: 600,
           margin: '0 auto',
-          padding: 'var(--ds-spacing-24) var(--ds-spacing-16) var(--ds-spacing-32)',
+          padding: '44px var(--ds-spacing-16) var(--ds-spacing-32)',
           boxSizing: 'border-box',
         }}
       >
-        <SectionTitle>Frequently asked questions</SectionTitle>
+        <SectionTitle
+          style={{
+            textAlign: 'center',
+            fontSize: '30px',
+            marginBottom: '40px',
+          }}
+        >
+          Frequently asked questions
+        </SectionTitle>
         <div
           style={{
             display: 'flex',
@@ -159,7 +173,7 @@ export function FaqPage() {
                 variant="h4"
                 color="primary"
                 as="p"
-                style={{ marginBottom: 'var(--ds-spacing-8)' }}
+                style={{ marginBottom: 'var(--ds-spacing-8)', fontSize: '18px' }}
               >
                 {item.question}
               </Text>

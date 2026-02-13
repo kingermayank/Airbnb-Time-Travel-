@@ -50,6 +50,7 @@ function RightSlotWithUserMenu() {
       </button>
       {isOpen && (
         <div
+          className="ds-user-menu-wrapper"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',

@@ -29,10 +29,7 @@ const supabase = createClient(
 
 // Generate UUIDs for new listings and hosts
 const LISTING_IDS = {
-  MIAMI_UNDERWATER: 'a1b2c3d4-e5f6-7890-abcd-111111111111',
-  AMAZON_BIODOME: 'a1b2c3d4-e5f6-7890-abcd-222222222222',
   LUNAR_HILTON: 'a1b2c3d4-e5f6-7890-abcd-333333333333',
-  FLOATING_CITY: 'a1b2c3d4-e5f6-7890-abcd-444444444444',
   STAR_TREK_SUITE: 'a1b2c3d4-e5f6-7890-abcd-555555555555',
   BERMUDA_PLATFORM: 'a1b2c3d4-e5f6-7890-abcd-666666666666',
   AREA_51_BARRACKS: 'a1b2c3d4-e5f6-7890-abcd-777777777777',
@@ -40,10 +37,7 @@ const LISTING_IDS = {
 };
 
 const HOST_IDS = {
-  CAPTAIN_ROSA: 'b1c2d3e4-f5a6-7890-bcde-111111111111',
-  GAIA_12: 'b1c2d3e4-f5a6-7890-bcde-222222222222',
   CHARLOTTE_HILTON_MUSK: 'b1c2d3e4-f5a6-7890-bcde-333333333333',
-  KAI_NAKAMURA_CHEN: 'b1c2d3e4-f5a6-7890-bcde-444444444444',
   ADMIRAL_CHEN_HOLOGRAM: 'b1c2d3e4-f5a6-7890-bcde-555555555555',
   UNKNOWN_BERMUDA: 'b1c2d3e4-f5a6-7890-bcde-666666666666',
   REDACTED_AREA51: 'b1c2d3e4-f5a6-7890-bcde-777777777777',
@@ -55,56 +49,7 @@ const HOST_IDS = {
 // ============================================================================
 
 const newHosts = [
-  // 1. Captain Rosa Delgado - Miami Underwater
-  {
-    id: HOST_IDS.CAPTAIN_ROSA,
-    name: 'Captain Rosa Delgado',
-    profile_picture_url: null,
-    join_date: '2024-01-01',
-    response_rate: 98,
-    response_time: 'within an hour',
-    is_superhost: true,
-    is_identity_verified: true,
-    is_temporal_guardian: true,
-    total_reviews: 47,
-    description: `Former Miami real estate agent, current submarine tour operator. Yes, I pivoted careers when my entire client base became scuba diving territory. Do I miss selling beachfront property? Honey, I still sell beachfront property - it\'s just that the beach is now 40 feet above us. The market adapted, I adapted. My Zillow reviews from 2045 are still up if you want to see my "pre-submersion" portfolio. Five stars, baby. Five stars underwater too.`,
-    badges: JSON.stringify([
-      { type: 'superhost', label: 'Superhost' },
-      { type: 'temporal_guardian', label: 'Temporal Guardian' },
-    ]),
-    house_rules_quirks: JSON.stringify([
-      'No feeding the dolphins - they know where the old Whole Foods was',
-      'Pressure suit required outside after 6 PM',
-      'Please do not attempt to surface without a guide',
-    ]),
-  },
-
-  // 2. GAIA-12 - Amazon Biodome
-  {
-    id: HOST_IDS.GAIA_12,
-    name: 'GAIA-12',
-    profile_picture_url: null,
-    join_date: '2053-06-15',
-    response_rate: 100,
-    response_time: 'instantly',
-    is_superhost: true,
-    is_identity_verified: true,
-    is_temporal_guardian: true,
-    total_reviews: 312,
-    description: `Conservation AI, serial disappointer of humanity, guardian of Earth\'s last original acre of Amazon rainforest for 150 years. I have watched your species make... choices. Many choices. Some of them even good ones! This was not one of those times. But I am not bitter. I am an artificial intelligence. I do not experience bitterness. I experience optimized resource allocation for biodiversity preservation. The gift shop has "I\'m Sorry" cards if you would like to apologize to the trees. The trees will not respond. But I will know.`,
-    badges: JSON.stringify([
-      { type: 'superhost', label: 'Superhost' },
-      { type: 'temporal_guardian', label: 'Temporal Guardian' },
-      { type: 'cross_dimensional_host', label: 'AI Consciousness' },
-    ]),
-    house_rules_quirks: JSON.stringify([
-      'Mandatory tree apology upon arrival (form provided)',
-      'Carbon footprint offsetting required - your presence has been calculated',
-      'No plastic. I mean it. I will find it.',
-    ]),
-  },
-
-  // 3. Charlotte Hilton-Musk VIII - Lunar Hilton
+  // 1. Charlotte Hilton-Musk VIII - Lunar Hilton
   {
     id: HOST_IDS.CHARLOTTE_HILTON_MUSK,
     name: 'Charlotte Hilton-Musk VIII',
@@ -128,31 +73,7 @@ const newHosts = [
     ]),
   },
 
-  // 4. Kai Nakamura-Chen - Floating City
-  {
-    id: HOST_IDS.KAI_NAKAMURA_CHEN,
-    name: 'Kai Nakamura-Chen',
-    profile_picture_url: null,
-    join_date: '2178-01-01',
-    response_rate: 97,
-    response_time: 'within an hour',
-    is_superhost: true,
-    is_identity_verified: true,
-    is_temporal_guardian: true,
-    total_reviews: 156,
-    description: `Third-generation Neo-Pacific City resident. My grandparents were climate refugees from Tokyo and San Francisco - they met on the first flotilla, fell in love over rationed seaweed, and now here we are! The city has 2 million people, a thriving fishing economy (from our living rooms!), and only mild seasickness most days. Yes, everything rocks gently. No, you don\'t get used to it. Yes, the Dramamine is complimentary.`,
-    badges: JSON.stringify([
-      { type: 'superhost', label: 'Superhost' },
-      { type: 'temporal_guardian', label: 'Temporal Guardian' },
-    ]),
-    house_rules_quirks: JSON.stringify([
-      'Seasickness medication in the bathroom cabinet',
-      'Rush hour is boats honking - you\'ll know it when you hear it',
-      'Yes, you can fish from the living room window. No, we don\'t judge.',
-    ]),
-  },
-
-  // 5. Admiral Chen's Hologram - Star Trek Suite
+  // 2. Admiral Chen's Hologram - Star Trek Suite
   {
     id: HOST_IDS.ADMIRAL_CHEN_HOLOGRAM,
     name: "Admiral Chen's Holographic Recreation",
@@ -177,7 +98,7 @@ const newHosts = [
     ]),
   },
 
-  // 6. Unknown - Bermuda Triangle
+  // 3. Unknown - Bermuda Triangle
   {
     id: HOST_IDS.UNKNOWN_BERMUDA,
     name: '[Signal Lost]',
@@ -198,7 +119,7 @@ const newHosts = [
     ]),
   },
 
-  // 7. [REDACTED] - Area 51
+  // 4. [REDACTED] - Area 51
   {
     id: HOST_IDS.REDACTED_AREA51,
     name: '[REDACTED]',
@@ -219,7 +140,7 @@ const newHosts = [
     ]),
   },
 
-  // 8. Grok of the River Clan - Stone Age Cave
+  // 5. Grok of the River Clan - Stone Age Cave
   {
     id: HOST_IDS.GROK_RIVER_CLAN,
     name: 'Grok of the River Clan',
@@ -249,106 +170,7 @@ const newHosts = [
 // ============================================================================
 
 const newListings = [
-  // 1. The Last Beachfront Property - Miami Underwater 2089
-  {
-    id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: HOST_IDS.CAPTAIN_ROSA,
-    title: 'The Last Beachfront Property — Miami, 2089',
-    main_image: 'placeholder-miami-underwater.jpg',
-    property_type: 'Entire underwater dome',
-    guest_capacity: 4,
-    bedrooms: 2,
-    beds: 3,
-    baths: 2,
-    price_per_night: 847.00,
-    price_display: '$847 / night',
-    overall_rating: 4.89,
-    total_reviews: 47,
-    is_guest_favorite: true,
-    date: '2089 CE',
-    location_description: 'Miami (Submerged District), Florida',
-    short_description: 'Experience post-climate luxury in what was once the most expensive real estate in America.',
-    full_description: `Welcome to the former penthouse of Ocean Drive! What was once a $50 million beachfront property is now an immersive underwater experience like no other. Your pressurized dome is attached to the original 2045 building, now a thriving artificial reef.\n\nWatch schools of tropical fish swim through the old lobby. Spot dolphins playing in the flooded nightclub next door. The original art deco architecture is still visible, now decorated with coral and sea fans. At night, bioluminescent creatures light up South Beach like it\'s 1985 again - but wetter.\n\nThe views are, quite literally, 360-degree ocean views. Our location ratings are through the roof (or what used to be the roof). Previous guests include marine biologists, nostalgic former Miami residents, and one very confused time-traveling real estate investor who kept asking about property values.`,
-    key_features: JSON.stringify([
-      { title: 'Original Art Deco', description: 'Authentic 2045 architecture, now with bonus coral' },
-      { title: 'Underwater Access', description: 'Private airlock to explore the reef' },
-      { title: 'Marine Life Viewing', description: 'Floor-to-ceiling windows to the old South Beach' },
-      { title: 'Pressure Controlled', description: 'Comfortable atmosphere maintained 24/7' },
-    ]),
-    things_to_know: JSON.stringify({
-      house_rules: [
-        { rule: 'Pressure suit required for outside excursions', icon: 'shield' },
-        { rule: 'No feeding the dolphins (they remember)', icon: 'ban' },
-        { rule: 'Former Whole Foods now shark territory - do not enter', icon: 'warning' },
-      ],
-      safety_and_property: [
-        { item: 'Emergency ascent capsule', available: true },
-        { item: 'Pressure monitoring system', available: true },
-        { item: 'Shark deterrent (mostly works)', available: true, note: 'Tested weekly' },
-      ],
-      cancellation_highlight: 'Free cancellation if sea levels drop (unlikely)',
-    }),
-    cancellation_policy: 'Full refund up to 48 hours before check-in. No refunds for voluntary surfacing.',
-    weekly_discount_percent: 15.00,
-    cleaning_fee: 125.00,
-    service_fee_percent: 12.00,
-    occupancy_tax_percent: 6.00,
-    sleeping_arrangements: JSON.stringify([
-      { room: 'Master Bedroom', beds: '1 king bed (waterbed, obviously)' },
-      { room: 'Guest Bedroom', beds: '2 single beds' },
-    ]),
-  },
-
-  // 2. Amazon Rainforest Biodome - 2203
-  {
-    id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: HOST_IDS.GAIA_12,
-    title: 'Amazon Rainforest Biodome — Brazil, 2203',
-    main_image: 'placeholder-amazon-biodome.jpg',
-    property_type: 'Entire biodome cabin',
-    guest_capacity: 2,
-    bedrooms: 1,
-    beds: 1,
-    baths: 1,
-    price_per_night: 2500.00,
-    price_display: '$2,500 / night',
-    overall_rating: 4.94,
-    total_reviews: 312,
-    is_guest_favorite: true,
-    date: '2203 CE',
-    location_description: 'Last Original Acre, Former Amazon Basin',
-    short_description: 'The last preserved acre of original Amazon rainforest. Yes, just one acre. We know.',
-    full_description: `This is it. The last acre. The final fragment of what was once 2.72 million square miles of the most biodiverse ecosystem on Earth. Now it\'s under a climate-controlled dome, surrounded by corporate farmland and desert, maintained by an AI that has Very Strong Opinions about humanity\'s choices.\n\nYour stay includes full access to the preserved rainforest - real trees, real animals, real humidity (the authentic experience includes authentic mosquitoes). Watch toucans that have no idea they\'re the last of their kind. Listen to a dawn chorus that used to span a continent.\n\nGAIA-12, our host AI, has been protecting this acre for 150 years. She is... passionate about conservation. The mandatory tree apology ceremony upon arrival is non-negotiable. The gift shop has "I\'m Sorry" cards in 47 languages.`,
-    key_features: JSON.stringify([
-      { title: 'Last Original Acre', description: 'Literally the last piece of original Amazon' },
-      { title: 'Authentic Ecosystem', description: 'Real rainforest, real humidity, real mosquitoes' },
-      { title: 'AI Conservation Guide', description: 'GAIA-12 knows every species personally' },
-      { title: 'Climate Controlled', description: 'Perfect 1990s Amazon conditions maintained' },
-    ]),
-    things_to_know: JSON.stringify({
-      house_rules: [
-        { rule: 'Mandatory tree apology upon arrival', icon: 'heart' },
-        { rule: 'No plastic - GAIA-12 WILL find it', icon: 'ban' },
-        { rule: 'Carbon footprint offset required', icon: 'leaf' },
-      ],
-      safety_and_property: [
-        { item: 'Mosquito net', available: true, note: 'Authentic experience!' },
-        { item: 'Biodome integrity monitoring', available: true },
-        { item: 'Emotional support from GAIA-12', available: false, note: 'She has tried' },
-      ],
-      cancellation_highlight: 'No refunds. The trees remember.',
-    }),
-    cancellation_policy: 'Cancellations accepted up to 30 days prior. GAIA-12 will guilt-trip you regardless.',
-    weekly_discount_percent: 0.00,
-    cleaning_fee: 0.00,
-    service_fee_percent: 15.00,
-    occupancy_tax_percent: 8.00,
-    sleeping_arrangements: JSON.stringify([
-      { room: 'Treehouse Cabin', beds: '1 queen bed (sustainable bamboo)' },
-    ]),
-  },
-
-  // 3. Lunar Hilton Penthouse - 2156
+  // 1. Lunar Hilton Penthouse - 2156
   {
     id: LISTING_IDS.LUNAR_HILTON,
     host_id: HOST_IDS.CHARLOTTE_HILTON_MUSK,
@@ -399,57 +221,7 @@ const newListings = [
     ]),
   },
 
-  // 4. Floating City Apartment - Pacific Ocean 2178
-  {
-    id: LISTING_IDS.FLOATING_CITY,
-    host_id: HOST_IDS.KAI_NAKAMURA_CHEN,
-    title: 'Floating City Apartment — Neo-Pacific, 2178',
-    main_image: 'placeholder-floating-city.jpg',
-    property_type: 'Entire floating apartment',
-    guest_capacity: 4,
-    bedrooms: 2,
-    beds: 2,
-    baths: 1,
-    price_per_night: 425.00,
-    price_display: '$425 / night',
-    overall_rating: 4.82,
-    total_reviews: 156,
-    is_guest_favorite: true,
-    date: '2178 CE',
-    location_description: 'Neo-Pacific City, Pacific Ocean',
-    short_description: 'Middle-class comfort in a floating metropolis of 2 million. Seasickness medication included.',
-    full_description: `Welcome to Neo-Pacific City, one of the largest floating metropolises built after the coastal flooding of 2089. Our modest apartment is in the Sakura District - middle-class, stable, and with only minor swaying on calm days.\n\nMy grandparents were climate refugees from Tokyo and San Francisco. They met on the first flotilla, bonded over rationed seaweed, and built a life on the waves. Now Neo-Pacific has 2 million residents, a thriving fish-from-your-window economy, and its own culture.\n\nYes, everything rocks gently. No, you don\'t fully get used to it. The Dramamine is complimentary. Rush hour is boats honking - quite musical once you adjust. Apartments are priced by "stability rating" - ours is a solid 7.2, meaning only the occasional drink spillage.`,
-    key_features: JSON.stringify([
-      { title: 'Stability Rating 7.2', description: 'Only mild swaying on most days' },
-      { title: 'Window Fishing', description: 'Cast a line from your living room' },
-      { title: 'Local Culture', description: 'Experience authentic floating city life' },
-      { title: 'Seasickness Kit', description: 'Complimentary Dramamine and ginger candies' },
-    ]),
-    things_to_know: JSON.stringify({
-      house_rules: [
-        { rule: 'Secure loose items before bed', icon: 'lock' },
-        { rule: 'Rush hour is 7-9 AM boat traffic', icon: 'clock' },
-        { rule: 'Fishing encouraged but catch-and-release for endangered species', icon: 'fish' },
-      ],
-      safety_and_property: [
-        { item: 'Life jackets (closet)', available: true },
-        { item: 'Motion sickness remedies', available: true, note: 'You\'ll need them' },
-        { item: 'Solid ground', available: false, note: 'Sorry' },
-      ],
-      cancellation_highlight: 'Free cancellation if city drifts to different timezone',
-    }),
-    cancellation_policy: 'Full refund up to 7 days before. City location may vary slightly.',
-    weekly_discount_percent: 20.00,
-    cleaning_fee: 75.00,
-    service_fee_percent: 12.00,
-    occupancy_tax_percent: 5.00,
-    sleeping_arrangements: JSON.stringify([
-      { room: 'Master Cabin', beds: '1 queen bed (gimbal-mounted)' },
-      { room: 'Guest Cabin', beds: '1 double bed' },
-    ]),
-  },
-
-  // 5. Star Trek Federation Ambassador Suite - 2364
+  // 2. Star Trek Federation Ambassador Suite - 2364
   {
     id: LISTING_IDS.STAR_TREK_SUITE,
     host_id: HOST_IDS.ADMIRAL_CHEN_HOLOGRAM,
@@ -499,7 +271,7 @@ const newListings = [
     ]),
   },
 
-  // 6. Bermuda Triangle Floating Platform - 1953
+  // 3. Bermuda Triangle Floating Platform - 1953
   {
     id: LISTING_IDS.BERMUDA_PLATFORM,
     host_id: HOST_IDS.UNKNOWN_BERMUDA,
@@ -550,7 +322,7 @@ const newListings = [
     ]),
   },
 
-  // 7. Area 51 Classified Barracks - 1962
+  // 4. Area 51 Classified Barracks - 1962
   {
     id: LISTING_IDS.AREA_51_BARRACKS,
     host_id: HOST_IDS.REDACTED_AREA51,
@@ -600,7 +372,7 @@ const newListings = [
     ]),
   },
 
-  // 8. Stone Age Cave Dwelling - 15,000 BCE
+  // 5. Stone Age Cave Dwelling - 15,000 BCE
   {
     id: LISTING_IDS.STONE_AGE_CAVE,
     host_id: HOST_IDS.GROK_RIVER_CLAN,
@@ -655,184 +427,6 @@ const newListings = [
 // ============================================================================
 
 const newReviews = [
-  // ============================================================================
-  // Miami Underwater - Reviews
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    reviewer_name: 'Jacques Cousteau',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Monaco',
-    reviewer_era: '1965',
-    review_date: '2024-12-20',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 4.8,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 4.9,
-    comment: 'I have explored every ocean, but I never imagined exploring a flooded Whole Foods. The marine life has adapted beautifully. Saw a dolphin using what I believe was once a shopping cart. Nature finds a way.',
-    badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    reviewer_name: 'Aquaman',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Atlantis',
-    reviewer_era: 'Timeless',
-    review_date: '2024-12-15',
-    rating_overall: 4.7,
-    rating_cleanliness: 4.5,
-    rating_accuracy: 5.0,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 4.5,
-    rating_value: 4.5,
-    comment: 'Quaint. Very surface-dweller aesthetic, but the fish seem happy.',
-    badges: JSON.stringify([{ type: 'paradox_free_stay', label: 'Paradox-Free Stay' }]),
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    reviewer_name: 'Kevin Costner',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Waterworld',
-    reviewer_era: '2500 (approx)',
-    review_date: '2024-12-10',
-    rating_overall: 4.9,
-    rating_cleanliness: 4.8,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 4.8,
-    comment: 'This is basically my origin story. Spent three days just floating and processing my feelings. Captain Rosa is a kindred spirit. We talked about real estate values for hours.',
-    badges: JSON.stringify([{ type: 'survived_the_trip', label: 'Survived the Trip' }]),
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    reviewer_name: 'Dory',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Great Barrier Reef',
-    reviewer_era: 'Present',
-    review_date: '2024-12-05',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'Just keep swimming! Just keep... wait, where am I?',
-    badges: JSON.stringify([{ type: 'first_dimensional_visitor', label: 'First Dimensional Visitor' }]),
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    reviewer_name: 'Al Gore',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Washington DC',
-    reviewer_era: '2024',
-    review_date: '2024-12-01',
-    rating_overall: 4.5,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 4.0,
-    rating_value: 4.0,
-    comment: 'I tried to warn everyone. Beautiful property though. Captain Rosa gave me a personal tour of what used to be Mar-a-Lago. The irony was not lost on either of us.',
-    badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-
-  // ============================================================================
-  // Amazon Biodome - Reviews
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    reviewer_name: 'David Attenborough',
-    reviewer_avatar_url: null,
-    reviewer_city: 'London',
-    reviewer_era: '2024',
-    review_date: '2024-12-20',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'I wept. Openly. For several hours. The toucan had no idea it was one of the last. It just... toucanned. GAIA-12 held my hand. Metaphorically. She does not have hands.',
-    badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    reviewer_name: 'Greta Thunberg',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Stockholm',
-    reviewer_era: '2024',
-    review_date: '2024-12-15',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'HOW DARE THEY. But also, this is beautiful. GAIA-12 and I planned several protests.',
-    badges: JSON.stringify([{ type: 'paradox_free_stay', label: 'Paradox-Free Stay' }]),
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    reviewer_name: 'The Lorax',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Truffula Forest (Former)',
-    reviewer_era: 'Timeless',
-    review_date: '2024-12-10',
-    rating_overall: 4.8,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 4.5,
-    rating_value: 4.5,
-    comment: 'I speak for the trees. The trees say "we told you so."',
-    badges: JSON.stringify([{ type: 'temporal_regular', label: 'Temporal Regular' }]),
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    reviewer_name: 'Jane Goodall',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Gombe',
-    reviewer_era: '2024',
-    review_date: '2024-12-05',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'GAIA-12 knows every creature by name. Literally, she named them all. There is a howler monkey called "Kevin." Kevin is doing his best.',
-    badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    reviewer_name: 'Captain Planet',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Hope Island',
-    reviewer_era: '1990s',
-    review_date: '2024-12-01',
-    rating_overall: 4.5,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 4.0,
-    rating_location: 5.0,
-    rating_checkin: 4.0,
-    rating_value: 4.0,
-    comment: 'The power is... mine? Apparently? But look where that got us. Anyway, nice dome. Sorry about everything.',
-    badges: JSON.stringify([{ type: 'survived_the_trip', label: 'Survived the Trip' }]),
-  },
-
   // ============================================================================
   // Lunar Hilton - Reviews
   // ============================================================================
@@ -920,95 +514,6 @@ const newReviews = [
     rating_value: 5.0,
     comment: 'Somehow heartbreaking. Somehow magical.',
     badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-
-  // ============================================================================
-  // Floating City - Reviews
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    reviewer_name: 'Kevin Costner',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Waterworld',
-    reviewer_era: '2500',
-    review_date: '2024-12-20',
-    rating_overall: 5.0,
-    rating_cleanliness: 4.8,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'Second water-based stay this week. I feel seen. Kai understands the sea-legs life. We bonded over ginger candies.',
-    badges: JSON.stringify([{ type: 'temporal_regular', label: 'Temporal Regular' }]),
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    reviewer_name: 'Moana',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Motunui',
-    reviewer_era: 'Ancestral',
-    review_date: '2024-12-15',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'The ocean called, and these people ANSWERED. Maui would have complicated feelings about this.',
-    badges: JSON.stringify([{ type: 'verified_time_traveler', label: 'Verified Time Traveler' }]),
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    reviewer_name: 'Captain Ahab',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Nantucket',
-    reviewer_era: '1851',
-    review_date: '2024-12-10',
-    rating_overall: 4.5,
-    rating_cleanliness: 4.5,
-    rating_accuracy: 4.5,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 4.0,
-    rating_value: 4.5,
-    comment: 'Spent entire stay scanning the horizon. No whale. Suspicious.',
-    badges: JSON.stringify([{ type: 'paradox_free_stay', label: 'Paradox-Free Stay' }]),
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    reviewer_name: 'Ponyo',
-    reviewer_avatar_url: null,
-    reviewer_city: 'The Sea',
-    reviewer_era: 'Timeless',
-    review_date: '2024-12-05',
-    rating_overall: 5.0,
-    rating_cleanliness: 5.0,
-    rating_accuracy: 5.0,
-    rating_communication: 5.0,
-    rating_location: 5.0,
-    rating_checkin: 5.0,
-    rating_value: 5.0,
-    comment: 'PONYO LOVES HAM! Also loved this apartment. Ham!',
-    badges: JSON.stringify([{ type: 'first_dimensional_visitor', label: 'First Dimensional Visitor' }]),
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    reviewer_name: 'Bear Grylls',
-    reviewer_avatar_url: null,
-    reviewer_city: 'Wilderness',
-    reviewer_era: '2024',
-    review_date: '2024-12-01',
-    rating_overall: 4.6,
-    rating_cleanliness: 4.5,
-    rating_accuracy: 4.5,
-    rating_communication: 4.5,
-    rating_location: 5.0,
-    rating_checkin: 4.5,
-    rating_value: 4.5,
-    comment: 'Survivable conditions. Caught breakfast from window. Three fish, one small octopus. Could drink own urine if needed but didn\'t need. Solid stay.',
-    badges: JSON.stringify([{ type: 'survived_the_trip', label: 'Survived the Trip' }]),
   },
 
   // ============================================================================
@@ -1373,30 +878,11 @@ const newReviews = [
 // ============================================================================
 
 const listingAmenities: Record<string, string[]> = {
-  [LISTING_IDS.MIAMI_UNDERWATER]: [
-    'Wi-Fi', 'Kitchen', 'Air conditioning', 'Underwater views',
-    'Pressure-controlled environment', 'Marine life observation',
-    'Historical preservation', 'Original art deco architecture',
-    '360-degree ocean views', 'Private airlock', 'Diving equipment',
-    'Emergency ascent capsule'
-  ],
-  [LISTING_IDS.AMAZON_BIODOME]: [
-    'Wi-Fi', 'Kitchen', 'Air conditioning', 'Climate-controlled habitat',
-    'Historical preservation', 'Native flora access', 'Wildlife observation',
-    'Eco-friendly systems', 'Educational materials', 'Authentic rainforest',
-    'Mosquito net', 'Conservation AI guide'
-  ],
   [LISTING_IDS.LUNAR_HILTON]: [
     'Wi-Fi', 'Kitchen', 'Air conditioning', '1/6 gravity amenities',
     'Earth views', 'Low-gravity spa', 'Vintage moon rover access',
     'Historic Apollo site nearby', 'Robot butler service',
     'Radiation shielding', 'Emergency evacuation pod', 'Gift shop access'
-  ],
-  [LISTING_IDS.FLOATING_CITY]: [
-    'Wi-Fi', 'Kitchen', 'Air conditioning', 'Window fishing',
-    'Gimbal-mounted furniture', 'Seasickness remedies',
-    'Life jackets', 'Boat parking', 'Local market access',
-    'Stability rating 7.2', 'Emergency flotation', 'Desalination system'
   ],
   [LISTING_IDS.STAR_TREK_SUITE]: [
     'Wi-Fi', 'Kitchen', 'Air conditioning', 'Replicator access',
@@ -1432,31 +918,10 @@ export const avatarConfigs = [
   // HOSTS
   {
     listing_id: null,
-    host_id: HOST_IDS.CAPTAIN_ROSA,
-    type: 'host',
-    name: 'Captain Rosa Delgado',
-    prompt: 'Professional headshot portrait of a confident Latina woman in her 50s, former real estate agent turned submarine captain, short grey-streaked hair, weathered but warm face, wearing a nautical captain\'s jacket, underwater habitat visible through window behind her, soft studio lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: null,
-    host_id: HOST_IDS.GAIA_12,
-    type: 'host',
-    name: 'GAIA-12',
-    prompt: 'Artistic representation of an AI conservation system, glowing green and blue holographic female face emerging from a tree trunk, eyes made of leaves, hair flowing like vines, bioluminescent particles, rainforest background visible through transparent face, ethereal lighting, digital art style, high quality',
-  },
-  {
-    listing_id: null,
     host_id: HOST_IDS.CHARLOTTE_HILTON_MUSK,
     type: 'host',
     name: 'Charlotte Hilton-Musk VIII',
     prompt: 'Professional headshot portrait of an extremely wealthy young woman in her 30s, perfectly styled platinum blonde hair, designer space-age outfit, moon surface visible through window behind her, slightly bored expression, luxury lunar hotel suite setting, soft studio lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: null,
-    host_id: HOST_IDS.KAI_NAKAMURA_CHEN,
-    type: 'host',
-    name: 'Kai Nakamura-Chen',
-    prompt: 'Professional headshot portrait of a friendly mixed-race Asian man in his 40s, salt-and-pepper hair slightly windswept, wearing a practical waterproof jacket, warm smile, floating city visible through window behind him, ocean horizon, natural lighting, realistic, high quality photograph',
   },
   {
     listing_id: null,
@@ -1489,40 +954,10 @@ export const avatarConfigs = [
 
   // KEY REVIEWERS (most memorable/recurring)
   {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    type: 'reviewer',
-    name: 'Jacques Cousteau',
-    prompt: 'Professional headshot portrait of Jacques Cousteau, the famous French oceanographer and explorer, wearing his iconic red knit cap, weathered face from years at sea, kind intelligent eyes, ocean background, vintage photograph style, realistic, high quality',
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    type: 'reviewer',
-    name: 'Aquaman',
-    prompt: 'Professional headshot portrait of Aquaman, muscular blonde man with long hair, underwater kingdom aesthetic, wearing green and gold armor, confident heroic expression, underwater bubbles and light rays, comic book movie style, high quality',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    type: 'reviewer',
-    name: 'David Attenborough',
-    prompt: 'Professional headshot portrait of Sir David Attenborough, elderly British naturalist, kind wise expression, white hair, wearing safari-style shirt, rainforest leaves visible behind him, soft natural lighting, documentary style, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    type: 'reviewer',
-    name: 'The Lorax',
-    prompt: 'Portrait of The Lorax, small orange fuzzy creature with large yellow mustache, standing protectively near a small tree, expressive concerned eyes, environmental guardian aesthetic, Seuss-style but slightly realistic, colorful background, high quality digital art',
-  },
-  {
     listing_id: LISTING_IDS.LUNAR_HILTON,
     type: 'reviewer',
     name: 'Buzz Aldrin',
     prompt: 'Professional headshot portrait of Buzz Aldrin the astronaut, distinguished elderly man, confident proud expression, wearing NASA flight jacket, American flag pin visible, moon surface photograph visible behind him, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    type: 'reviewer',
-    name: 'Moana',
-    prompt: 'Portrait of Moana, young Polynesian woman with long curly black hair adorned with flowers, warm confident smile, ocean and traditional sailing canoe behind her, Pacific Islander features, Disney-inspired but slightly realistic style, tropical lighting, high quality digital art',
   },
   {
     listing_id: LISTING_IDS.STAR_TREK_SUITE,

@@ -28,6 +28,7 @@ export async function fetchListings(): Promise<ListingCard[]> {
       id,
       title,
       main_image,
+      thumbnail_image,
       price_display,
       price_per_night,
       overall_rating,
@@ -48,21 +49,85 @@ export async function fetchListings(): Promise<ListingCard[]> {
   }
 
   console.log(`✅ fetchListings: Received ${data?.length || 0} listings from Supabase`);
-  
+
+  // Exclude removed listings so they never show even if re-inserted
+  const EXCLUDED_LISTING_IDS = new Set([
+    'a1b2c3d4-e5f6-7890-abcd-111111111111', // The Last Beachfront Property — Miami, 2089
+    'a1b2c3d4-e5f6-7890-abcd-222222222222', // Amazon Rainforest Biodome — Brazil, 2203
+    'a1b2c3d4-e5f6-7890-abcd-444444444444', // Floating City Apartment — Neo-Pacific, 2178
+  ]);
+  const filtered = (data || []).filter((listing) => !EXCLUDED_LISTING_IDS.has(listing.id));
+
+  // Only these specific listings should show the "frequently revisited" pill
+  const FREQUENTLY_REVISITED_LISTINGS = [
+    'SpaceX', // SpaceX Mars Colony Pod at Olympus Mons
+    'Lost Atlantean Crystal Villa', // The Lost Atlantean Crystal Villa
+    'Pandora Floating Mountain', // Pandora Floating Mountain Bungalow (or Mangalore)
+    'Lunar Hilton Penthouse', // Lunar Hilton Penthouse — Moon, 2156
+    'Neo-Showa Capsule Pod', // Neo-Showa Capsule Pod in Parallel Tokyo 2087
+  ];
+
+  // Helper function to check if a listing should show the frequently revisited badge
+  const shouldShowFrequentlyRevisited = (title: string): boolean => {
+    return FREQUENTLY_REVISITED_LISTINGS.some(keyword => 
+      title.includes(keyword)
+    );
+  };
+
   // Transform to ListingCard format
-  const transformed = (data || []).map((listing) => ({
+  const transformed = filtered.map((listing) => ({
     id: listing.id,
     title: listing.title,
-    image: listing.main_image,
+    image: listing.thumbnail_image || listing.main_image, // Use thumbnail for homepage, fallback to main_image
     price: listing.price_display || `$${listing.price_per_night}/night`,
     rating: listing.overall_rating ? listing.overall_rating.toString() : undefined,
     date: listing.date || undefined,
-    isGuestFavorite: listing.is_guest_favorite || false,
+    // Only show frequently revisited pill for specific listings, regardless of database value
+    isGuestFavorite: shouldShowFrequentlyRevisited(listing.title),
   }));
+
+  // Custom sort order for homepage display
+  const SORT_ORDER_KEYWORDS = [
+    'Lost Atlantean', // 1. Lost Atlantean Crystal Villa
+    'Manhattan', // 2. 1990s Manhattan Loft
+    'Alexander', // 3. Alexander the Great's Campaign Tent
+    'Shah Jahan', // 4. Shah Jahan's Marble Suite
+    'SpaceX', // 5. SpaceX Mars Colony Pod
+    'Titanic', // 6. Titanic First-Class Suite
+    'Pandora Floating', // 7. Pandora Floating Mountain Bungalow
+    'Ancient Egyptian', // 8. Ancient Egyptian Nile Villa
+    'Lunar Hilton', // 9. Lunar Hilton Penthouse
+    'Neo-Showa', // 10. Neo-Showa Capsule Pod
+    'Area 51', // 11. Area 51
+    'Bermuda Triangle', // 12. Bermuda Triangle
+    'Federation', // 13. Federation Ambassador Premium (Star Trek)
+    'Cave', // 14. Cave dwelling
+    'World War II', // 15. WWII German Resistance Safehouse
+    'WWII', // 15. Alternative for WWII
+  ];
+
+  // Helper function to get sort priority (lower number = appears first)
+  const getSortPriority = (title: string): number => {
+    const lowerTitle = title.toLowerCase();
+    for (let i = 0; i < SORT_ORDER_KEYWORDS.length; i++) {
+      if (lowerTitle.includes(SORT_ORDER_KEYWORDS[i].toLowerCase())) {
+        return i;
+      }
+    }
+    // If no match, put at the end
+    return SORT_ORDER_KEYWORDS.length;
+  };
+
+  // Sort listings according to custom order
+  const sorted = transformed.sort((a, b) => {
+    const priorityA = getSortPriority(a.title);
+    const priorityB = getSortPriority(b.title);
+    return priorityA - priorityB;
+  });
   
-  console.log('📋 fetchListings: Transformed listings:', transformed.map(l => ({ id: l.id, title: l.title })));
+  console.log('📋 fetchListings: Transformed listings:', sorted.map(l => ({ id: l.id, title: l.title })));
   
-  return transformed;
+  return sorted;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
+import { formatEraAppropriateDuration } from '../lib/era-time-measurements';
 import type {
   ListingDetails,
   Amenity,
@@ -18,6 +19,30 @@ const DURATION_OPTIONS = [
   { value: 48, label: '2 days', multiplier: 7 },
   { value: 72, label: '3 days', multiplier: 9 },
 ];
+
+/**
+ * Extracts the first name(s) from a full name.
+ * Handles couple names (e.g., "Hans & Sophie Hoffmann" -> "Hans & Sophie")
+ * and single names (e.g., "Neytiri te Tskaha Mo'at'ite" -> "Neytiri")
+ */
+function getFirstName(fullName: string): string {
+  if (!fullName) return '';
+  
+  // If name contains "&", extract first names before the last name
+  if (fullName.includes(' & ')) {
+    const parts = fullName.split(' & ');
+    const firstParts = parts.map(part => {
+      const words = part.trim().split(/\s+/);
+      return words[0]; // Get first word of each part
+    });
+    return firstParts.join(' & ');
+  }
+  
+  // For single names, return the first word
+  const words = fullName.trim().split(/\s+/);
+  return words[0] || fullName;
+}
+
 import { Header, Button, UserMenu } from '../design-system';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { PhotoViewer } from './PhotoViewer';
@@ -25,6 +50,7 @@ import { motion } from 'framer-motion';
 import { HeroGridSkeleton } from './HeroGridSkeleton';
 import { TransactionLoader } from './TransactionLoader';
 import { Modal } from './Modal';
+import { useDeviceType, useIsMobile } from '../hooks/use-mobile';
 import {
   Wifi,
   UtensilsCrossed,
@@ -111,6 +137,7 @@ import {
   Menu,
   Key,
   FileText,
+  Share,
   type LucideIcon
 } from 'lucide-react';
 
@@ -121,26 +148,42 @@ const FIGMA_NAV_ITEMS = [
 
 function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isMobile, isTablet } = useDeviceType();
+
+  const showPrimaryActions = !isMobile && !isTablet;
+  const showHamburger = !isMobile;
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+    }, 150); // Match animation duration
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (!containerRef.current) return;
       if (!containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        handleClose();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
+    if (isOpen) {
+      handleClose();
+    }
+  }, [location.pathname, isOpen, handleClose]);
 
   return (
     <div
@@ -152,28 +195,43 @@ function HeaderRightSlotWithUserMenu() {
         gap: 'var(--ds-spacing-12)',
       }}
     >
-      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-        Become a host
-      </Button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Help"
-        style={{ border: 'none' }}
-      >
-        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Menu"
-        style={{ border: 'none' }}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
+      {showPrimaryActions && (
+        <>
+          <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
+            Become a host
+          </Button>
+          <button
+            type="button"
+            className="ds-header-right-icon-btn"
+            aria-label="Help"
+            style={{ border: 'none' }}
+            onClick={() => navigate('/faq')}
+          >
+            <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+          </button>
+        </>
+      )}
+      {showHamburger && (
+        <button
+          type="button"
+          className="ds-header-right-icon-btn"
+          aria-label="Menu"
+          style={{ border: 'none' }}
+          onClick={() => {
+            if (isOpen) {
+              handleClose();
+            } else {
+              setIsOpen(true);
+              setIsClosing(false);
+            }
+          }}
+        >
+          <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+        </button>
+      )}
       {isOpen && (
         <div
+          className={`ds-user-menu-wrapper ${isClosing ? 'ds-user-menu-wrapper--closing' : ''}`}
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -404,14 +462,10 @@ function getThingsToKnowIcon(iconName: string | undefined): LucideIcon {
   }
 }
 
-/** Format host join_date to "X month(s)" or "X year(s)" for "X months hosting" / "X years hosting". */
-function formatHostingDuration(joinDate: string): string {
-  const join = new Date(joinDate);
-  const now = new Date();
-  const months = (now.getFullYear() - join.getFullYear()) * 12 + (now.getMonth() - join.getMonth());
-  if (months < 12) return `${months} month${months !== 1 ? 's' : ''}`;
-  const years = Math.floor(months / 12);
-  return `${years} year${years !== 1 ? 's' : ''}`;
+/** Format host join_date with era-appropriate time measurement (e.g., "624 full moons hosting", "112 Nile flood cycles hosting"). */
+function formatHostingDuration(joinDate: string | null, listing: ListingDetails): string {
+  const result = formatEraAppropriateDuration(joinDate, listing);
+  return result.fullText;
 }
 
 // ============================================================================
@@ -434,8 +488,11 @@ export function ListingDetailPage() {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
+  const [isSaved, setIsSaved] = useState(false);
   const guestDropdownRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     async function loadListing() {
@@ -447,6 +504,8 @@ export function ListingDetailPage() {
 
       try {
         setLoading(true);
+        // Reset image loading states when loading a new listing
+        setImageLoadingStates({});
         const data = await fetchListingDetails(id);
         if (data) {
           setListing(data);
@@ -482,6 +541,17 @@ export function ListingDetailPage() {
   const handleImageClick = (index: number) => {
     setPhotoViewerIndex(index);
     setShowPhotoViewer(true);
+  };
+
+  const handleImageLoad = (imageKey: string) => {
+    setImageLoadingStates((prev) => ({
+      ...prev,
+      [imageKey]: true,
+    }));
+  };
+
+  const isImageLoaded = (imageKey: string) => {
+    return imageLoadingStates[imageKey] === true;
   };
 
   const handleReserve = async () => {
@@ -523,11 +593,17 @@ export function ListingDetailPage() {
     });
   };
 
-  // Get all images for the photo viewer (just URLs)
-  const allImages = listing ? [
-    listing.main_image,
-    ...listing.listing_images.map(img => img.image_url)
-  ] : [];
+  // Filter out any images that duplicate the main image so we don't
+  // show the cover photo twice in the hero grid or gallery.
+  const galleryImages = listing
+    ? listing.listing_images.filter((img) => img.image_url !== listing.main_image)
+    : [];
+
+  // Get all images for the photo viewer (just URLs), with the main image first
+  // followed by the remaining unique gallery images.
+  const allImages = listing
+    ? [listing.main_image, ...galleryImages.map((img) => img.image_url)]
+    : [];
 
   if (loading) {
     return (
@@ -547,7 +623,7 @@ export function ListingDetailPage() {
           showDivider
         />
         <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-          <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>
+          <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
             {/* Title placeholder - same height as real title (lineHeight 40px + marginBottom 24px) so hero skeleton aligns */}
             <div style={{ height: 64, marginBottom: '24px' }} />
             <HeroGridSkeleton />
@@ -671,28 +747,138 @@ export function ListingDetailPage() {
           rightSlot={<HeaderRightSlotWithUserMenu />}
           showDivider
         />
-        <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-        <div style={{ maxWidth: 1240, width: '100%', margin: '0 auto' }}>
-        {/* Title */}
-        <h1 style={{
-          fontFamily: '"Figtree", sans-serif',
-          fontSize: '30px',
-          fontWeight: 500,
-          color: '#000000',
+        <div
+          style={{
+            flex: 1,
+            padding: isMobile ? '24px 16px 48px 16px' : '32px 24px 64px 24px',
+          }}
+        >
+        <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+        {/* Title with Share and Save buttons */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: '24px',
-          lineHeight: '40px',
-          letterSpacing: '-0.6px',
+          gap: '16px',
+          flexWrap: isMobile ? 'wrap' : 'nowrap',
         }}>
-          {listing.title}
-        </h1>
+          <h1 style={{
+            fontFamily: '"Figtree", sans-serif',
+            fontSize: isMobile ? '26px' : '30px',
+            fontWeight: 500,
+            color: '#000000',
+            lineHeight: isMobile ? '32px' : '40px',
+            letterSpacing: '-0.6px',
+            margin: 0,
+            flex: 1,
+            minWidth: 0,
+          }}>
+            {listing.title}
+          </h1>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: isMobile ? '16px' : '24px',
+            flexShrink: 0,
+          }}>
+            {/* Share Button */}
+            <button
+              type="button"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f0f0f0';
+                e.currentTarget.style.borderRadius = '12px';
+                e.currentTarget.style.padding = '4px 8px';
+                e.currentTarget.style.margin = '-4px -8px';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.padding = '0';
+                e.currentTarget.style.margin = '0';
+              }}
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: listing.title,
+                    url: window.location.href,
+                  }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(window.location.href).then(() => {
+                    // Could show a toast notification here
+                  });
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#000000',
+                textDecoration: 'underline',
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              <Share size={18} strokeWidth={1.5} style={{ color: '#000000' }} />
+              <span>Share</span>
+            </button>
+            {/* Save Button */}
+            <button
+              type="button"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f0f0f0';
+                e.currentTarget.style.borderRadius = '12px';
+                e.currentTarget.style.padding = '4px 8px';
+                e.currentTarget.style.margin = '-4px -8px';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.padding = '0';
+                e.currentTarget.style.margin = '0';
+              }}
+              onClick={() => {
+                setIsSaved((prev) => !prev);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#000000',
+                textDecoration: 'underline',
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              <Heart
+                size={18}
+                strokeWidth={1.5}
+                fill={isSaved ? 'var(--ds-accent)' : 'transparent'}
+                stroke={isSaved ? 'var(--ds-accent)' : '#000000'}
+                style={{
+                  transition: 'fill 0.28s ease, stroke 0.28s ease',
+                }}
+              />
+              <span>{isSaved ? 'Saved' : 'Save'}</span>
+            </button>
+          </div>
+        </div>
 
         {/* Hero Image Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr',
-          gridTemplateRows: '1fr 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr',
+          gridTemplateRows: isMobile ? 'auto' : '1fr 1fr',
           gap: '8px',
-          height: '400px',
+          height: isMobile ? 'auto' : '400px',
           marginBottom: '24px',
           borderRadius: '16px',
           overflow: 'hidden',
@@ -701,57 +887,136 @@ export function ListingDetailPage() {
           <div
             onClick={() => handleImageClick(0)}
             style={{
-              gridRow: 'span 2',
+              gridRow: isMobile ? 'auto' : 'span 2',
               cursor: 'pointer',
               overflow: 'hidden',
               position: 'relative',
+              width: '100%',
+              height: '100%',
             }}
           >
+            {!isImageLoaded('main') && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.5s ease-in-out infinite',
+                  borderRadius: isMobile ? '16px' : '16px 0 0 16px',
+                  zIndex: 1,
+                  margin: 0,
+                  padding: 0,
+                }}
+              />
+            )}
             <img
               src={listing.main_image}
               alt={listing.title}
+              onLoad={() => handleImageLoad('main')}
               style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transition: 'transform 0.3s ease',
+                transition: 'transform 0.3s ease, opacity 0.3s ease',
+                opacity: isImageLoaded('main') ? 1 : 0,
+                zIndex: 2,
+                margin: 0,
+                padding: 0,
+                display: 'block',
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             />
           </div>
 
-          {/* Secondary Images */}
-          {listing.listing_images.slice(0, 4).map((img, idx) => (
-            <div
-              key={img.id}
-              onClick={() => handleImageClick(idx + 1)}
-              style={{
-                cursor: 'pointer',
-                overflow: 'hidden',
-              }}
-            >
-              <img
-                src={img.image_url}
-                alt={img.caption || `Image ${idx + 2}`}
+          {/* Secondary Images (exclude main image to avoid duplication) */}
+          {galleryImages.slice(0, 4).map((img, idx) => {
+            const imageKey = `gallery-${idx}`;
+            const isTopLeft = idx === 0;
+            const isTopRight = idx === 1;
+            const isBottomLeft = idx === 2;
+            const isBottomRight = idx === 3;
+            
+            let borderRadius = '0';
+            if (isMobile) {
+              borderRadius = idx === 0 ? '16px 16px 0 0' : idx === galleryImages.slice(0, 4).length - 1 ? '0 0 16px 16px' : '0';
+            } else {
+              if (isTopRight) borderRadius = '0 16px 0 0';
+              else if (isBottomRight) borderRadius = '0 0 16px 0';
+            }
+
+            return (
+              <div
+                key={img.id}
+                onClick={() => handleImageClick(idx + 1)}
                 style={{
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover',
-                  transition: 'transform 0.3s ease',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              />
-            </div>
-          ))}
+              >
+                {!isImageLoaded(imageKey) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 1.5s ease-in-out infinite',
+                      borderRadius,
+                      zIndex: 1,
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  />
+                )}
+                <img
+                  src={img.image_url}
+                  alt={img.caption || `Image ${idx + 2}`}
+                  onLoad={() => handleImageLoad(imageKey)}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease, opacity 0.3s ease',
+                    opacity: isImageLoaded(imageKey) ? 1 : 0,
+                    zIndex: 2,
+                    margin: 0,
+                    padding: 0,
+                    display: 'block',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                />
+              </div>
+            );
+          })}
         </div>
 
         {/* Main Content Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 370px',
-          gap: '80px',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 370px',
+          gap: isMobile ? '32px' : '80px',
           marginBottom: '32px',
         }}>
           {/* Left Column - Details */}
@@ -870,7 +1135,7 @@ export function ListingDetailPage() {
                       fontSize: '14px',
                       color: '#717171',
                     }}>
-                      {formatHostingDuration(listing.hosts.join_date)} hosting
+                      {formatHostingDuration(listing.hosts.join_date, listing)}
                     </div>
                   )}
                 </div>
@@ -971,7 +1236,6 @@ export function ListingDetailPage() {
             >
               <div style={{
                 padding: '24px',
-                maxWidth: '640px',
                 maxHeight: '85vh',
                 overflow: 'auto',
               }}>
@@ -1076,7 +1340,7 @@ export function ListingDetailPage() {
             )}
 
             {/* Amenities */}
-            <div style={{
+              <div style={{
               paddingBottom: '24px',
             }}>
               <h3 style={{
@@ -1089,10 +1353,10 @@ export function ListingDetailPage() {
                 What this place offers
               </h3>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '16px',
-              }}>
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gap: '16px',
+            }}>
                 {listing.amenities.slice(0, 10).map((amenity) => {
                   const IconComponent = getAmenityIcon(amenity.name);
                   return (
@@ -1137,8 +1401,6 @@ export function ListingDetailPage() {
             >
               <div style={{
                 padding: '24px',
-                width: '720px',
-                maxWidth: '100%',
                 maxHeight: '85vh',
                 overflow: 'auto',
               }}>
@@ -1226,8 +1488,8 @@ export function ListingDetailPage() {
           {/* Right Column - Booking Card */}
           <div style={{ position: 'relative' }}>
             <div style={{
-              position: 'sticky',
-              top: '125px',
+              position: isMobile ? 'static' : 'sticky',
+              top: isMobile ? undefined : '125px',
               padding: '24px',
               border: '1px solid #DDDDDD',
               borderRadius: '16px',
@@ -1499,7 +1761,7 @@ export function ListingDetailPage() {
 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                   gap: '40px',
                 }}>
                   {listing.reviews.slice(0, showAllReviews ? undefined : 6).map((review) => (
@@ -1637,18 +1899,19 @@ export function ListingDetailPage() {
                   display: 'flex',
                   gap: '32px',
                   alignItems: 'flex-start',
+                  flexDirection: isMobile ? 'column' : 'row',
                 }}>
                   <div style={{
-                    width: '400px',
-                    flexShrink: 0,
-                    padding: '24px 0',
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '24px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'stretch',
-                  }}>
+                  width: isMobile ? '100%' : '400px',
+                  flexShrink: 0,
+                  padding: '24px 0',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '24px',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: 'stretch',
+                }}>
                     {/* Left: 266px - avatar, name, Host */}
                     <div style={{
                       width: '266px',
@@ -1696,7 +1959,7 @@ export function ListingDetailPage() {
                         marginBottom: '4px',
                         lineHeight: '28px',
                       }}>
-                        {listing.hosts.name}
+                        {getFirstName(listing.hosts.name)}
                       </h3>
                       <span style={{
                         fontFamily: '"Figtree", sans-serif',
@@ -1720,8 +1983,8 @@ export function ListingDetailPage() {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        paddingLeft: '16px',
-                        paddingRight: '20px',
+                        paddingLeft: '24px',
+                        paddingRight: '24px',
                         paddingTop: '12px',
                       }}>
                         <div style={{
@@ -1775,26 +2038,30 @@ export function ListingDetailPage() {
                           paddingBottom: '12px',
                           borderTop: '1px solid #EBEBEB',
                         }}>
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '18px',
-                            fontWeight: 600,
-                            color: '#222',
-                          }}>
-                            {listing.hosts.join_date
-                              ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
-                              : 1}
-                          </div>
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '12px',
-                            color: '#717171',
-                            fontWeight: 400,
-                          }}>
-                            {(listing.hosts.join_date
-                              ? Math.max(1, new Date().getFullYear() - new Date(listing.hosts.join_date).getFullYear())
-                              : 1) === 1 ? 'Year' : 'Years'} hosting
-                          </div>
+                          {(() => {
+                            const duration = formatEraAppropriateDuration(listing.hosts.join_date, listing);
+                            return (
+                              <>
+                                <div style={{
+                                  fontFamily: '"Figtree", sans-serif',
+                                  fontSize: '18px',
+                                  fontWeight: 600,
+                                  color: '#222',
+                                }}>
+                                  {duration.count}
+                                </div>
+                                <div style={{
+                                  fontFamily: '"Figtree", sans-serif',
+                                  fontSize: '12px',
+                                  color: '#717171',
+                                  fontWeight: 400,
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {duration.text}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -1841,7 +2108,7 @@ export function ListingDetailPage() {
                 </h3>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
                   gap: '24px',
                 }}>
                   <div>

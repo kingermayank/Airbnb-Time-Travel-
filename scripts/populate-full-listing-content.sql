@@ -260,7 +260,7 @@ WHERE id = '10b2efa4-819b-4a10-99a0-1f5dc580b080';
 -- The Lost Atlantean Crystal Villa
 UPDATE listings SET
   host_id = 'host-poseidon',
-  property_type = 'Entire underwater villa',
+  property_type = 'Entire Atlantean crystal villa',
   guest_capacity = 6,
   bedrooms = 3,
   beds = 4,

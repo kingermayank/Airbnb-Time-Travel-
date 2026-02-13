@@ -17,10 +17,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const PHASE4_LISTING_IDS = [
-  'a1b2c3d4-e5f6-7890-abcd-111111111111',
-  'a1b2c3d4-e5f6-7890-abcd-222222222222',
   'a1b2c3d4-e5f6-7890-abcd-333333333333',
-  'a1b2c3d4-e5f6-7890-abcd-444444444444',
   'a1b2c3d4-e5f6-7890-abcd-555555555555',
   'a1b2c3d4-e5f6-7890-abcd-666666666666',
   'a1b2c3d4-e5f6-7890-abcd-777777777777',

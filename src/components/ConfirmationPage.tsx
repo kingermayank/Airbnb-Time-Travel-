@@ -5,13 +5,15 @@ import type { ListingDetails } from '../types/database';
 import { Header, Button, UserMenu } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { useDeviceType } from '../hooks/use-mobile';
+import { Modal } from './Modal';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
   {
     id: 'delorean',
     name: 'Back to the Future DeLorean',
-    description: 'Hit 88 miles per hour and break the space-time continuum—just like Marty and Doc Brown. Roads required. Lightning optional.',
+    description: 'Hit 88 miles per hour and break the space-time continuum, just like Marty and Doc Brown. Roads required. Lightning optional.',
     icon: '/images/vehicles/delorean.png',
     video: '/images/vehicles/delorean.mp4'
   },
@@ -76,6 +78,10 @@ function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
+  const { isMobile, isTablet } = useDeviceType();
+
+  const showPrimaryActions = !isMobile && !isTablet;
+  const showHamburger = !isMobile;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -107,61 +113,69 @@ function HeaderRightSlotWithUserMenu() {
         gap: 'var(--ds-spacing-12)',
       }}
     >
-      <Button
-        variant="ghost"
-        size="md"
-        style={{ color: 'var(--ds-navbar-active)' }}
-        onClick={() => navigate('/')}
-      >
-        Become a host
-      </Button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Help"
-        style={{ border: 'none' }}
-      >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ color: 'var(--ds-navbar-active)' }}
+      {showPrimaryActions && (
+        <>
+          <Button
+            variant="ghost"
+            size="md"
+            style={{ color: 'var(--ds-navbar-active)' }}
+            onClick={() => navigate('/')}
+          >
+            Become a host
+          </Button>
+          <button
+            type="button"
+            className="ds-header-right-icon-btn"
+            aria-label="Help"
+            style={{ border: 'none' }}
+            onClick={() => navigate('/faq')}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: 'var(--ds-navbar-active)' }}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <path d="M12 17h.01" />
+            </svg>
+          </button>
+        </>
+      )}
+      {showHamburger && (
+        <button
+          type="button"
+          className="ds-header-right-icon-btn"
+          aria-label="Menu"
+          style={{ border: 'none' }}
+          onClick={() => setIsOpen((prev) => !prev)}
         >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-          <path d="M12 17h.01" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Menu"
-        style={{ border: 'none' }}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ color: 'var(--ds-navbar-active)' }}
-        >
-          <line x1="4" x2="20" y1="12" y2="12" />
-          <line x1="4" x2="20" y1="6" y2="6" />
-          <line x1="4" x2="20" y1="18" y2="18" />
-        </svg>
-      </button>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: 'var(--ds-navbar-active)' }}
+          >
+            <line x1="4" x2="20" y1="12" y2="12" />
+            <line x1="4" x2="20" y1="6" y2="6" />
+            <line x1="4" x2="20" y1="18" y2="18" />
+          </svg>
+        </button>
+      )}
       {isOpen && (
         <div
+          className="ds-user-menu-wrapper"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -211,6 +225,7 @@ export function ConfirmationPage() {
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
+  const { isMobile, isTablet } = useDeviceType();
 
   // Match Magic Path BookingConfirmation page background when confirmation view is shown
   useEffect(() => {
@@ -412,11 +427,12 @@ export function ConfirmationPage() {
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
-        paddingBottom: '64px',
-        paddingTop: '32px',
-        paddingLeft: '260px',
-        paddingRight: '260px',
-        width: '100%'
+        paddingBottom: isMobile ? '48px' : '64px',
+        paddingTop: isMobile ? '24px' : '32px',
+        paddingLeft: isMobile ? 16 : isTablet ? 40 : 260,
+        paddingRight: isMobile ? 16 : isTablet ? 40 : 260,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         {/* Back Button and Title */}
         <div style={{
@@ -457,9 +473,10 @@ export function ConfirmationPage() {
         {/* Two Column Layout */}
         <div style={{
           display: 'flex',
-          gap: '64px',
+          gap: isMobile ? 32 : isTablet ? 40 : 64,
           alignItems: 'flex-start',
-          width: '100%'
+          width: '100%',
+          flexDirection: isMobile ? 'column' : 'row',
         }}>
           {/* Left Column */}
           <div style={{
@@ -781,7 +798,7 @@ export function ConfirmationPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
-            width: '380px',
+            width: isMobile ? '100%' : isTablet ? 320 : 380,
             flexShrink: 0
           }}>
             <div style={{
@@ -1146,156 +1163,144 @@ export function ConfirmationPage() {
       </div>
 
       {/* Payment Method Selection Modal */}
-      {showPaymentModal && (
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+      >
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setShowPaymentModal(false)}>
+          padding: '24px',
+          width: '500px',
+          maxWidth: '90vw',
+          maxHeight: '85vh',
+          overflow: 'auto',
+        }}>
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '24px',
-            padding: '24px',
-            width: '500px',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{
-              fontFamily: 'var(--ds-font-family)',
-              fontWeight: 500,
-              fontSize: '20px',
-              lineHeight: '28px',
-              letterSpacing: '-0.4px',
-              color: 'rgba(0, 0, 0, 1)',
-              marginBottom: '16px'
-            }}>
-              Payment method
-            </div>
+            fontFamily: 'var(--ds-font-family)',
+            fontWeight: 500,
+            fontSize: '20px',
+            lineHeight: '28px',
+            letterSpacing: '-0.4px',
+            color: 'rgba(0, 0, 0, 1)',
+            marginBottom: '16px'
+          }}>
+            Payment method
+          </div>
 
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              marginBottom: '16px'
-            }}>
-              {/* Show all payment methods with the first one as selected by default */}
-              {PAYMENT_METHODS.map((method, index) => {
-                const isSelected = tempSelectedPayment.id === method.id;
-                const isFirst = index === 0;
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            marginBottom: '16px'
+          }}>
+            {/* Show all payment methods with the first one as selected by default */}
+            {PAYMENT_METHODS.map((method, index) => {
+              const isSelected = tempSelectedPayment.id === method.id;
+              const isFirst = index === 0;
 
-                return (
-                  <div key={method.id}>
-                    {!isFirst && index === 1 && (
+              return (
+                <div key={method.id}>
+                  {!isFirst && index === 1 && (
+                    <div style={{
+                      fontFamily: 'var(--ds-font-family)',
+                      fontWeight: 500,
+                      fontSize: '16px',
+                      lineHeight: '24px',
+                      letterSpacing: '-0.32px',
+                      color: 'rgba(0, 0, 0, 1)',
+                      marginBottom: '16px'
+                    }}>
+                      Or pay with
+                    </div>
+                  )}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '0',
+                    cursor: 'pointer'
+                  }} onClick={() => setTempSelectedPayment(method)}>
+                    <div style={{
+                      display: 'flex',
+                      flex: '1 0 0',
+                      gap: '12px',
+                      alignItems: 'center'
+                    }}>
+                      <img src={method.icon} alt={method.name} style={{
+                        width: '32px',
+                        height: '32px',
+                        objectFit: 'contain',
+                        flexShrink: 0
+                      }} />
                       <div style={{
                         fontFamily: 'var(--ds-font-family)',
-                        fontWeight: 500,
                         fontSize: '16px',
                         lineHeight: '24px',
                         letterSpacing: '-0.32px',
-                        color: 'rgba(0, 0, 0, 1)',
-                        marginBottom: '16px'
+                        color: 'rgba(34, 34, 34, 1)'
                       }}>
-                        Or pay with
-                      </div>
-                    )}
-                    <div style={{
-                      display: 'flex',
-                      gap: '16px',
-                      alignItems: 'center',
-                      padding: '0',
-                      cursor: 'pointer'
-                    }} onClick={() => setTempSelectedPayment(method)}>
-                      <div style={{
-                        display: 'flex',
-                        flex: '1 0 0',
-                        gap: '12px',
-                        alignItems: 'center'
-                      }}>
-                        <img src={method.icon} alt={method.name} style={{
-                          width: '32px',
-                          height: '32px',
-                          objectFit: 'contain',
-                          flexShrink: 0
-                        }} />
-                        <div style={{
-                          fontFamily: 'var(--ds-font-family)',
-                          fontSize: '16px',
-                          lineHeight: '24px',
-                          letterSpacing: '-0.32px',
-                          color: 'rgba(34, 34, 34, 1)'
-                        }}>
-                          {method.address}
-                        </div>
-                      </div>
-                      <div style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: '2px solid rgba(34, 34, 34, 1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        backgroundColor: isSelected ? 'transparent' : 'white'
-                      }}>
-                        {isSelected && (
-                          <div style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(34, 34, 34, 1)'
-                          }} />
-                        )}
+                        {method.address}
                       </div>
                     </div>
                     <div style={{
-                      height: '1px',
-                      width: '100%',
-                      backgroundColor: 'rgba(229, 231, 235, 1)',
-                      marginTop: '16px'
-                    }} />
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      border: '2px solid rgba(34, 34, 34, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      backgroundColor: isSelected ? 'transparent' : 'white'
+                    }}>
+                      {isSelected && (
+                        <div style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(34, 34, 34, 1)'
+                        }} />
+                      )}
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{
+                    height: '1px',
+                    width: '100%',
+                    backgroundColor: 'rgba(229, 231, 235, 1)',
+                    marginTop: '16px'
+                  }} />
+                </div>
+              );
+            })}
+          </div>
 
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginTop: '16px'
-            }}>
-              <button
-                onClick={handlePaymentMethodDone}
-                style={{
-                  backgroundColor: 'rgba(34, 34, 34, 1)',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--ds-font-family)',
-                  fontWeight: 500,
-                  fontSize: '16px',
-                  lineHeight: '24px',
-                  letterSpacing: '-0.32px',
-                  color: 'white',
-                  width: '96px',
-                  textAlign: 'center'
-                }}
-              >
-                Done
-              </button>
-            </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '16px'
+          }}>
+            <button
+              onClick={handlePaymentMethodDone}
+              style={{
+                backgroundColor: 'rgba(34, 34, 34, 1)',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--ds-font-family)',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                letterSpacing: '-0.32px',
+                color: 'white',
+                width: '96px',
+                textAlign: 'center'
+              }}
+            >
+              Done
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

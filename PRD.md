@@ -443,11 +443,8 @@ src/
 2. **The Lost Atlantean Crystal Villa** - Atlantis
 3. **Pandora Floating Mountain Bungalow** - Pandora
 4. **Neo-Showa Capsule Pod in Parallel Tokyo 2087** - Neo-Shinjuku District, Parallel Tokyo
-5. **The Last Beachfront Property** - Miami, 2089
-6. **Amazon Rainforest Biodome** - Brazil, 2203
-7. **Lunar Hilton Penthouse** - Moon, 2156
-8. **Floating City Apartment** - Neo-Pacific, 2178
-9. **Federation Ambassador Suite** - Earth, 2364
+5. **Lunar Hilton Penthouse** - Moon, 2156
+6. **Federation Ambassador Suite** - Earth, 2364
 
 ---
 

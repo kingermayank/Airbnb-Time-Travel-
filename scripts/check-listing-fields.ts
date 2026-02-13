@@ -15,7 +15,7 @@ async function check() {
   const { data, error } = await supabase
     .from('listings')
     .select('id, title, key_features, things_to_know, sleeping_arrangements')
-    .eq('id', 'a1b2c3d4-e5f6-7890-abcd-111111111111')
+    .eq('id', 'a1b2c3d4-e5f6-7890-abcd-333333333333')
     .single();
 
   if (error) {

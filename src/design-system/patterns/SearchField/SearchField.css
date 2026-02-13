@@ -33,7 +33,10 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.ds-search-field-search-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .ds-search-field-search-btn:hover:not(:disabled) {

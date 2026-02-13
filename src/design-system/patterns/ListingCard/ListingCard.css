@@ -1,3 +1,11 @@
+/* Heart button: scale down on active */
+.ds-listing-card-heart-btn {
+  transition: transform 0.1s ease;
+}
+.ds-listing-card-heart-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 /* Heart icon: scale on hover (110%), applied to the icon so the graphic grows while hovering the button */
 .ds-listing-card-heart-icon {
   transition: transform 0.2s ease;

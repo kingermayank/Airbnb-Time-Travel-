@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import './Modal.css';
 
 interface ModalProps {
@@ -9,51 +10,67 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, children }: ModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
+  // Handle escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
 
+  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      // Trigger animation by adding class after mount
-      requestAnimationFrame(() => {
-        if (modalRef.current) {
-          modalRef.current.classList.add('modal-enter-active');
-        }
-        if (backdropRef.current) {
-          backdropRef.current.classList.add('backdrop-enter-active');
-        }
-      });
+      document.body.style.overflow = 'hidden';
     } else {
-      // Remove active classes when closing
-      if (modalRef.current) {
-        modalRef.current.classList.remove('modal-enter-active');
-      }
-      if (backdropRef.current) {
-        backdropRef.current.classList.remove('backdrop-enter-active');
-      }
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const modalNode = (
-    <div
-      ref={backdropRef}
-      className="modal-backdrop"
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        className="modal-content"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: 'rgb(255, 255, 255)',
-          background: 'rgb(255, 255, 255)'
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="modal-backdrop"
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.12 }}
+        >
+          <motion.div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.95, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 40 }}
+            transition={{
+              enter: {
+                type: 'spring',
+                stiffness: 600,
+                damping: 45,
+                duration: 0.2,
+              },
+              exit: {
+                duration: 0.1,
+                ease: 'easeIn',
+              },
+            }}
+            style={{
+              backgroundColor: 'rgb(255, 255, 255)',
+              background: 'rgb(255, 255, 255)',
+            }}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   return createPortal(modalNode, document.body);

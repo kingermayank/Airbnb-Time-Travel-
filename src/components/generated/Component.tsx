@@ -7,16 +7,39 @@ import { Header, SearchField, ListingCard, Button, Footer, UserMenu } from '../.
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
 import { HelpCircle, Menu } from 'lucide-react';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
+import { useDeviceType, useIsMobile } from '../../hooks/use-mobile';
 
 // Mock data - fallback until Supabase is populated (prices in Bitcoin)
+// Ordered according to homepage display order
 const MOCK_LISTINGS: ListingCardType[] = [
   {
+    id: 'mock-3',
+    title: "The Lost Atlantean Crystal Villa",
+    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/bbe5b882-690a-4661-836a-08f66193c3f1.jpg",
+    price: "₿0.012540 / hour",
+    rating: "4.82",
+    isGuestFavorite: true,
+  },
+  {
+    id: 'mock-9',
+    title: "1990s Manhattan Loft in Pre-Internet NYC",
+    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1e517539-a473-4b2a-b992-a49cc7dbbe8e.jpg",
+    price: "₿0.002748 / hour",
+    rating: "4.82",
+  },
+  {
+    id: 'mock-8',
+    title: "Alexander the Great's Campaign Tent — Persia, 330 BCE",
+    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/31951292-b7a3-4d4e-9d00-944e3fd01f43.jpg",
+    price: "₿0.008244 / hour",
+    date: "330 BCE",
+  },
+  {
     id: 'mock-1',
-    title: "Shah Jahan's Marble Suite in Agra",
+    title: "Shah Jahan's Marble Suite — Agra, 1650",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/4d4e615e-dcce-4f7e-a73c-18add1151842.jpg",
     price: "₿0.019032 / hour",
     rating: "4.82",
-    isGuestFavorite: true,
   },
   {
     id: 'mock-2',
@@ -24,26 +47,13 @@ const MOCK_LISTINGS: ListingCardType[] = [
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
     price: "₿0.008244 / hour",
     rating: "4.82",
-  },
-  {
-    id: 'mock-3',
-    title: "The Lost Atlantean Crystal Villa",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/bbe5b882-690a-4661-836a-08f66193c3f1.jpg",
-    price: "₿0.012540 / hour",
-    rating: "4.82",
+    isGuestFavorite: true,
   },
   {
     id: 'mock-4',
-    title: "First-Class Suite in Titanic April 1912",
+    title: "Titanic First-Class Suite — April 1912",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/ab970d7e-74d0-4a74-8e5c-4ca8f2a64ad0.jpg",
     price: "₿0.006768 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-5',
-    title: "WWII German Resistance Safehouse Loft",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/b2e96b48-0491-4bea-a1df-887341cc53d5.jpg",
-    price: "₿0.003576 / hour",
     rating: "4.82",
   },
   {
@@ -62,39 +72,10 @@ const MOCK_LISTINGS: ListingCardType[] = [
     date: "330 BCE",
   },
   {
-    id: 'mock-8',
-    title: "Alexander the Great's Campaign Tent",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/31951292-b7a3-4d4e-9d00-944e3fd01f43.jpg",
-    price: "₿0.008244 / hour",
-    date: "330 BCE",
-  },
-  {
-    id: 'mock-9',
-    title: "1990s Manhattan Loft in Pre-Internet NYC",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1e517539-a473-4b2a-b992-a49cc7dbbe8e.jpg",
-    price: "₿0.002748 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-10',
-    title: "Shah Jahan's Marble Suite in Agra",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/4d4e615e-dcce-4f7e-a73c-18add1151842.jpg",
-    price: "₿0.019032 / hour",
-    rating: "4.82",
-    isGuestFavorite: true,
-  },
-  {
-    id: 'mock-11',
-    title: "First-Class Suite in Titanic April 1912",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/ab970d7e-74d0-4a74-8e5c-4ca8f2a64ad0.jpg",
-    price: "₿0.006768 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-12',
-    title: "SpaceX Mars Colony Pod at Olympus Mons",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
-    price: "₿0.008244 / hour",
+    id: 'mock-5',
+    title: "WWII German Resistance Safehouse Loft",
+    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/b2e96b48-0491-4bea-a1df-887341cc53d5.jpg",
+    price: "₿0.003576 / hour",
     rating: "4.82",
   },
 ];
@@ -108,6 +89,11 @@ function HeaderRightSlotWithUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const location = useLocation();
+  const { isMobile, isTablet } = useDeviceType();
+  const navigate = useNavigate();
+
+  const showPrimaryActions = !isMobile && !isTablet;
+  const showHamburger = !isMobile;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -137,22 +123,34 @@ function HeaderRightSlotWithUserMenu() {
         gap: 'var(--ds-spacing-12)',
       }}
     >
-      <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-        Become a host
-      </Button>
-      <button type="button" className="ds-header-right-icon-btn" aria-label="Help">
-        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Menu"
-        onClick={() => setIsOpen(prev => !prev)}
-      >
-        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
+      {showPrimaryActions && (
+        <>
+          <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
+            Become a host
+          </Button>
+          <button
+            type="button"
+            className="ds-header-right-icon-btn"
+            aria-label="Help"
+            onClick={() => navigate('/faq')}
+          >
+            <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+          </button>
+        </>
+      )}
+      {showHamburger && (
+        <button
+          type="button"
+          className="ds-header-right-icon-btn"
+          aria-label="Menu"
+          onClick={() => setIsOpen(prev => !prev)}
+        >
+          <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
+        </button>
+      )}
       {isOpen && (
         <div
+          className="ds-user-menu-wrapper"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -172,6 +170,9 @@ export const AirbnbUi = () => {
   const [listings, setListings] = useState<ListingCardType[]>(MOCK_LISTINGS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  const searchBarAreaRef = useRef<HTMLDivElement>(null);
+  const [showHeaderDivider, setShowHeaderDivider] = useState(false);
 
   useEffect(() => {
     async function loadListings() {
@@ -196,6 +197,27 @@ export const AirbnbUi = () => {
     loadListings();
   }, []);
 
+  // Scroll listener to detect when search bar area moves behind the sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      const searchBarArea = searchBarAreaRef.current;
+      if (!searchBarArea) return;
+
+      const rect = searchBarArea.getBoundingClientRect();
+      // As soon as the top of the search area goes above the viewport top,
+      // it is effectively behind the sticky header, so we show the divider.
+      setShowHeaderDivider(rect.top <= 0);
+    };
+
+    // Run once on mount to ensure correct initial state
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -212,9 +234,11 @@ export const AirbnbUi = () => {
         activeNavLabel="Time Travel"
         onNavClick={() => {}}
         rightSlot={<HeaderRightSlotWithUserMenu />}
+        showDividerOnScroll={showHeaderDivider}
       />
 
       <div
+        ref={searchBarAreaRef}
         style={{
           width: '100%',
           padding: 'var(--ds-spacing-12) 0 var(--ds-spacing-32) 0',
@@ -259,7 +283,9 @@ export const AirbnbUi = () => {
       <main
         style={{
           flex: 1,
-          padding: 'var(--ds-spacing-40) var(--ds-spacing-80)',
+          padding: isMobile
+            ? 'var(--ds-spacing-24) var(--ds-spacing-16)'
+            : 'var(--ds-spacing-40) var(--ds-spacing-80)',
           maxWidth: 1280,
           margin: '0 auto',
           width: '100%',
@@ -270,7 +296,7 @@ export const AirbnbUi = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
               columnGap: 'var(--ds-spacing-16)',
               rowGap: 'var(--ds-spacing-40)',
             }}
@@ -331,7 +357,7 @@ export const AirbnbUi = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
               columnGap: 'var(--ds-spacing-16)',
               rowGap: 'var(--ds-spacing-40)',
             }}

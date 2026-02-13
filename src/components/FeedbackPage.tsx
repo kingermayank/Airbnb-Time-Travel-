@@ -70,6 +70,7 @@ function HeaderRightSlotWithUserMenu() {
         className="ds-header-right-icon-btn"
         aria-label="Help"
         style={{ border: 'none' }}
+        onClick={() => navigate('/faq')}
       >
         <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
       </button>
@@ -84,6 +85,7 @@ function HeaderRightSlotWithUserMenu() {
       </button>
       {isOpen && (
         <div
+          className="ds-user-menu-wrapper"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',

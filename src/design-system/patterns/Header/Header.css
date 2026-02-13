@@ -45,10 +45,21 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
 }
 .ds-header-right-icon-btn:hover {
   background: #ebebeb;
+}
+.ds-header-right-icon-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Header navigation tabs */
+.ds-header-nav-tab {
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+.ds-header-nav-tab:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 /* Divider below header (variant: showDivider), e.g. Listing Details page */

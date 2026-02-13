@@ -271,12 +271,14 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
       <div
         style={{
           position: 'relative',
-          width: '100%',
+          width: '60vw',
+          maxWidth: '60vw',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '80px 80px',
+          padding: '60px 4vw',
+          margin: '0 auto',
           boxSizing: 'border-box',
           zIndex: 9999,
           overflow: 'hidden',

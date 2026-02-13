@@ -49,10 +49,7 @@ function delay(ms: number): Promise<void> {
 // ============================================================================
 
 const LISTING_IDS = {
-  MIAMI_UNDERWATER: 'a1b2c3d4-e5f6-7890-abcd-111111111111',
-  AMAZON_BIODOME: 'a1b2c3d4-e5f6-7890-abcd-222222222222',
   LUNAR_HILTON: 'a1b2c3d4-e5f6-7890-abcd-333333333333',
-  FLOATING_CITY: 'a1b2c3d4-e5f6-7890-abcd-444444444444',
   STAR_TREK_SUITE: 'a1b2c3d4-e5f6-7890-abcd-555555555555',
   BERMUDA_PLATFORM: 'a1b2c3d4-e5f6-7890-abcd-666666666666',
   AREA_51_BARRACKS: 'a1b2c3d4-e5f6-7890-abcd-777777777777',
@@ -60,10 +57,7 @@ const LISTING_IDS = {
 };
 
 const HOST_IDS = {
-  CAPTAIN_ROSA: 'b1c2d3e4-f5a6-7890-bcde-111111111111',
-  GAIA_12: 'b1c2d3e4-f5a6-7890-bcde-222222222222',
   CHARLOTTE_HILTON_MUSK: 'b1c2d3e4-f5a6-7890-bcde-333333333333',
-  KAI_NAKAMURA_CHEN: 'b1c2d3e4-f5a6-7890-bcde-444444444444',
   ADMIRAL_CHEN_HOLOGRAM: 'b1c2d3e4-f5a6-7890-bcde-555555555555',
   UNKNOWN_BERMUDA: 'b1c2d3e4-f5a6-7890-bcde-666666666666',
   REDACTED_AREA51: 'b1c2d3e4-f5a6-7890-bcde-777777777777',
@@ -88,31 +82,10 @@ const avatarConfigs: AvatarConfig[] = [
   // ============================================================================
   {
     listing_id: null,
-    host_id: HOST_IDS.CAPTAIN_ROSA,
-    type: 'host',
-    name: 'Captain Rosa Delgado',
-    prompt: 'Professional headshot portrait of a confident Latina woman in her 50s, former real estate agent turned submarine captain, short grey-streaked hair, weathered but warm face, wearing a nautical captain\'s jacket, underwater habitat visible through window behind her, soft studio lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: null,
-    host_id: HOST_IDS.GAIA_12,
-    type: 'host',
-    name: 'GAIA-12',
-    prompt: 'Artistic representation of an AI conservation system, glowing green and blue holographic female face emerging from a tree trunk, eyes made of leaves, hair flowing like vines, bioluminescent particles, rainforest background visible through transparent face, ethereal lighting, digital art style, high quality',
-  },
-  {
-    listing_id: null,
     host_id: HOST_IDS.CHARLOTTE_HILTON_MUSK,
     type: 'host',
     name: 'Charlotte Hilton-Musk VIII',
     prompt: 'Professional headshot portrait of an extremely wealthy young woman in her 30s, perfectly styled platinum blonde hair, designer space-age outfit, moon surface visible through window behind her, slightly bored expression, luxury lunar hotel suite setting, soft studio lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: null,
-    host_id: HOST_IDS.KAI_NAKAMURA_CHEN,
-    type: 'host',
-    name: 'Kai Nakamura-Chen',
-    prompt: 'Professional headshot portrait of a friendly mixed-race Asian man in his 40s, salt-and-pepper hair slightly windswept, wearing a practical waterproof jacket, warm smile, floating city visible through window behind him, ocean horizon, natural lighting, realistic, high quality photograph',
   },
   {
     listing_id: null,
@@ -141,84 +114,6 @@ const avatarConfigs: AvatarConfig[] = [
     type: 'host',
     name: 'Grok of the River Clan',
     prompt: 'Portrait of a friendly Cro-Magnon caveman, strong but approachable features, long tangled brown hair and beard, wearing animal furs, cave paintings visible on wall behind him, warm fire light illuminating face, proud expression, historically accurate Stone Age appearance, high quality digital art',
-  },
-
-  // ============================================================================
-  // REVIEWERS - Miami Underwater
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Jacques Cousteau',
-    prompt: 'Professional headshot portrait of Jacques Cousteau, the famous French oceanographer and explorer, wearing his iconic red knit cap, weathered face from years at sea, kind intelligent eyes, ocean background, vintage photograph style, realistic, high quality',
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Aquaman',
-    prompt: 'Professional headshot portrait of Aquaman, muscular blonde man with long hair, underwater kingdom aesthetic, wearing green and gold armor, confident heroic expression, underwater bubbles and light rays, comic book movie style, high quality',
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Kevin Costner',
-    prompt: 'Professional headshot portrait of Kevin Costner the actor, rugged handsome features, salt and pepper hair, wearing practical waterworld-style clothing, confident weathered expression, ocean background, natural lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Dory',
-    prompt: 'Cute portrait of Dory the blue tang fish from Finding Nemo, friendly expressive eyes, big smile, underwater ocean background with coral reef, Pixar animation style but slightly realistic, colorful tropical fish aesthetic, high quality digital art',
-  },
-  {
-    listing_id: LISTING_IDS.MIAMI_UNDERWATER,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Al Gore',
-    prompt: 'Professional headshot portrait of Al Gore, distinguished older gentleman, silver hair neatly combed, wearing business suit, thoughtful concerned expression, environmental graphs visible in background, professional lighting, realistic, high quality photograph',
-  },
-
-  // ============================================================================
-  // REVIEWERS - Amazon Biodome
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: null,
-    type: 'reviewer',
-    name: 'David Attenborough',
-    prompt: 'Professional headshot portrait of Sir David Attenborough, elderly British naturalist, kind wise expression, white hair, wearing safari-style shirt, rainforest leaves visible behind him, soft natural lighting, documentary style, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Greta Thunberg',
-    prompt: 'Professional headshot portrait of a young Swedish environmental activist with braided hair, determined passionate expression, wearing simple clothing, forest background, natural lighting, documentary style, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: null,
-    type: 'reviewer',
-    name: 'The Lorax',
-    prompt: 'Portrait of The Lorax, small orange fuzzy creature with large yellow mustache, standing protectively near a small tree, expressive concerned eyes, environmental guardian aesthetic, Seuss-style but slightly realistic, colorful background, high quality digital art',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Jane Goodall',
-    prompt: 'Professional headshot portrait of Jane Goodall, elderly British primatologist, silver hair in ponytail, warm wise smile, wearing practical field clothing, rainforest background with hint of wildlife, natural lighting, realistic, high quality photograph',
-  },
-  {
-    listing_id: LISTING_IDS.AMAZON_BIODOME,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Captain Planet',
-    prompt: 'Portrait of Captain Planet, muscular superhero with green mullet hair, blue skin, red chest emblem with Earth symbol, confident heroic pose, Earth visible in background, 1990s cartoon style but slightly realistic, colorful dramatic lighting, high quality digital art',
   },
 
   // ============================================================================
@@ -258,38 +153,6 @@ const avatarConfigs: AvatarConfig[] = [
     type: 'reviewer',
     name: 'Nicole Kidman',
     prompt: 'Professional headshot portrait of a glamorous Australian actress with strawberry blonde hair, elegant ethereal expression, wearing sophisticated evening attire, soft cinematic lighting, movie star aesthetic, realistic, high quality photograph',
-  },
-
-  // ============================================================================
-  // REVIEWERS - Floating City
-  // ============================================================================
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Moana',
-    prompt: 'Portrait of Moana, young Polynesian woman with long curly black hair adorned with flowers, warm confident smile, ocean and traditional sailing canoe behind her, Pacific Islander features, Disney-inspired but slightly realistic style, tropical lighting, high quality digital art',
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Captain Ahab',
-    prompt: 'Portrait of Captain Ahab, grizzled 19th century whaling captain, intense obsessive eyes, grey beard and weathered face, wearing period-appropriate captain coat, stormy sea behind him, dramatic moody lighting, 1850s aesthetic, high quality digital art',
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Ponyo',
-    prompt: 'Cute portrait of Ponyo, small magical fish girl with round face and red hair, big happy smile, underwater and waves around her, Studio Ghibli animation style but slightly realistic, colorful whimsical aesthetic, high quality digital art',
-  },
-  {
-    listing_id: LISTING_IDS.FLOATING_CITY,
-    host_id: null,
-    type: 'reviewer',
-    name: 'Bear Grylls',
-    prompt: 'Professional headshot portrait of Bear Grylls, the survival expert, rugged outdoor appearance, confident capable expression, wearing practical survival gear, wilderness ocean background, natural lighting, adventurer aesthetic, realistic, high quality photograph',
   },
 
   // ============================================================================

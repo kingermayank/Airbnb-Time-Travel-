@@ -98,7 +98,7 @@ export function DesignSystemShowcase() {
         <div style={sectionStyle}>
           <Text variant="label" color="secondary" style={{ marginBottom: 8 }}>Badge</Text>
           <div style={rowStyle}>
-            <Badge>Guest favorite</Badge>
+            <Badge>Frequently revisited</Badge>
             <Badge>Pending</Badge>
           </div>
         </div>

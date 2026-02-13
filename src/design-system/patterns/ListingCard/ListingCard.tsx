@@ -116,7 +116,7 @@ export function ListingCard({
         />
         {isGuestFavorite && (
           <div style={badgeWrapperStyle}>
-            <Badge>Guest favorite</Badge>
+            <Badge>Frequently revisited</Badge>
           </div>
         )}
         <button

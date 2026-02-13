@@ -15,7 +15,7 @@ export function Badge({ children, className, style }: BadgeProps) {
     alignItems: 'center',
     padding: 'var(--ds-badge-padding-top) var(--ds-spacing-12) var(--ds-badge-padding-bottom) var(--ds-spacing-12)',
     gap: 'var(--ds-spacing-10)',
-    backgroundColor: 'var(--ds-surface)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // 95% opacity white background
     boxShadow: 'var(--ds-shadow-badge)',
     borderRadius: 'var(--ds-radius-full)',
     ...style,
