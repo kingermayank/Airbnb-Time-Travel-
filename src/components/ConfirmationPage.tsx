@@ -5,10 +5,11 @@ import type { ListingDetails } from '../types/database';
 import { Header, Button, IconButton } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
-import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
 import { ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
@@ -72,7 +73,7 @@ const PAYMENT_METHODS = [
 ];
 
 const CONFIRMATION_NAV_ITEMS = [
-  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
+  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
@@ -91,6 +92,8 @@ export function ConfirmationPage() {
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const vehicleVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const [insuranceSelected, setInsuranceSelected] = useState(false);
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [insuranceCheckboxHovered, setInsuranceCheckboxHovered] = useState(false);
 
   // When playingVideoId is set, start that video at 2x; pause others at first frame
   useEffect(() => {
@@ -295,7 +298,7 @@ export function ConfirmationPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <div style={{ borderBottom: '1px solid var(--ds-border-light)' }}>
+      <div>
         <Header
           brandName="warpbnb"
           navItems={CONFIRMATION_NAV_ITEMS}
@@ -455,7 +458,7 @@ export function ConfirmationPage() {
                 color: 'rgba(0, 0, 0, 1)',
                 marginBottom: '16px'
               }}>
-                Select teleporation method
+                Select teleportation method
               </div>
               <div style={{
                 display: 'flex',
@@ -464,36 +467,75 @@ export function ConfirmationPage() {
               }}>
                 {TELEPORTATION_METHODS.map((method) => {
                   const isSelected = selectedTeleportation === method.id;
+                  const isHovered = hoveredCardId === method.id;
                   const handleClick = () => {
                     setSelectedTeleportation(method.id);
                     setPlayingVideoId(method.id);
                   };
                   return (
-                    <div
+                    <motion.div
                       key={method.id}
                       onClick={handleClick}
+                      onHoverStart={() => setHoveredCardId(method.id)}
+                      onHoverEnd={() => setHoveredCardId(null)}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{
+                        scale: 1.02,
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                      }}
+                      transition={{
+                        duration: 0.3,
+                        ease: [0.34, 1.56, 0.64, 1],
+                      }}
                       style={{
-                        border: isSelected ? '1px solid rgba(34, 34, 34, 1)' : '1px solid rgba(217, 217, 217, 1)',
+                        position: 'relative',
+                        border: isSelected ? '2px solid rgba(34, 34, 34, 1)' : '1px solid rgba(217, 217, 217, 1)',
                         borderRadius: '16px',
                         padding: '16px',
-                        backgroundColor: '#FFF',
+                        backgroundColor: 'white',
                         cursor: 'pointer',
                         display: 'flex',
                         gap: '16px',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        overflow: 'hidden',
                       }}
                     >
-                      <div style={{
-                        width: '72px',
-                        height: '72px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(0, 0, 0, 0.03)'
-                      }}>
+                      {/* Shimmer sweep effect on hover */}
+                      <motion.div
+                        initial={{ x: '-100%' }}
+                        animate={{ x: isHovered ? '200%' : '-100%' }}
+                        transition={{
+                          duration: 0.8,
+                          ease: 'easeInOut',
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '50%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                          pointerEvents: 'none',
+                          zIndex: 1,
+                        }}
+                      />
+
+                      <div
+                        style={{
+                          width: '72px',
+                          height: '72px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                          position: 'relative',
+                          zIndex: 2,
+                        }}
+                      >
                         <video
                           ref={(el) => { vehicleVideoRefs.current[method.id] = el; }}
                           src={method.video}
@@ -518,7 +560,7 @@ export function ConfirmationPage() {
                           style={{
                             width: '100%',
                             height: '100%',
-                            objectFit: 'cover'
+                            objectFit: 'cover',
                           }}
                         />
                       </div>
@@ -527,7 +569,9 @@ export function ConfirmationPage() {
                         flexDirection: 'column',
                         flex: '1 0 0',
                         gap: '2px',
-                        alignItems: 'flex-start'
+                        alignItems: 'flex-start',
+                        position: 'relative',
+                        zIndex: 2,
                       }}>
                         <div style={{
                           fontFamily: 'var(--ds-font-family)',
@@ -549,26 +593,51 @@ export function ConfirmationPage() {
                           {method.description}
                         </div>
                       </div>
-                      <div style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: '2px solid rgba(34, 34, 34, 1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
+
+                      {/* Radio button with spring physics */}
+                      <motion.div
+                        animate={{
+                          scale: isSelected ? 1 : 0.95,
+                          borderColor: isSelected || isHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)',
+                        }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          borderWidth: isSelected ? 2 : 1,
+                          borderStyle: 'solid',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          position: 'relative',
+                          zIndex: 2,
+                        }}
+                      >
                         {isSelected && (
-                          <div style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            backgroundColor: 'rgba(34, 34, 34, 1)'
-                          }} />
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 500,
+                              damping: 25,
+                            }}
+                            style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              backgroundColor: 'rgba(34, 34, 34, 1)'
+                            }}
+                          />
                         )}
-                      </div>
-                    </div>
+                      </motion.div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -576,65 +645,48 @@ export function ConfirmationPage() {
 
             {/* Emergency Extraction Insurance */}
             <div style={{
-              border: '1px solid rgba(221, 221, 221, 1)',
               borderRadius: '24px',
               padding: '24px',
               width: '100%',
               backgroundColor: 'rgba(247, 247, 247, 1)'
             }}>
               <div style={{
+                fontFamily: 'var(--ds-font-family)',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                letterSpacing: '-0.32px',
+                color: 'rgba(0, 0, 0, 1)',
+                marginBottom: '8px'
+              }}>
+                Add emergency extraction insurance?
+              </div>
+              <div style={{
                 display: 'flex',
-                gap: '16px',
-                alignItems: 'flex-start',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 width: '100%',
-                marginBottom: '16px'
+                marginBottom: '8px'
               }}>
                 <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flex: '1 0 0',
-                  gap: '2px',
-                  alignItems: 'flex-start'
+                  fontFamily: 'var(--ds-font-family)',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  lineHeight: '20px',
+                  letterSpacing: '-0.28px',
+                  color: 'rgba(34, 34, 34, 1)'
                 }}>
-                  <div style={{
-                    fontFamily: 'var(--ds-font-family)',
-                    fontWeight: 500,
-                    fontSize: '16px',
-                    lineHeight: '24px',
-                    letterSpacing: '-0.32px',
-                    color: 'rgba(0, 0, 0, 1)',
-                    marginBottom: '8px'
-                  }}>
-                    Add emergency extraction insurance?
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--ds-font-family)',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    lineHeight: '20px',
-                    letterSpacing: '-0.28px',
-                    color: 'rgba(34, 34, 34, 1)',
-                    marginBottom: '2px'
-                  }}>
-                    Yes, add peace of mind for 40{selectedPaymentMethod.symbol}.
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--ds-font-family)',
-                    fontSize: '14px',
-                    lineHeight: '20px',
-                    letterSpacing: '-0.28px',
-                    color: 'rgba(34, 34, 34, 1)'
-                  }}>
-                    Covers paradoxes, hostile timelines, and butterfly effects.
-                  </div>
+                  Yes, add peace of mind for 40{selectedPaymentMethod.symbol}.
                 </div>
                 <div
                   onClick={() => setInsuranceSelected(!insuranceSelected)}
+                  onMouseEnter={() => setInsuranceCheckboxHovered(true)}
+                  onMouseLeave={() => setInsuranceCheckboxHovered(false)}
                   style={{
                     width: '24px',
                     height: '24px',
                     borderRadius: '6px',
-                    border: '1px solid rgba(140, 140, 140, 1)',
+                    border: `${insuranceSelected ? '2' : '1'}px solid ${insuranceCheckboxHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)'}`,
                     backgroundColor: insuranceSelected ? 'rgba(34, 34, 34, 1)' : 'white',
                     cursor: 'pointer',
                     display: 'flex',
@@ -649,6 +701,16 @@ export function ConfirmationPage() {
                     </svg>
                   )}
                 </div>
+              </div>
+              <div style={{
+                fontFamily: 'var(--ds-font-family)',
+                fontSize: '14px',
+                lineHeight: '20px',
+                letterSpacing: '-0.28px',
+                color: 'rgba(34, 34, 34, 1)',
+                marginBottom: '16px'
+              }}>
+                Covers paradoxes, hostile timelines, and butterfly effects.
               </div>
               <div style={{
                 height: '1px',

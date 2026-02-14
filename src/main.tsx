@@ -42,6 +42,17 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from './design-system/patterns/Header/header-nav-assets';
+
+// Preload header nav icons so they appear instantly (avoids visible reload on refresh)
+[PORTAL_ICON_URL, MINDSCAPES_ICON_URL].forEach((href) => {
+  if (document.querySelector(`link[rel="preload"][href="${href}"]`)) return;
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = href;
+  document.head.appendChild(link);
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

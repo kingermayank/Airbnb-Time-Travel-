@@ -135,7 +135,8 @@ export interface ListingCard {
   id: string;
   title: string;
   image: string;
-  price: string;
+  /** Optional; omitted on homepage so price is not shown there */
+  price?: string;
   rating?: string;
   date?: string;
   isGuestFavorite?: boolean;

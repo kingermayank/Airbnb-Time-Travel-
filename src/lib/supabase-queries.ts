@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { hasDedicatedAmenityIcon } from './amenity-icons';
 import type {
   Listing,
   ListingWithHost,
@@ -29,8 +30,6 @@ export async function fetchListings(): Promise<ListingCard[]> {
       title,
       main_image,
       thumbnail_image,
-      price_display,
-      price_per_night,
       overall_rating,
       date,
       is_guest_favorite
@@ -74,12 +73,11 @@ export async function fetchListings(): Promise<ListingCard[]> {
     );
   };
 
-  // Transform to ListingCard format
+  // Transform to ListingCard format (no price on homepage)
   const transformed = filtered.map((listing) => ({
     id: listing.id,
     title: listing.title,
     image: listing.thumbnail_image || listing.main_image, // Use thumbnail for homepage, fallback to main_image
-    price: listing.price_display || `$${listing.price_per_night}/night`,
     rating: listing.overall_rating ? listing.overall_rating.toString() : undefined,
     date: listing.date || undefined,
     // Only show frequently revisited pill for specific listings, regardless of database value
@@ -346,10 +344,10 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       console.error('Error fetching reviews:', reviewsError);
     }
 
-    // Transform the data
+    // Transform the data — only include amenities that have a dedicated icon
     const amenities = (amenitiesData || [])
       .map((item: any) => item.amenities)
-      .filter((amenity: Amenity | null) => amenity !== null) as Amenity[];
+      .filter((amenity: Amenity | null) => amenity !== null && hasDedicatedAmenityIcon(amenity.name)) as Amenity[];
 
     // Dedupe reviews by listing_id + reviewer_name + review_date + comment (keep first occurrence)
     const seen = new Set<string>();

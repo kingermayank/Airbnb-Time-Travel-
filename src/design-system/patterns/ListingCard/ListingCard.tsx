@@ -11,7 +11,8 @@ export interface ListingCardProps {
   title: string;
   /** Optional year or era (e.g. "30 BC", "2187") shown with title. */
   year?: string;
-  price: string;
+  /** Optional; when omitted, price row is hidden (e.g. on homepage). */
+  price?: string;
   rating?: string;
   date?: string;
   isGuestFavorite?: boolean;
@@ -156,17 +157,20 @@ export function ListingCard({
           {title}
         </Text>
         <div style={priceRowStyle}>
-          <Text variant="bodySmall" color="primary" weight="medium">
-            {price}
-          </Text>
-          {[year != null && year !== '' ? year : null, rating != null ? `★ ${rating}` : null]
+          {[price, year != null && year !== '' ? year : null, rating != null ? `★ ${rating}` : null]
             .filter(Boolean)
             .map((segment, index) => (
               <React.Fragment key={index}>
-                <Text variant="bodySmall" color="secondary" style={{ fontWeight: 800 }}>
-                  ·
-                </Text>
-                <Text variant="bodySmall" color="secondary">
+                {index > 0 && (
+                  <Text variant="bodySmall" color="secondary" style={{ fontWeight: 800 }}>
+                    ·
+                  </Text>
+                )}
+                <Text
+                  variant="bodySmall"
+                  color={index === 0 && price != null ? 'primary' : 'secondary'}
+                  weight={index === 0 ? 'medium' : undefined}
+                >
                   {segment}
                 </Text>
               </React.Fragment>

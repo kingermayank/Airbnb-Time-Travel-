@@ -4,7 +4,7 @@ import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
 import { Header, SearchField, ListingCard, Button, Footer } from '../../design-system';
-import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
 import { useDeviceType, useIsMobile } from '../../hooks/use-mobile';
@@ -81,7 +81,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
 ];
 
 const FIGMA_NAV_ITEMS = [
-  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
+  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
@@ -289,7 +289,6 @@ export const AirbnbUi = () => {
                 image={listing.image}
                 title={listing.title}
                 year={listing.date}
-                price={listing.price}
                 rating={listing.rating}
                 isGuestFavorite={listing.isGuestFavorite}
                 onClick={() => navigate(`/listing/${listing.id}`)}

@@ -15,7 +15,7 @@ import {
   ConfirmationSummary,
 } from '../design-system';
 import type { EraOption } from '../design-system';
-import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '@/design-system/patterns/Header/header-nav-assets';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '@/design-system/patterns/Header/header-nav-assets';
 
 const sectionStyle: React.CSSProperties = {
   marginBottom: 48,
@@ -43,7 +43,7 @@ const DURATION_OPTIONS = [
 ];
 
 const SAMPLE_NAV_ITEMS = [
-  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
+  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 const SAMPLE_VEHICLES = [

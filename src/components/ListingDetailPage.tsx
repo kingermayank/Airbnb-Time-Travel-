@@ -44,7 +44,7 @@ function getFirstName(fullName: string): string {
 }
 
 import { Header, Button } from '../design-system';
-import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PhotoViewer } from './PhotoViewer';
 import { motion } from 'framer-motion';
@@ -52,96 +52,52 @@ import { HeroGridSkeleton } from './HeroGridSkeleton';
 import { TransactionLoader } from './TransactionLoader';
 import { Modal } from './Modal';
 import { useDeviceType, useIsMobile } from '../hooks/use-mobile';
+import { getAmenityIcon } from '../lib/amenity-icons';
 import {
-  Wifi,
-  UtensilsCrossed,
-  Mountain,
-  Activity,
-  Wind,
-  Car,
-  Recycle,
-  Droplets,
-  Shield,
   Package,
   Users,
-  Bed,
-  Eye,
-  Gauge,
-  Settings,
-  ChefHat,
-  Heart,
-  Refrigerator,
-  Thermometer,
-  AirVent,
-  Circle,
-  Gem,
-  Waves,
-  RotateCcw,
-  Fish,
-  DoorOpen,
-  Lightbulb,
-  Building2,
-  BookOpen,
-  Sparkles,
-  Star,
-  Lock,
-  Zap,
-  Clock,
-  Globe,
-  Tent,
-  Leaf,
-  Phone,
-  Music,
-  Building,
   Lamp,
   CheckCircle,
   User,
-  GaugeCircle,
   Wine,
   GlassWater,
-  ConciergeBell,
-  Bath,
-  Dumbbell,
   Shirt,
-  PenLine,
-  Armchair,
-  Anchor,
   Footprints,
   ShieldCheck,
-  XCircle,
   BadgeCheck,
   Timer,
-  Compass,
   MessageCircle,
-  AlertTriangle,
   Info,
-  Sun,
-  Moon,
   Camera,
-  Bird,
   Hand,
   Network,
-  Scroll,
   Sword,
   Rewind,
-  Ban,
-  DoorClosed,
   VolumeX,
-  Flame,
-  TreePine,
-  Radio,
-  Binoculars,
-  Rocket,
-  Cpu,
-  Bot,
   Key,
   FileText,
   Share,
-  type LucideIcon
+  Heart,
+  Star,
+  Clock,
+  Sparkles,
+  Shield,
+  Ban,
+  AlertTriangle,
+  Leaf,
+  Lock,
+  Eye,
+  Flame,
+  Fish,
+  Compass,
+  Rocket,
+  DoorOpen,
+  Bed,
+  type LucideIcon,
 } from 'lucide-react';
 
 const FIGMA_NAV_ITEMS = [
-  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
+  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
@@ -211,124 +167,6 @@ function HostBadgePill({ badge }: { badge: HostBadge }) {
       </span>
     </div>
   );
-}
-
-// ============================================================================
-// AMENITY ICON MAPPING
-// ============================================================================
-
-function getAmenityIcon(amenityName: string): LucideIcon {
-  const name = amenityName.toLowerCase();
-
-  // WiFi and connectivity
-  if (name.includes('wifi') || name.includes('wi-fi') || name.includes('starlink')) return Wifi;
-  if (name.includes('radio') || name.includes('communication')) return Radio;
-
-  // Kitchen and food
-  if (name.includes('kitchen') || name.includes('galley')) return UtensilsCrossed;
-  if (name.includes('refrigerator') || name.includes('cold') || name.includes('storage')) return Refrigerator;
-  if (name.includes('chef') || name.includes('cooking')) return ChefHat;
-
-  // Climate and environment
-  if (name.includes('air conditioning') || name.includes('climate') || name.includes('heating')) return Thermometer;
-  if (name.includes('life support')) return Activity;
-  if (name.includes('habitat')) return Building2;
-  if (name.includes('pressure')) return Gauge;
-
-  // Views and nature
-  if (name.includes('view') || name.includes('observation')) return Eye;
-  if (name.includes('mountain') || name.includes('floating')) return Mountain;
-  if (name.includes('underwater') || name.includes('ocean') || name.includes('marine')) return Waves;
-  if (name.includes('crystal') || name.includes('gem')) return Gem;
-  if (name.includes('bioluminescent') || name.includes('glow')) return Sparkles;
-  if (name.includes('flora') || name.includes('native') || name.includes('plant') || name.includes('tree')) return TreePine;
-  if (name.includes('wildlife') || name.includes('bird')) return Bird;
-
-  // Space and technology
-  if (name.includes('rover') || name.includes('exploration')) return Car;
-  if (name.includes('monitoring') || name.includes('perimeter')) return Eye;
-  if (name.includes('recycler') || name.includes('fabric')) return Recycle;
-  if (name.includes('drying') || name.includes('thermal')) return Sun;
-  if (name.includes('replicator')) return Cpu;
-  if (name.includes('holodeck')) return Sparkles;
-  if (name.includes('transporter')) return Zap;
-  if (name.includes('robot') || name.includes('butler')) return Bot;
-  if (name.includes('radiation') || name.includes('shielding')) return Shield;
-  if (name.includes('evacuation') || name.includes('emergency') || name.includes('escape')) return Rocket;
-
-  // Historical and cultural
-  if (name.includes('historical') || name.includes('preservation') || name.includes('authentic')) return BookOpen;
-  if (name.includes('artifact') || name.includes('cultural')) return Scroll;
-  if (name.includes('period') || name.includes('furnishing')) return Armchair;
-  if (name.includes('hieroglyphic') || name.includes('painting') || name.includes('art')) return PenLine;
-  if (name.includes('nile') || name.includes('river')) return Anchor;
-  if (name.includes('courtyard') || name.includes('garden')) return Leaf;
-  if (name.includes('tour') || name.includes('guide')) return Compass;
-  if (name.includes('military') || name.includes('camp')) return Tent;
-  if (name.includes('hidden') || name.includes('compartment') || name.includes('secret')) return Lock;
-  if (name.includes('covert') || name.includes('entry')) return DoorClosed;
-
-  // Comfort and amenities
-  if (name.includes('bed') || name.includes('sleeping')) return Bed;
-  if (name.includes('bath') || name.includes('spa')) return Bath;
-  if (name.includes('gym') || name.includes('fitness')) return Dumbbell;
-  if (name.includes('pool') || name.includes('jacuzzi')) return Droplets;
-  if (name.includes('parking')) return Car;
-  if (name.includes('concierge') || name.includes('service')) return ConciergeBell;
-
-  // Stone age / primitive
-  if (name.includes('fire') || name.includes('pit')) return Flame;
-  if (name.includes('fur') || name.includes('bedding')) return Bed;
-  if (name.includes('cave') || name.includes('entrance')) return DoorOpen;
-  if (name.includes('hunting') || name.includes('grok')) return Binoculars;
-  if (name.includes('berry') || name.includes('foraging')) return Leaf;
-  if (name.includes('mammoth') || name.includes('comfort')) return Heart;
-  if (name.includes('smoke') || name.includes('ventilation')) return Wind;
-  if (name.includes('rock') || name.includes('seating')) return Circle;
-  if (name.includes('predator') || name.includes('protection')) return Shield;
-  if (name.includes('spirit') || name.includes('journey')) return Sparkles;
-
-  // Bermuda / Mystery
-  if (name.includes('temporal') || name.includes('anomaly')) return Clock;
-  if (name.includes('compass') || name.includes('unreliable')) return Compass;
-  if (name.includes('calendar') || name.includes('subjective')) return Clock;
-  if (name.includes('research') || name.includes('equipment')) return Settings;
-  if (name.includes('mystery') || name.includes('atmosphere')) return Eye;
-  if (name.includes('bunk') || name.includes('mess')) return Bed;
-  if (name.includes('log') || name.includes('record')) return BookOpen;
-  if (name.includes('dread') || name.includes('existential')) return AlertTriangle;
-  if (name.includes('raft') || name.includes('life')) return Anchor;
-
-  // Area 51 / Classified
-  if (name.includes('classified') || name.includes('cafeteria')) return UtensilsCrossed;
-  if (name.includes('unusual') || name.includes('housekeeping')) return Users;
-  if (name.includes('monitored') || name.includes('communications')) return Radio;
-  if (name.includes('hangar') || name.includes('restricted')) return Ban;
-  if (name.includes('first aid')) return Heart;
-  if (name.includes('night sky')) return Moon;
-  if (name.includes('redacted')) return XCircle;
-
-  // Floating city
-  if (name.includes('window') || name.includes('fishing')) return Fish;
-  if (name.includes('gimbal') || name.includes('furniture')) return Settings;
-  if (name.includes('seasickness') || name.includes('remedies')) return Heart;
-  if (name.includes('life jacket')) return Shield;
-  if (name.includes('boat') || name.includes('parking')) return Anchor;
-  if (name.includes('market') || name.includes('local')) return Building;
-  if (name.includes('stability') || name.includes('rating')) return GaugeCircle;
-  if (name.includes('flotation')) return Waves;
-  if (name.includes('desalination')) return Droplets;
-
-  // Star Trek
-  if (name.includes('vulcan') || name.includes('neighbor')) return Users;
-  if (name.includes('merit') || name.includes('cultural')) return Star;
-  if (name.includes('educational') || name.includes('program')) return BookOpen;
-  if (name.includes('translator') || name.includes('universal')) return Globe;
-  if (name.includes('post-scarcity')) return Sparkles;
-  if (name.includes('transport')) return Zap;
-
-  // Default
-  return Circle;
 }
 
 // ============================================================================
@@ -1220,60 +1058,65 @@ export function ListingDetailPage() {
               </div>
             )}
 
-            {/* Amenities */}
+            {/* Amenities — only show when at least one amenity has a dedicated icon */}
+            {listing.amenities.some((a) => getAmenityIcon(a.name).isDedicated) && (
               <div style={{
-              paddingBottom: '24px',
-            }}>
-              <h3 style={{
-                fontFamily: '"Figtree", sans-serif',
-                fontSize: '22px',
-                fontWeight: 600,
-                color: '#222',
-                marginBottom: '24px',
+                paddingBottom: '24px',
               }}>
-                What this place offers
-              </h3>
-              <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gap: '16px',
-            }}>
-                {listing.amenities.slice(0, 10).map((amenity) => {
-                  const IconComponent = getAmenityIcon(amenity.name);
-                  return (
-                    <div key={amenity.id} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                    }}>
-                      <IconComponent
-                        size={24}
-                        color="#222"
-                        strokeWidth={1.5}
-                        style={{ flexShrink: 0 }}
-                      />
-                      <span style={{
-                        fontFamily: '"Figtree", sans-serif',
-                        fontSize: '16px',
-                        color: '#222',
-                      }}>
-                        {amenity.name}
-                      </span>
-                    </div>
-                  );
-                })}
+                <h3 style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '22px',
+                  fontWeight: 600,
+                  color: '#222',
+                  marginBottom: '24px',
+                }}>
+                  What this place offers
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                  gap: '16px',
+                }}>
+                  {listing.amenities
+                    .filter((amenity) => getAmenityIcon(amenity.name).isDedicated)
+                    .slice(0, 10)
+                    .map((amenity) => {
+                      const { Icon: IconComponent } = getAmenityIcon(amenity.name);
+                      return (
+                        <div key={amenity.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                        }}>
+                          <IconComponent
+                            size={24}
+                            color="#222"
+                            strokeWidth={1.5}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <span style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '16px',
+                            color: '#222',
+                          }}>
+                            {amenity.name}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+                {(listing.amenities.filter((a) => getAmenityIcon(a.name).isDedicated).length > 10) && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => setShowAmenitiesModal(true)}
+                    style={{ marginTop: '24px' }}
+                  >
+                    Show all {listing.amenities.filter((a) => getAmenityIcon(a.name).isDedicated).length} amenities
+                  </Button>
+                )}
               </div>
-              {listing.amenities.length > 10 && (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={() => setShowAmenitiesModal(true)}
-                  style={{ marginTop: '24px' }}
-                >
-                  Show all {listing.amenities.length} amenities
-                </Button>
-              )}
-            </div>
+            )}
 
             {/* Amenities modal (all amenities) */}
             <Modal
@@ -1328,8 +1171,10 @@ export function ListingDetailPage() {
                   display: 'flex',
                   flexDirection: 'column',
                 }}>
-                  {listing.amenities.map((amenity, idx) => {
-                    const IconComponent = getAmenityIcon(amenity.name);
+                  {listing.amenities
+                    .filter((amenity) => getAmenityIcon(amenity.name).isDedicated)
+                    .map((amenity, idx) => {
+                    const { Icon: IconComponent } = getAmenityIcon(amenity.name);
                     return (
                       <div key={amenity.id}>
                         <div style={{
@@ -1353,7 +1198,7 @@ export function ListingDetailPage() {
                             {amenity.name}
                           </span>
                         </div>
-                        {idx < listing.amenities.length - 1 && (
+                        {idx < listing.amenities.filter((a) => getAmenityIcon(a.name).isDedicated).length - 1 && (
                           <div style={{
                             height: '1px',
                             backgroundColor: '#EBEBEB',
@@ -1788,7 +1633,7 @@ export function ListingDetailPage() {
                   <div style={{
                   width: isMobile ? '100%' : '400px',
                   flexShrink: 0,
-                  padding: '24px 0',
+                  padding: '24px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '24px',
                   boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
@@ -1796,9 +1641,9 @@ export function ListingDetailPage() {
                   flexDirection: isMobile ? 'column' : 'row',
                   alignItems: 'stretch',
                 }}>
-                    {/* Left: 266px - avatar, name, Host */}
+                    {/* Left: avatar, name, Host — column width sized so 24px card padding gives equal space left/right of avatar */}
                     <div style={{
-                      width: '266px',
+                      width: '218px',
                       flexShrink: 0,
                       display: 'flex',
                       flexDirection: 'column',
@@ -1855,10 +1700,11 @@ export function ListingDetailPage() {
                       </span>
                     </div>
 
-                    {/* Right: 134px - Reviews, Rating, Years hosting (stacked, with dividers) */}
+                    {/* Right: Reviews, Rating, Years hosting (stacked, with dividers) */}
                     <div style={{
                       width: '134px',
                       flexShrink: 0,
+                      minWidth: 0,
                       display: 'flex',
                       flexDirection: 'column',
                     }}>
@@ -1868,7 +1714,7 @@ export function ListingDetailPage() {
                         flexDirection: 'column',
                         justifyContent: 'center',
                         paddingLeft: '24px',
-                        paddingRight: '24px',
+                        paddingRight: '0',
                         paddingTop: '12px',
                       }}>
                         <div style={{
@@ -1939,7 +1785,9 @@ export function ListingDetailPage() {
                                   fontSize: '12px',
                                   color: '#717171',
                                   fontWeight: 400,
-                                  whiteSpace: 'nowrap',
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  lineHeight: 1.4,
                                 }}>
                                   {duration.text}
                                 </div>

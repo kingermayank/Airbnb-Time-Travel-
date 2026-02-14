@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Text } from '../../foundations/Text';
 import { useDeviceType } from '../../../hooks/use-mobile';
 import './Header.css';
@@ -132,6 +132,20 @@ export function Header({
 }: HeaderProps) {
   const { isMobile } = useDeviceType();
 
+  // Preload nav icon images so they appear instantly (same as other header assets)
+  useEffect(() => {
+    navItems.forEach((item) => {
+      const url = item.iconUrl;
+      if (url && !document.querySelector(`link[rel="preload"][href="${url}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = url;
+        document.head.appendChild(link);
+      }
+    });
+  }, [navItems]);
+
   const headerStyle: React.CSSProperties = {
     ...headerBaseStyle,
     // Mobile-first: column layout, auto height, compact horizontal padding
@@ -189,10 +203,10 @@ export function Header({
           padding: isMobile ? '0 0 var(--ds-spacing-8)' : 0,
         }}
       >
-        {navItems.map((item) => {
-          const isActive = activeNavLabel === item.label && !item.disabled;
-          const isDisabled = item.disabled === true;
-          return (
+{navItems.map((item, index) => {
+            const isActive = activeNavLabel === item.label && !item.disabled;
+            const isDisabled = item.disabled === true;
+            return (
             <button
               key={item.label}
               type="button"
@@ -239,6 +253,9 @@ export function Header({
                     <img
                       src={item.iconUrl}
                       alt=""
+                      width={48}
+                      height={48}
+                      fetchPriority={index === 0 ? 'high' : undefined}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
                   </div>

@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Header, Button, UserMenu } from '@/design-system';
 import type { NavItem } from '@/design-system/patterns';
-import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '@/design-system/patterns/Header/header-nav-assets';
+import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '@/design-system/patterns/Header/header-nav-assets';
 import { HelpCircle, Menu } from 'lucide-react';
 
 /** Exact match to Figma 307-4788: only Time Travel (active) and Mindscapes (coming soon). */
 const FIGMA_NAV_ITEMS: NavItem[] = [
-  { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
+  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
