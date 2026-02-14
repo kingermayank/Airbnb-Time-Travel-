@@ -162,6 +162,14 @@ body {
   button:active:not(:disabled) {
     transform: scale(0.97);
   }
+  @media (prefers-reduced-motion: reduce) {
+    button:not(:disabled) {
+      transition: none;
+    }
+    button:active:not(:disabled) {
+      transform: none;
+    }
+  }
 }
 
 /* Broken Image Fallback Styles */
@@ -178,6 +186,12 @@ img.broken-image-fallback {
 .dark img.broken-image-fallback {
   background: #1f2937;
   border-color: #374151;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  img.broken-image-fallback {
+    animation: none;
+  }
 }
 
 @keyframes fadeIn {

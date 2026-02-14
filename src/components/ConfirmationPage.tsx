@@ -1,12 +1,14 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
-import { Header, Button, UserMenu } from '../design-system';
+import { Header, Button, IconButton } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
+import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
+import { ChevronLeft } from 'lucide-react';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
@@ -74,122 +76,6 @@ const CONFIRMATION_NAV_ITEMS = [
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
-function HeaderRightSlotWithUserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const location = useLocation();
-  const { isMobile, isTablet } = useDeviceType();
-
-  const showPrimaryActions = !isMobile && !isTablet;
-  const showHamburger = !isMobile;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-
-  const navigate = useNavigate();
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--ds-spacing-12)',
-      }}
-    >
-      {showPrimaryActions && (
-        <>
-          <Button
-            variant="ghost"
-            size="md"
-            style={{ color: 'var(--ds-navbar-active)' }}
-            onClick={() => navigate('/')}
-          >
-            Become a host
-          </Button>
-          <button
-            type="button"
-            className="ds-header-right-icon-btn"
-            aria-label="Help"
-            style={{ border: 'none' }}
-            onClick={() => navigate('/faq')}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: 'var(--ds-navbar-active)' }}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <path d="M12 17h.01" />
-            </svg>
-          </button>
-        </>
-      )}
-      {showHamburger && (
-        <button
-          type="button"
-          className="ds-header-right-icon-btn"
-          aria-label="Menu"
-          style={{ border: 'none' }}
-          onClick={() => setIsOpen((prev) => !prev)}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ color: 'var(--ds-navbar-active)' }}
-          >
-            <line x1="4" x2="20" y1="12" y2="12" />
-            <line x1="4" x2="20" y1="6" y2="6" />
-            <line x1="4" x2="20" y1="18" y2="18" />
-          </svg>
-        </button>
-      )}
-      {isOpen && (
-        <div
-          className="ds-user-menu-wrapper"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            zIndex: 30,
-          }}
-        >
-          <UserMenu />
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function ConfirmationPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -237,6 +123,26 @@ export function ConfirmationPage() {
     };
   }, [bookingConfirmed, listing]);
 
+  const fetchListingForConfirm = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await fetchListingDetails(id);
+      if (!data) {
+        setError('Listing not found. Please check the console for details.');
+      } else {
+        setListing(data);
+      }
+    } catch (err) {
+      console.error('Error loading listing:', err);
+      setError(`Failed to load listing details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id) {
       setError('Listing ID is required');
@@ -244,31 +150,16 @@ export function ConfirmationPage() {
       return;
     }
 
-    async function loadListing() {
-      if (!id) return;
-      
-      try {
-        setIsLoading(true);
-        setError(null);
-        console.log('📄 Loading listing details for confirmation page, ID:', id);
-        const data = await fetchListingDetails(id);
-        if (!data) {
-          console.error('❌ No data returned for listing ID:', id);
-          setError('Listing not found. Please check the console for details.');
-        } else {
-          console.log('✅ Listing loaded successfully for confirmation:', data.title);
-          setListing(data);
-        }
-      } catch (err) {
-        console.error('❌ Exception loading listing:', err);
-        setError(`Failed to load listing details: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      } finally {
-        setIsLoading(false);
-      }
+    const routeState = (location as { state?: { listing?: ListingDetails } }).state;
+    const stateListing = routeState?.listing;
+    if (stateListing && stateListing.id === id && stateListing.price_per_night != null) {
+      setListing(stateListing);
+      setIsLoading(false);
+      return;
     }
 
-    loadListing();
-  }, [id]);
+    fetchListingForConfirm();
+  }, [id, (location as { state?: unknown }).state, fetchListingForConfirm]);
 
   // Calculate pricing breakdown - convert to Bitcoin for display
   const calculatePricing = () => {
@@ -363,20 +254,14 @@ export function ConfirmationPage() {
         }}>
           {error || 'Listing not found'}
         </div>
-        <button onClick={() => navigate('/')} style={{
-          padding: '12px 24px',
-          borderRadius: '8px',
-          border: 'none',
-          backgroundColor: '#FF395C',
-          color: 'white',
-          fontSize: '14px',
-          fontFamily: 'var(--ds-font-family)',
-          fontWeight: 500,
-          cursor: 'pointer',
-          marginTop: '20px'
-        }}>
-          Back to Listings
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '20px' }}>
+          <Button variant="primary" size="md" onClick={() => fetchListingForConfirm()}>
+            Retry
+          </Button>
+          <Button variant="secondary" size="md" onClick={() => navigate('/')}>
+            Back to Listings
+          </Button>
+        </div>
       </div>
     );
   }
@@ -442,22 +327,12 @@ export function ConfirmationPage() {
           alignItems: 'center',
           width: '100%'
         }}>
-          <button onClick={() => navigate(`/listing/${id}`)} style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '22px',
-            border: 'none',
-            backgroundColor: 'rgba(242, 242, 242, 1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="rgba(34, 34, 34, 1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <IconButton
+            icon={<ChevronLeft size={24} strokeWidth={2} style={{ color: 'var(--ds-text-primary)' }} />}
+            ariaLabel="Back to listing"
+            onClick={() => navigate(`/listing/${id}`)}
+            style={{ minWidth: 44, minHeight: 44, width: 44, height: 44, flexShrink: 0 }}
+          />
           <div style={{
             fontFamily: 'var(--ds-font-family)',
             fontWeight: 500,
@@ -598,7 +473,7 @@ export function ConfirmationPage() {
                       key={method.id}
                       onClick={handleClick}
                       style={{
-                        border: isSelected ? '2px solid rgba(34, 34, 34, 1)' : '2px solid rgba(217, 217, 217, 1)',
+                        border: isSelected ? '1px solid rgba(34, 34, 34, 1)' : '1px solid rgba(217, 217, 217, 1)',
                         borderRadius: '16px',
                         padding: '16px',
                         backgroundColor: '#FFF',
@@ -1100,7 +975,7 @@ export function ConfirmationPage() {
                 </div>
               </div>
 
-              {/* Book Button */}
+              {/* Confirm and Warp Button – matches Reserve button on listing detail */}
               <button
                 disabled={isBookingSubmitting}
                 onClick={async () => {
@@ -1133,29 +1008,21 @@ export function ConfirmationPage() {
                   }
                 }}
                 style={{
-                  backgroundColor: isBookingSubmitting ? 'rgba(222, 49, 81, 0.7)' : 'rgba(222, 49, 81, 1)',
                   width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: 'var(--ds-radius-full)',
+                  padding: '14px',
+                  background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                  color: 'white',
                   border: 'none',
+                  borderRadius: '9999px',
+                  fontSize: '16px',
+                  fontWeight: 600,
                   cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
-                  boxShadow: '0px 1px 2px rgba(31, 41, 55, 0.08)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'opacity 0.2s'
+                  fontFamily: '"Figtree", sans-serif',
+                  marginBottom: '16px',
+                  opacity: isBookingSubmitting ? 0.7 : 1,
                 }}
-                onMouseEnter={e => !isBookingSubmitting && (e.currentTarget.style.opacity = '0.9')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
-                <span style={{
-                  fontFamily: 'var(--ds-font-family)',
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  lineHeight: '20px',
-                  letterSpacing: '-0.28px',
-                  color: 'white'
-                }}>{isBookingSubmitting ? 'Securing...' : 'Book Launch Window'}</span>
+                {isBookingSubmitting ? 'Processing...' : 'Confirm and Warp'}
               </button>
             </div>
           </div>
@@ -1169,10 +1036,11 @@ export function ConfirmationPage() {
       >
         <div style={{
           padding: '24px',
-          width: '500px',
-          maxWidth: '90vw',
+          width: '420px',
+          maxWidth: 'calc(100vw - 48px)',
           maxHeight: '85vh',
           overflow: 'auto',
+          boxSizing: 'border-box',
         }}>
           <div style={{
             fontFamily: 'var(--ds-font-family)',

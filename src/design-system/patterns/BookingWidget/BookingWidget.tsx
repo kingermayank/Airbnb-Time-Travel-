@@ -66,6 +66,7 @@ export function BookingWidget({
               type="button"
               onClick={() => onDurationChange(opt)}
               style={{
+                minHeight: 44,
                 padding: 'var(--ds-spacing-8) var(--ds-spacing-16)',
                 borderRadius: 'var(--ds-radius-md)',
                 border:
@@ -100,9 +101,10 @@ export function BookingWidget({
             onClick={() => onGuestCountChange(guestCount)}
             style={{
               marginTop: 'var(--ds-spacing-4)',
+              minHeight: 44,
+              padding: 'var(--ds-spacing-8) 0',
               background: 'none',
               border: 'none',
-              padding: 0,
               fontFamily: 'var(--ds-font-family)',
               fontSize: 'var(--ds-text-12)',
               color: 'var(--ds-accent)',

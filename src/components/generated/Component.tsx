@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
-import { Header, SearchField, ListingCard, Button, Footer, UserMenu } from '../../design-system';
+import { Header, SearchField, ListingCard, Button, Footer } from '../../design-system';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
-import { HelpCircle, Menu } from 'lucide-react';
+import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
 import { useDeviceType, useIsMobile } from '../../hooks/use-mobile';
 
@@ -84,86 +84,6 @@ const FIGMA_NAV_ITEMS = [
   { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
-
-function HeaderRightSlotWithUserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const location = useLocation();
-  const { isMobile, isTablet } = useDeviceType();
-  const navigate = useNavigate();
-
-  const showPrimaryActions = !isMobile && !isTablet;
-  const showHamburger = !isMobile;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--ds-spacing-12)',
-      }}
-    >
-      {showPrimaryActions && (
-        <>
-          <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-            Become a host
-          </Button>
-          <button
-            type="button"
-            className="ds-header-right-icon-btn"
-            aria-label="Help"
-            onClick={() => navigate('/faq')}
-          >
-            <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-          </button>
-        </>
-      )}
-      {showHamburger && (
-        <button
-          type="button"
-          className="ds-header-right-icon-btn"
-          aria-label="Menu"
-          onClick={() => setIsOpen(prev => !prev)}
-        >
-          <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-        </button>
-      )}
-      {isOpen && (
-        <div
-          className="ds-user-menu-wrapper"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            zIndex: 30,
-          }}
-        >
-          <UserMenu />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export const AirbnbUi = () => {
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 /* Heart button: scale down on active */
 .ds-listing-card-heart-btn {
-  transition: transform 0.1s ease;
+  transition: transform var(--ds-motion-duration-sm) var(--ds-motion-ease);
 }
 .ds-listing-card-heart-btn:active:not(:disabled) {
   transform: scale(0.97);
@@ -8,11 +8,13 @@
 
 /* Heart icon: scale on hover (110%), applied to the icon so the graphic grows while hovering the button */
 .ds-listing-card-heart-icon {
-  transition: transform 0.2s ease;
+  transition: transform var(--ds-motion-duration-md) var(--ds-motion-ease);
   display: inline-flex;
 }
-.ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
-  transform: scale(1.10);
+@media (hover: hover) {
+  .ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
+    transform: scale(1.10);
+  }
 }
 
 /* Micro-interaction: gentle pop when heart is liked (runs on click, not on hover) */
@@ -37,5 +39,22 @@
 
 /* Smooth fill/stroke transition when toggling liked (applied to Heart via wrapper) */
 .ds-listing-card-heart-icon svg {
-  transition: fill 0.28s ease, stroke 0.28s ease;
+  transition: fill var(--ds-motion-duration-md) var(--ds-motion-ease), stroke var(--ds-motion-duration-md) var(--ds-motion-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-listing-card-heart-btn,
+  .ds-listing-card-heart-icon,
+  .ds-listing-card-heart-icon svg {
+    transition: none;
+  }
+  .ds-listing-card-heart-btn:active:not(:disabled) {
+    transform: none;
+  }
+  .ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
+    transform: none;
+  }
+  .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-icon {
+    animation: none;
+  }
 }

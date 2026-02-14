@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { HelpCircle, Menu } from 'lucide-react';
-import { Header, Button, UserMenu, SectionTitle, Text, Input } from '../design-system';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Header, Button, SectionTitle, Text, Input } from '../design-system';
+import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 
 const FEEDBACK_NAV_ITEMS = [
@@ -23,82 +23,6 @@ const textareaStyle: React.CSSProperties = {
   minHeight: 120,
   resize: 'vertical',
 };
-
-function HeaderRightSlotWithUserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const location = useLocation();
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-
-  const navigate = useNavigate();
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--ds-spacing-12)',
-      }}
-    >
-      <Button
-        variant="ghost"
-        size="md"
-        style={{ color: 'var(--ds-navbar-active)' }}
-        onClick={() => navigate('/')}
-      >
-        Become a host
-      </Button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Help"
-        style={{ border: 'none' }}
-        onClick={() => navigate('/faq')}
-      >
-        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Menu"
-        style={{ border: 'none' }}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      {isOpen && (
-        <div
-          className="ds-user-menu-wrapper"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            zIndex: 30,
-          }}
-        >
-          <UserMenu />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function FeedbackPage() {
   const navigate = useNavigate();

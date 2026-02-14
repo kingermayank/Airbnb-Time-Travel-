@@ -1,7 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import './Modal.css';
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (el) => el.offsetParent !== null && !el.hasAttribute('disabled')
+  );
+}
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,6 +19,10 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, children }: ModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const shouldReduceMotion = useReducedMotion();
+
   // Handle escape key
   useEffect(() => {
     if (!isOpen) return;
@@ -32,6 +45,60 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
     };
   }, [isOpen]);
 
+  // Focus trap and return focus
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+
+    const content = contentRef.current;
+    if (content) {
+      const focusable = getFocusableElements(content);
+      const first = focusable[0];
+      if (first) {
+        requestAnimationFrame(() => first.focus());
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !contentRef.current) return;
+      const focusable = getFocusableElements(contentRef.current);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement as HTMLElement;
+
+      if (e.shiftKey) {
+        if (current === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (current === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      const prev = previousActiveElementRef.current;
+      if (prev && typeof prev.focus === 'function') {
+        requestAnimationFrame(() => prev.focus());
+      }
+    };
+  }, [isOpen]);
+
+  const motionDuration = shouldReduceMotion ? 0 : 0.2;
+  const motionEase = [0.25, 0.46, 0.45, 0.94] as const;
+
+  const backdropTransition = { duration: motionDuration, ease: motionEase };
+  const contentTransition = { duration: motionDuration, ease: motionEase };
+
   const modalNode = (
     <AnimatePresence>
       {isOpen && (
@@ -41,19 +108,16 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.12 }}
+          transition={backdropTransition}
         >
           <motion.div
+            ref={contentRef}
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
-            initial={{ opacity: 0, scale: 0.95, y: 40 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 40 }}
-            transition={{
-              type: 'spring',
-              stiffness: 600,
-              damping: 45,
-            }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 40 }}
+            transition={contentTransition}
             style={{
               backgroundColor: 'rgb(255, 255, 255)',
               background: 'rgb(255, 255, 255)',

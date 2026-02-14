@@ -33,10 +33,12 @@
   margin-bottom: 4px;
 }
 
-/* Right-side icon buttons: filled grey, no border (Figma 307-4788) */
+/* Right-side icon buttons: filled grey, no border (Figma 307-4788). Min 44px tap target (a11y). */
 .ds-header-right-icon-btn {
-  width: 40px;
-  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -47,8 +49,10 @@
   cursor: pointer;
   transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
 }
-.ds-header-right-icon-btn:hover {
-  background: #ebebeb;
+@media (hover: hover) {
+  .ds-header-right-icon-btn:hover {
+    background: #ebebeb;
+  }
 }
 .ds-header-right-icon-btn:active:not(:disabled) {
   transform: scale(0.97);

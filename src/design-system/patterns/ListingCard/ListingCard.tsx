@@ -39,13 +39,16 @@ const imageContainerStyle: React.CSSProperties = {
   backgroundColor: '#f3f3f3',
 };
 
+/* Min 44px tap target for touch/a11y (Emil's design engineering) */
 const heartButtonStyle: React.CSSProperties = {
   position: 'absolute',
   right: 'var(--ds-spacing-12)',
   top: 'var(--ds-spacing-12)',
+  minWidth: 44,
+  minHeight: 44,
+  padding: 10,
   background: 'none',
   border: 'none',
-  padding: 0,
   cursor: 'pointer',
   zIndex: 2,
   display: 'flex',
@@ -108,6 +111,7 @@ export function ListingCard({
         <img
           src={image}
           alt={title}
+          loading="lazy"
           style={{
             width: '100%',
             height: '100%',
@@ -152,15 +156,16 @@ export function ListingCard({
           {title}
         </Text>
         <div style={priceRowStyle}>
+          <Text variant="bodySmall" color="primary" weight="medium">
+            {price}
+          </Text>
           {[year != null && year !== '' ? year : null, rating != null ? `★ ${rating}` : null]
             .filter(Boolean)
             .map((segment, index) => (
               <React.Fragment key={index}>
-                {index > 0 && (
-                  <Text variant="bodySmall" color="secondary" style={{ fontWeight: 800 }}>
-                    ·
-                  </Text>
-                )}
+                <Text variant="bodySmall" color="secondary" style={{ fontWeight: 800 }}>
+                  ·
+                </Text>
                 <Text variant="bodySmall" color="secondary">
                   {segment}
                 </Text>

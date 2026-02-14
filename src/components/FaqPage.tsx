@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { HelpCircle, Menu } from 'lucide-react';
-import { Header, Button, UserMenu, SectionTitle, Text } from '../design-system';
+import { useNavigate } from 'react-router-dom';
+import { Header, Button, SectionTitle, Text } from '../design-system';
+import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 
 const FAQ_NAV_ITEMS = [
@@ -35,82 +34,6 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
       'A mix of tools, experimentation, and iteration. Primarily Figma for planning and UI design; Cursor plus Claude Code for building; multiple AI models (Nano Banana Pro, Flux Schnell, Luma Photon) for image generation; Supabase for backend; and various tools for motion, image refinement, and layout exploration. A full breakdown of the process is planned for an upcoming newsletter post.',
   },
 ];
-
-function HeaderRightSlotWithUserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const location = useLocation();
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-
-  const navigate = useNavigate();
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--ds-spacing-12)',
-      }}
-    >
-      <Button
-        variant="ghost"
-        size="md"
-        style={{ color: 'var(--ds-navbar-active)' }}
-        onClick={() => navigate('/')}
-      >
-        Become a host
-      </Button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Help"
-        style={{ border: 'none' }}
-        onClick={() => navigate('/faq')}
-      >
-        <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      <button
-        type="button"
-        className="ds-header-right-icon-btn"
-        aria-label="Menu"
-        style={{ border: 'none' }}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-      </button>
-      {isOpen && (
-        <div
-          className="ds-user-menu-wrapper"
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            zIndex: 30,
-          }}
-        >
-          <UserMenu />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function FaqPage() {
   const navigate = useNavigate();

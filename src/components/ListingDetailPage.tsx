@@ -43,8 +43,9 @@ function getFirstName(fullName: string): string {
   return words[0] || fullName;
 }
 
-import { Header, Button, UserMenu } from '../design-system';
+import { Header, Button } from '../design-system';
 import { PORTAL_VIDEO_URL, PORTAL_POSTER_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PhotoViewer } from './PhotoViewer';
 import { motion } from 'framer-motion';
 import { HeroGridSkeleton } from './HeroGridSkeleton';
@@ -133,8 +134,6 @@ import {
   Rocket,
   Cpu,
   Bot,
-  HelpCircle,
-  Menu,
   Key,
   FileText,
   Share,
@@ -145,106 +144,6 @@ const FIGMA_NAV_ITEMS = [
   { label: 'Time Travel', iconVideoUrl: PORTAL_VIDEO_URL, iconPosterUrl: PORTAL_POSTER_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
-
-function HeaderRightSlotWithUserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isMobile, isTablet } = useDeviceType();
-
-  const showPrimaryActions = !isMobile && !isTablet;
-  const showHamburger = !isMobile;
-
-  const handleClose = useCallback(() => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsOpen(false);
-      setIsClosing(false);
-    }, 150); // Match animation duration
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(event.target as Node)) {
-        handleClose();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, handleClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      handleClose();
-    }
-  }, [location.pathname, isOpen, handleClose]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--ds-spacing-12)',
-      }}
-    >
-      {showPrimaryActions && (
-        <>
-          <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }}>
-            Become a host
-          </Button>
-          <button
-            type="button"
-            className="ds-header-right-icon-btn"
-            aria-label="Help"
-            style={{ border: 'none' }}
-            onClick={() => navigate('/faq')}
-          >
-            <HelpCircle size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-          </button>
-        </>
-      )}
-      {showHamburger && (
-        <button
-          type="button"
-          className="ds-header-right-icon-btn"
-          aria-label="Menu"
-          style={{ border: 'none' }}
-          onClick={() => {
-            if (isOpen) {
-              handleClose();
-            } else {
-              setIsOpen(true);
-              setIsClosing(false);
-            }
-          }}
-        >
-          <Menu size={20} strokeWidth={2} style={{ color: 'var(--ds-navbar-active)' }} />
-        </button>
-      )}
-      {isOpen && (
-        <div
-          className={`ds-user-menu-wrapper ${isClosing ? 'ds-user-menu-wrapper--closing' : ''}`}
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            zIndex: 30,
-          }}
-        >
-          <UserMenu />
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ============================================================================
 // HOST BADGE COMPONENTS (Airbnb-style)
@@ -494,34 +393,34 @@ export function ListingDetailPage() {
   const durationDropdownRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    async function loadListing() {
-      if (!id) {
-        setError('No listing ID provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        // Reset image loading states when loading a new listing
-        setImageLoadingStates({});
-        const data = await fetchListingDetails(id);
-        if (data) {
-          setListing(data);
-        } else {
-          setError('Listing not found');
-        }
-      } catch (err) {
-        console.error('Error loading listing:', err);
-        setError('Failed to load listing');
-      } finally {
-        setLoading(false);
-      }
+  const loadListing = useCallback(async () => {
+    if (!id) {
+      setError('No listing ID provided');
+      setLoading(false);
+      return;
     }
 
-    loadListing();
+    try {
+      setLoading(true);
+      setError(null);
+      setImageLoadingStates({});
+      const data = await fetchListingDetails(id);
+      if (data) {
+        setListing(data);
+      } else {
+        setError('Listing not found');
+      }
+    } catch (err) {
+      console.error('Error loading listing:', err);
+      setError('Failed to load listing');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    loadListing();
+  }, [loadListing]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -554,32 +453,18 @@ export function ListingDetailPage() {
     return imageLoadingStates[imageKey] === true;
   };
 
-  const handleReserve = async () => {
+  const handleReserve = () => {
     if (!listing) return;
 
-    setIsBooking(true);
-
-    // Calculate prices
     const baseFare = listing.price_per_night * selectedDuration.multiplier;
     const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
     const cleaningFee = listing.cleaning_fee || 50;
     const occupancyTax = baseFare * (listing.occupancy_tax_percent || 8) / 100;
     const totalPrice = baseFare + serviceFee + cleaningFee + occupancyTax;
 
-    // Simulate booking delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
-    setIsBooking(false);
-
-    // Navigate to confirmation (payment + vehicle selection) page
     navigate(`/listing/${listing.id}/confirm`, {
       state: {
-        listing: {
-          id: listing.id,
-          title: listing.title,
-          image: listing.main_image,
-          host: listing.hosts?.name,
-        },
+        listing, // full listing so confirm page can render immediately without refetch
         booking: {
           duration: selectedDuration.label,
           guests: guestCount,
@@ -647,21 +532,14 @@ export function ListingDetailPage() {
         <h2 style={{ fontFamily: '"Figtree", sans-serif', fontSize: '24px', color: '#222' }}>
           {error || 'Listing not found'}
         </h2>
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#FF385C',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            fontFamily: '"Figtree", sans-serif',
-          }}
-        >
-          Back to Home
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Button variant="primary" size="md" onClick={() => loadListing()}>
+            Retry
+          </Button>
+          <Button variant="secondary" size="md" onClick={() => navigate('/')}>
+            Back to Home
+          </Button>
+        </div>
       </div>
     );
   }
@@ -787,7 +665,7 @@ export function ListingDetailPage() {
               type="button"
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#f0f0f0';
-                e.currentTarget.style.borderRadius = '12px';
+                e.currentTarget.style.borderRadius = '8px';
                 e.currentTarget.style.padding = '4px 8px';
                 e.currentTarget.style.margin = '-4px -8px';
               }}
@@ -831,7 +709,7 @@ export function ListingDetailPage() {
               type="button"
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#f0f0f0';
-                e.currentTarget.style.borderRadius = '12px';
+                e.currentTarget.style.borderRadius = '8px';
                 e.currentTarget.style.padding = '4px 8px';
                 e.currentTarget.style.margin = '-4px -8px';
               }}
@@ -1236,8 +1114,11 @@ export function ListingDetailPage() {
             >
               <div style={{
                 padding: '24px',
+                width: '560px',
+                maxWidth: 'calc(100vw - 48px)',
                 maxHeight: '85vh',
                 overflow: 'auto',
+                boxSizing: 'border-box',
               }}>
                 <div style={{
                   display: 'flex',
@@ -1401,8 +1282,11 @@ export function ListingDetailPage() {
             >
               <div style={{
                 padding: '24px',
+                width: '560px',
+                maxWidth: 'calc(100vw - 48px)',
                 maxHeight: '85vh',
                 overflow: 'auto',
+                boxSizing: 'border-box',
               }}>
                 <div style={{
                   display: 'flex',

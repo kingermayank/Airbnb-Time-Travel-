@@ -119,6 +119,13 @@
   --ds-radius-booking-card: 12px;
   --ds-booking-card-padding: 24px;
 
+  /* ---- Motion (Emil: ease-out for enter/exit, 150–250ms UI, 200–300ms modals) ---- */
+  --ds-motion-duration-sm: 150ms;
+  --ds-motion-duration-md: 200ms;
+  --ds-motion-duration-modal: 200ms;
+  --ds-motion-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ds-motion-ease: ease;
+
   /* ---- Shadows ---- */
   --ds-shadow-badge: 0px 3px 4px rgba(0, 0, 0, 0.16);
   --ds-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);

@@ -45,3 +45,9 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .bouncing-dot {
+    animation: none;
+  }
+}
+

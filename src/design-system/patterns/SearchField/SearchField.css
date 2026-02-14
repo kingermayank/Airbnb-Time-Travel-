@@ -12,13 +12,14 @@
   box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
 }
 
-.ds-search-field-section:hover:not(:disabled) {
-  box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
-}
-
-/* Who zone already applies the overlay; avoid double overlay on the Who section button */
-.ds-search-field-who-zone .ds-search-field-section:hover:not(:disabled) {
-  box-shadow: none;
+@media (hover: hover) {
+  .ds-search-field-section:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
+  }
+  /* Who zone already applies the overlay; avoid double overlay on the Who section button */
+  .ds-search-field-who-zone .ds-search-field-section:hover:not(:disabled) {
+    box-shadow: none;
+  }
 }
 
 .ds-search-field-search-btn {
@@ -39,8 +40,10 @@
   transform: scale(0.97);
 }
 
-.ds-search-field-search-btn:hover:not(:disabled) {
-  background-color: var(--ds-accent-hover);
+@media (hover: hover) {
+  .ds-search-field-search-btn:hover:not(:disabled) {
+    background-color: var(--ds-accent-hover);
+  }
 }
 
 .ds-search-field-search-btn:disabled {
