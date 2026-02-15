@@ -219,7 +219,7 @@ export function ListingDetailPage() {
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
-  const [guestCount, setGuestCount] = useState(0);
+  const [guestCount, setGuestCount] = useState(1);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -238,7 +238,7 @@ export function ListingDetailPage() {
     if (listing && !appliedInitialGuestCountRef.current && typeof (location.state as { guestCount?: number })?.guestCount === 'number') {
       const initial = (location.state as { guestCount: number }).guestCount;
       const cap = listing.guest_capacity ?? 10;
-      const val = Math.min(cap, Math.max(0, initial));
+      const val = Math.min(cap, Math.max(1, initial));
       setGuestCount(val);
       appliedInitialGuestCountRef.current = true;
     }
@@ -1395,16 +1395,16 @@ export function ListingDetailPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.max(0, guestCount - 1)); }}
-                          disabled={guestCount <= 0}
+                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.max(1, guestCount - 1)); }}
+                          disabled={guestCount <= 1}
                           style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             border: '1px solid #B0B0B0',
                             background: 'white',
-                            cursor: guestCount <= 0 ? 'not-allowed' : 'pointer',
-                            opacity: guestCount <= 0 ? 0.5 : 1,
+                            cursor: guestCount <= 1 ? 'not-allowed' : 'pointer',
+                            opacity: guestCount <= 1 ? 0.5 : 1,
                           }}
                         >
                           -

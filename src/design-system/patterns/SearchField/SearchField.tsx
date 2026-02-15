@@ -28,8 +28,8 @@ export interface SearchFieldProps {
 }
 
 const defaultWhere: SearchFieldSectionConfig = {
-  label: 'Where',
-  placeholder: 'Search destinations',
+  label: 'Theme',
+  placeholder: 'Select theme',
 };
 const defaultEra: SearchFieldSectionConfig = {
   label: 'Era',
@@ -145,7 +145,7 @@ export function SearchField({
         </Text>
       </button>
 
-      {showDividerAfterWhere && <div style={dividerStyle} aria-hidden />}
+      <div style={{ ...dividerStyle, backgroundColor: showDividerAfterWhere ? 'var(--ds-border)' : 'transparent' }} aria-hidden />
 
       <button
         type="button"
@@ -164,7 +164,7 @@ export function SearchField({
         </Text>
       </button>
 
-      {showDividerAfterEra && <div style={dividerStyle} aria-hidden />}
+      <div style={{ ...dividerStyle, backgroundColor: showDividerAfterEra ? 'var(--ds-border)' : 'transparent' }} aria-hidden />
 
       <div
         className={`ds-search-field-who-zone${effectiveSection === 'who' ? ' ds-search-field-who-zone--hover' : ''}${isActive('who') ? ' ds-search-field-who-zone--active' : ''}`}

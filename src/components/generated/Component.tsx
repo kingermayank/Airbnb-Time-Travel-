@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
@@ -101,6 +102,47 @@ const FIGMA_NAV_ITEMS = [
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
+// ── Picker transition animation constants ──────────────────────────────
+const TAB_INDEX: Record<string, number> = { where: 0, era: 1, who: 2 };
+const SLIDE_OFFSET = 80; // px
+
+const enterTransition = {
+  type: 'spring' as const,
+  stiffness: 300,
+  damping: 28,
+  mass: 0.8,
+};
+
+const exitTransition = {
+  type: 'tween' as const,
+  duration: 0.15,
+  ease: 'easeIn' as const,
+};
+
+const slideVariants = {
+  enter: (dir: number) => ({
+    x: dir * SLIDE_OFFSET,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: enterTransition,
+  },
+  exit: (dir: number) => ({
+    x: dir * -SLIDE_OFFSET,
+    opacity: 0,
+    transition: exitTransition,
+  }),
+};
+
+const instantTransition = { duration: 0 };
+const reducedMotionVariants = {
+  enter: { opacity: 0 },
+  center: { opacity: 1, transition: instantTransition },
+  exit: { opacity: 0, transition: instantTransition },
+};
+
 export const AirbnbUi = () => {
   const navigate = useNavigate();
   const [listings, setListings] = useState<ListingCardType[]>(MOCK_LISTINGS);
@@ -118,6 +160,27 @@ export const AirbnbUi = () => {
   const [adultsCount, setAdultsCount] = useState(0);
   const [childrenCount, setChildrenCount] = useState(0);
   const totalGuestCount = adultsCount + childrenCount;
+
+  // ── Picker transition direction tracking ──────────────────────────────
+  const prevSectionRef = useRef<string | null>(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Direction: +1 = forward (slide from right), -1 = backward (slide from left)
+  // Comparing numeric indices handles ALL 6 permutations including direct jumps (where<->who)
+  const direction = useMemo(() => {
+    const prev = prevSectionRef.current;
+    const curr = activeSection;
+    if (!prev || !curr) return 1;
+    return (TAB_INDEX[curr] ?? 0) > (TAB_INDEX[prev] ?? 0) ? 1 : -1;
+  }, [activeSection]);
+
+  // Update ref AFTER direction is computed
+  useEffect(() => {
+    if (activeSection) prevSectionRef.current = activeSection;
+  }, [activeSection]);
+
+  // Era button center offset relative to searchDropdownRef (measured in onEraClick before state change)
+  const [eraTabCenterLeft, setEraTabCenterLeft] = useState<number | null>(null);
 
   const pickerStorageBaseUrl = useMemo(() => {
     const url = (import.meta as { env?: { VITE_SUPABASE_URL?: string } }).env?.VITE_SUPABASE_URL;
@@ -234,11 +297,23 @@ export const AirbnbUi = () => {
             activeSection={activeSection}
             onSearch={handleSearch}
             onWhereClick={() => setActiveSection((s) => (s === 'where' ? null : 'where'))}
-            onEraClick={() => setActiveSection((s) => (s === 'era' ? null : 'era'))}
+            onEraClick={() => {
+              // Measure era button center before toggling, so the picker is positioned correctly on first render
+              if (searchDropdownRef.current) {
+                const buttons = searchDropdownRef.current.querySelectorAll('button[aria-expanded]');
+                const eraButton = buttons[1] as HTMLElement | undefined;
+                if (eraButton) {
+                  const containerRect = searchDropdownRef.current.getBoundingClientRect();
+                  const eraRect = eraButton.getBoundingClientRect();
+                  setEraTabCenterLeft(eraRect.left + eraRect.width / 2 - containerRect.left);
+                }
+              }
+              setActiveSection((s) => (s === 'era' ? null : 'era'));
+            }}
             onWhoClick={() => setActiveSection((s) => (s === 'who' ? null : 'who'))}
             where={{
-              label: 'Where',
-              placeholder: getThemeLabel(selectedTheme) ?? 'Search destinations',
+              label: 'Theme',
+              placeholder: getThemeLabel(selectedTheme) ?? 'Select theme',
             }}
             era={{
               label: 'Era',
@@ -249,79 +324,75 @@ export const AirbnbUi = () => {
               placeholder: totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests',
             }}
           />
-          {activeSection === 'where' && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                marginTop: 4,
-                zIndex: 20,
-              }}
-              aria-label="Theme picker"
-            >
-              <ThemePicker
-                items={themeOptions}
-                selectedId={selectedTheme ?? undefined}
-                onSelect={(id) => setSelectedTheme((current) => (current === id ? null : id))}
-              />
-            </div>
-          )}
-          {activeSection === 'era' && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                marginTop: 4,
-                zIndex: 20,
-              }}
-              aria-label="Era picker"
-            >
-              <EraPicker
-                items={eraOptions}
-                selectedId={selectedEra ?? undefined}
-                onSelect={(id) => setSelectedEra((current) => (current === id ? null : id))}
-              />
-            </div>
-          )}
-          {activeSection === 'who' && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                left: 'auto',
-                marginTop: 4,
-                zIndex: 20,
-              }}
-              aria-label="Guest picker"
-            >
-              <GuestPicker
-                categories={[
-                  {
-                    id: 'adults',
-                    label: 'Adults',
-                    subtitle: 'Ages 13 or above',
-                    count: adultsCount,
-                    max: 10,
-                  },
-                  {
-                    id: 'children',
-                    label: 'Children',
-                    subtitle: 'Ages 2 – 12',
-                    count: childrenCount,
-                    max: 10,
-                  },
-                ]}
-                onChange={(id, newCount) => {
-                  if (id === 'adults') setAdultsCount(newCount);
-                  else if (id === 'children') setChildrenCount(newCount);
+          <AnimatePresence mode="wait" custom={direction}>
+            {activeSection && (
+              <motion.div
+                key={activeSection}
+                custom={direction}
+                variants={shouldReduceMotion ? reducedMotionVariants : slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  marginTop: 4,
+                  zIndex: 20,
+                  ...(activeSection === 'where'
+                    ? { left: 0 }
+                    : activeSection === 'era'
+                      ? { left: eraTabCenterLeft != null ? eraTabCenterLeft - 210 : 0 }
+                      : { right: 0, left: 'auto' }),
                 }}
-              />
-            </div>
-          )}
+                aria-label={
+                  activeSection === 'where'
+                    ? 'Theme picker'
+                    : activeSection === 'era'
+                      ? 'Era picker'
+                      : 'Guest picker'
+                }
+              >
+                {activeSection === 'where' && (
+                  <ThemePicker
+                    items={themeOptions}
+                    selectedId={selectedTheme ?? undefined}
+                    onSelect={(id) => setSelectedTheme((current) => (current === id ? null : id))}
+                  />
+                )}
+                {activeSection === 'era' && (
+                  <EraPicker
+                    items={eraOptions}
+                    selectedId={selectedEra ?? undefined}
+                    onSelect={(id) => setSelectedEra((current) => (current === id ? null : id))}
+                  />
+                )}
+                {activeSection === 'who' && (
+                  <GuestPicker
+                    categories={[
+                      {
+                        id: 'adults',
+                        label: 'Adults',
+                        subtitle: 'Ages 13 or above',
+                        count: adultsCount,
+                        max: 10,
+                      },
+                      {
+                        id: 'children',
+                        label: 'Children',
+                        subtitle: 'Ages 2 – 12',
+                        count: childrenCount,
+                        max: 10,
+                      },
+                    ]}
+                    onChange={(id, newCount) => {
+                      if (id === 'adults') setAdultsCount(newCount);
+                      else if (id === 'children') setChildrenCount(newCount);
+                    }}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
