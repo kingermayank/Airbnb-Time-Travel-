@@ -63,6 +63,24 @@ import {
   Bird,
   Scroll,
   Sun,
+  Tv,
+  Swords,
+  ShieldCheck,
+  CalendarClock,
+  Navigation,
+  Palette,
+  Crown,
+  Feather,
+  Ship,
+  Utensils,
+  Warehouse,
+  ShoppingBag,
+  Award,
+  Landmark,
+  GraduationCap,
+  Music,
+  Archive,
+  Snowflake,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -89,6 +107,17 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   const w = match(name, ['wifi', 'wi-fi', 'starlink'], Wifi);
   if (w) return w;
   if (match(name, ['radio', 'communication'], Radio)) return { Icon: Radio, isDedicated: true };
+
+  // Building and atmosphere
+  if (match(name, ['nyc', 'building', 'atmosphere'], Building2)) return { Icon: Building2, isDedicated: true };
+  if (match(name, ['panoramic', 'views'], Eye)) return { Icon: Eye, isDedicated: true };
+  if (match(name, ['night', 'watch', 'protection'], ShieldCheck)) return { Icon: ShieldCheck, isDedicated: true };
+  if (match(name, ['command', 'access'], Lock)) return { Icon: Lock, isDedicated: true };
+  if (match(name, ['elite', 'guard', 'perimeter'], Shield)) return { Icon: Shield, isDedicated: true };
+  if (match(name, ['edwardian', 'technology'], Settings)) return { Icon: Settings, isDedicated: true };
+  if (match(name, ['iceberg', 'spotting'], Binoculars)) return { Icon: Binoculars, isDedicated: true };
+  if (match(name, ['chandelier', 'decor'], Sparkles)) return { Icon: Sparkles, isDedicated: true };
+  if (match(name, ['brandy', 'champagne', 'service'], ConciergeBell)) return { Icon: ConciergeBell, isDedicated: true };
 
   // Kitchen and food
   if (match(name, ['kitchen', 'galley'], UtensilsCrossed)) return { Icon: UtensilsCrossed, isDedicated: true };
@@ -126,13 +155,20 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   if (match(name, ['historical', 'preservation', 'authentic'], BookOpen)) return { Icon: BookOpen, isDedicated: true };
   if (match(name, ['artifact', 'cultural'], Scroll)) return { Icon: Scroll, isDedicated: true };
   if (match(name, ['period', 'furnishing'], Armchair)) return { Icon: Armchair, isDedicated: true };
-  if (match(name, ['hieroglyphic', 'painting', 'art'], PenLine)) return { Icon: PenLine, isDedicated: true };
-  if (match(name, ['nile', 'river'], Anchor)) return { Icon: Anchor, isDedicated: true };
+  if (match(name, ['hieroglyphic', 'decoration', 'painting', 'art'], Palette)) return { Icon: Palette, isDedicated: true };
+  if (match(name, ['nile', 'yamuna', 'river'], Anchor)) return { Icon: Anchor, isDedicated: true };
   if (match(name, ['courtyard', 'garden'], Leaf)) return { Icon: Leaf, isDedicated: true };
   if (match(name, ['tour', 'guide'], Compass)) return { Icon: Compass, isDedicated: true };
   if (match(name, ['military', 'camp'], Tent)) return { Icon: Tent, isDedicated: true };
   if (match(name, ['hidden', 'compartment', 'secret'], Lock)) return { Icon: Lock, isDedicated: true };
   if (match(name, ['covert', 'entry'], DoorClosed)) return { Icon: DoorClosed, isDedicated: true };
+  if (match(name, ['bronze', 'armor'], ShieldCheck)) return { Icon: ShieldCheck, isDedicated: true };
+  if (match(name, ['weapons', 'rack'], Swords)) return { Icon: Swords, isDedicated: true };
+  if (match(name, ['royal', 'entry', 'crown'], Crown)) return { Icon: Crown, isDedicated: true };
+  if (match(name, ['feather', 'pillow'], Feather)) return { Icon: Feather, isDedicated: true };
+  if (match(name, ['atlantic', 'crossing', 'ocean-facing', 'southampton', 'departure'], Ship)) return { Icon: Ship, isDedicated: true };
+  if (match(name, ['retro', 'tv', 'technology'], Tv)) return { Icon: Tv, isDedicated: true };
+  if (match(name, ['dining', 'access'], Utensils)) return { Icon: Utensils, isDedicated: true };
 
   // Comfort and amenities
   if (match(name, ['bed', 'sleeping'], Bed)) return { Icon: Bed, isDedicated: true };
@@ -140,7 +176,13 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   if (match(name, ['gym', 'fitness'], Dumbbell)) return { Icon: Dumbbell, isDedicated: true };
   if (match(name, ['pool', 'jacuzzi'], Droplets)) return { Icon: Droplets, isDedicated: true };
   if (name.includes('parking')) return { Icon: Car, isDedicated: true };
-  if (match(name, ['concierge', 'service'], ConciergeBell)) return { Icon: ConciergeBell, isDedicated: true };
+  if (match(name, ['concierge', 'service', 'steward'], ConciergeBell)) return { Icon: ConciergeBell, isDedicated: true };
+  if (match(name, ['wardrobe', 'storage'], Warehouse)) return { Icon: Warehouse, isDedicated: true };
+  if (match(name, ['vinyl', 'record'], Music)) return { Icon: Music, isDedicated: true };
+  if (match(name, ['educational', 'materials'], GraduationCap)) return { Icon: GraduationCap, isDedicated: true };
+  if (match(name, ['immersion', 'experience'], Award)) return { Icon: Award, isDedicated: true };
+  if (match(name, ['marble', 'craftsmanship', 'inlay'], Landmark)) return { Icon: Landmark, isDedicated: true };
+  if (match(name, ['cooling', 'architecture'], Snowflake)) return { Icon: Snowflake, isDedicated: true };
 
   // Stone age / primitive
   if (match(name, ['fire', 'pit'], Flame)) return { Icon: Flame, isDedicated: true };
@@ -157,8 +199,8 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
 
   // Bermuda / Mystery
   if (match(name, ['temporal', 'anomaly'], Clock)) return { Icon: Clock, isDedicated: true };
-  if (match(name, ['compass', 'unreliable'], Compass)) return { Icon: Compass, isDedicated: true };
-  if (match(name, ['calendar', 'subjective'], Clock)) return { Icon: Clock, isDedicated: true };
+  if (name.includes('unreliable compass')) return { Icon: Navigation, isDedicated: true };
+  if (name.includes('subjective calendar')) return { Icon: CalendarClock, isDedicated: true };
   if (match(name, ['research', 'equipment'], Settings)) return { Icon: Settings, isDedicated: true };
   if (match(name, ['mystery', 'atmosphere'], Eye)) return { Icon: Eye, isDedicated: true };
   if (match(name, ['bunk', 'mess'], Bed)) return { Icon: Bed, isDedicated: true };
