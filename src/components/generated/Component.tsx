@@ -127,7 +127,7 @@ export const AirbnbUi = () => {
       return null;
     }
     const base = url.replace(/\/$/, '');
-    const fullUrl = `${base}/storage/v1/object/public/listing-images/picker`;
+    const fullUrl = `${base}/storage/v1/object/public/listing-images/Filter`;
     console.log('✅ [Picker Debug] Picker base URL:', fullUrl);
     return fullUrl;
   }, []);
