@@ -146,10 +146,10 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   if (match(name, ['drying', 'thermal'], Sun)) return { Icon: Sun, isDedicated: true };
   if (name.includes('replicator')) return { Icon: Cpu, isDedicated: true };
   if (name.includes('holodeck')) return { Icon: Sparkles, isDedicated: true };
-  if (name.includes('transporter')) return { Icon: Zap, isDedicated: true };
+  if (name.includes('transporter access')) return { Icon: Zap, isDedicated: true };
   if (match(name, ['robot', 'butler'], Bot)) return { Icon: Bot, isDedicated: true };
   if (match(name, ['radiation', 'shielding'], Shield)) return { Icon: Shield, isDedicated: true };
-  if (match(name, ['evacuation', 'emergency', 'escape'], Rocket)) return { Icon: Rocket, isDedicated: true };
+  if (match(name, ['evacuation', 'emergency transport', 'escape'], Rocket)) return { Icon: Rocket, isDedicated: true };
 
   // Historical and cultural
   if (match(name, ['historical', 'preservation', 'authentic'], BookOpen)) return { Icon: BookOpen, isDedicated: true };
