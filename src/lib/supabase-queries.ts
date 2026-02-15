@@ -12,18 +12,24 @@ import type {
   Booking,
 } from '../types/database';
 
+export interface FetchListingsOptions {
+  theme?: string;
+  era?: string;
+}
+
 /**
- * Fetch all listings with host information for card display
+ * Fetch all listings with host information for card display.
+ * Optional theme/era filter; applied only when provided (e.g. when user clicks Search).
  */
-export async function fetchListings(): Promise<ListingCard[]> {
+export async function fetchListings(options?: FetchListingsOptions): Promise<ListingCard[]> {
   if (!isSupabaseConfigured()) {
     console.warn('⚠️ fetchListings: Supabase not configured');
     // Return empty array instead of throwing - let component handle fallback
     return [];
   }
   
-  console.log('🔄 fetchListings: Querying Supabase for listings...');
-  const { data, error } = await supabase
+  console.log('🔄 fetchListings: Querying Supabase for listings...', options ?? {});
+  let query = supabase
     .from('listings')
     .select(`
       id,
@@ -32,9 +38,20 @@ export async function fetchListings(): Promise<ListingCard[]> {
       thumbnail_image,
       overall_rating,
       date,
-      is_guest_favorite
+      is_guest_favorite,
+      theme,
+      era
     `)
     .order('created_at', { ascending: false });
+
+  if (options?.theme) {
+    query = query.eq('theme', options.theme);
+  }
+  if (options?.era) {
+    query = query.eq('era', options.era);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('❌ Error fetching listings from Supabase:', error);
@@ -82,6 +99,8 @@ export async function fetchListings(): Promise<ListingCard[]> {
     date: listing.date || undefined,
     // Only show frequently revisited pill for specific listings, regardless of database value
     isGuestFavorite: shouldShowFrequentlyRevisited(listing.title),
+    theme: listing.theme ?? undefined,
+    era: listing.era ?? undefined,
   }));
 
   // Custom sort order for homepage display

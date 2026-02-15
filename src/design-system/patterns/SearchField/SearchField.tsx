@@ -13,7 +13,9 @@ export interface SearchFieldSectionConfig {
 export interface SearchFieldProps {
   /** Optional: pin hover state for Storybook (overrides real hover). */
   pinnedHoverSection?: SearchFieldHoverSection;
-  /** Section labels and placeholders. */
+  /** Which section has its dropdown open (active state). */
+  activeSection?: SearchFieldHoverSection;
+  /** Section labels and placeholders. Parent can pass selection display (e.g. theme name) as placeholder. */
   where?: SearchFieldSectionConfig;
   era?: SearchFieldSectionConfig;
   who?: SearchFieldSectionConfig;
@@ -84,6 +86,7 @@ const whoZoneBaseStyle: React.CSSProperties = {
 
 export function SearchField({
   pinnedHoverSection,
+  activeSection,
   where = defaultWhere,
   era = defaultEra,
   who = defaultWho,
@@ -96,28 +99,43 @@ export function SearchField({
 }: SearchFieldProps) {
   const [hoveredSection, setHoveredSection] = React.useState<SearchFieldHoverSection>(null);
   const effectiveHover = pinnedHoverSection ?? hoveredSection;
+  /** Hover or active: same logic for overlay and divider visibility (dividers hidden when section is hovered or active). */
+  const effectiveSection = activeSection ?? effectiveHover;
 
+  /** Hover only: gray fill. Active section fill is handled by CSS (white); don't override. */
   const getSectionStyle = (section: SearchFieldHoverSection): React.CSSProperties => ({
     ...sectionBaseStyle,
-    boxShadow: effectiveHover === section ? 'inset 0 0 0 999px var(--ds-overlay-hover)' : undefined,
+    boxShadow: effectiveSection === section && !isActive(section) ? 'inset 0 0 0 999px var(--ds-overlay-hover)' : undefined,
   });
+
+  const isActive = (section: SearchFieldHoverSection) => activeSection === section;
 
   const whoZoneStyle: React.CSSProperties = {
     ...whoZoneBaseStyle,
   };
 
-  const showDividerAfterWhere = effectiveHover !== 'where' && effectiveHover !== 'era';
-  const showDividerAfterEra = effectiveHover !== 'era' && effectiveHover !== 'who';
+  const showDividerAfterWhere = effectiveSection !== 'where' && effectiveSection !== 'era';
+  const showDividerAfterEra = effectiveSection !== 'era' && effectiveSection !== 'who';
+
+  const hasActiveSection = activeSection != null;
+
+  const containerStyleWithActive = hasActiveSection
+    ? { ...containerStyle, backgroundColor: 'var(--ds-surface-icon-button)' }
+    : containerStyle;
 
   return (
-    <div className={className} style={{ ...containerStyle, ...style }}>
+    <div
+      className={[className, hasActiveSection ? 'ds-search-field-has-active' : ''].filter(Boolean).join(' ')}
+      style={{ ...containerStyleWithActive, ...style }}
+    >
       <button
         type="button"
-        className="ds-search-field-section"
+        className={`ds-search-field-section${isActive('where') ? ' ds-search-field-section--active' : ''}`}
         style={getSectionStyle('where')}
         onClick={onWhereClick}
         onMouseEnter={() => setHoveredSection('where')}
         onMouseLeave={() => setHoveredSection(null)}
+        aria-expanded={isActive('where')}
       >
         <Text variant="label" color="primary">
           {where.label}
@@ -131,11 +149,12 @@ export function SearchField({
 
       <button
         type="button"
-        className="ds-search-field-section"
+        className={`ds-search-field-section${isActive('era') ? ' ds-search-field-section--active' : ''}`}
         style={{ ...getSectionStyle('era'), padding: '0 var(--ds-spacing-32)' }}
         onClick={onEraClick}
         onMouseEnter={() => setHoveredSection('era')}
         onMouseLeave={() => setHoveredSection(null)}
+        aria-expanded={isActive('era')}
       >
         <Text variant="label" color="primary">
           {era.label}
@@ -148,7 +167,7 @@ export function SearchField({
       {showDividerAfterEra && <div style={dividerStyle} aria-hidden />}
 
       <div
-        className={`ds-search-field-who-zone${effectiveHover === 'who' ? ' ds-search-field-who-zone--hover' : ''}`}
+        className={`ds-search-field-who-zone${effectiveSection === 'who' ? ' ds-search-field-who-zone--hover' : ''}${isActive('who') ? ' ds-search-field-who-zone--active' : ''}`}
         style={whoZoneStyle}
         onMouseEnter={() => setHoveredSection('who')}
         onMouseLeave={() => setHoveredSection(null)}
@@ -156,9 +175,10 @@ export function SearchField({
       >
         <button
           type="button"
-          className="ds-search-field-section"
+          className={`ds-search-field-section${isActive('who') ? ' ds-search-field-section--active' : ''}`}
           style={{ ...sectionBaseStyle, padding: '0 var(--ds-spacing-32)' }}
           onClick={onWhoClick}
+          aria-expanded={isActive('who')}
         >
           <Text variant="label" color="primary">
             {who.label}

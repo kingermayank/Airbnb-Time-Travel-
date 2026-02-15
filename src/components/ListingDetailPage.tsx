@@ -212,13 +212,14 @@ function formatHostingDuration(joinDate: string | null, listing: ListingDetails)
 export function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [listing, setListing] = useState<ListingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
-  const [guestCount, setGuestCount] = useState(1);
+  const [guestCount, setGuestCount] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -229,7 +230,19 @@ export function ListingDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   const guestDropdownRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
+  const appliedInitialGuestCountRef = useRef(false);
   const isMobile = useIsMobile();
+
+  // Pre-fill guest count from homepage when navigating with state
+  useEffect(() => {
+    if (listing && !appliedInitialGuestCountRef.current && typeof (location.state as { guestCount?: number })?.guestCount === 'number') {
+      const initial = (location.state as { guestCount: number }).guestCount;
+      const cap = listing.guest_capacity ?? 10;
+      const val = Math.min(cap, Math.max(0, initial));
+      setGuestCount(val);
+      appliedInitialGuestCountRef.current = true;
+    }
+  }, [listing, location.state]);
 
   const loadListing = useCallback(async () => {
     if (!id) {
@@ -292,7 +305,7 @@ export function ListingDetailPage() {
   };
 
   const handleReserve = () => {
-    if (!listing) return;
+    if (!listing || guestCount < 1) return;
 
     const baseFare = listing.price_per_night * selectedDuration.multiplier;
     const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
@@ -1381,16 +1394,17 @@ export function ListingDetailPage() {
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
-                          onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
-                          disabled={guestCount <= 1}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.max(0, guestCount - 1)); }}
+                          disabled={guestCount <= 0}
                           style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             border: '1px solid #B0B0B0',
                             background: 'white',
-                            cursor: guestCount <= 1 ? 'not-allowed' : 'pointer',
-                            opacity: guestCount <= 1 ? 0.5 : 1,
+                            cursor: guestCount <= 0 ? 'not-allowed' : 'pointer',
+                            opacity: guestCount <= 0 ? 0.5 : 1,
                           }}
                         >
                           -
@@ -1405,7 +1419,8 @@ export function ListingDetailPage() {
                           {guestCount}
                         </span>
                         <button
-                          onClick={() => setGuestCount(Math.min(listing.guest_capacity || 10, guestCount + 1))}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.min(listing.guest_capacity || 10, guestCount + 1)); }}
                           disabled={guestCount >= (listing.guest_capacity || 10)}
                           style={{
                             width: '32px',
@@ -1428,7 +1443,7 @@ export function ListingDetailPage() {
               {/* Reserve Button */}
               <button
                 onClick={handleReserve}
-                disabled={isBooking}
+                disabled={isBooking || guestCount < 1}
                 style={{
                   width: '100%',
                   padding: '14px',

@@ -40,11 +40,11 @@ const imageContainerStyle: React.CSSProperties = {
   backgroundColor: '#f3f3f3',
 };
 
-/* Min 44px tap target for touch/a11y (Emil's design engineering) */
+/* Min 44px tap target for touch/a11y (Emil's design engineering). Pushed tight into top-right corner to mirror badge placement. */
 const heartButtonStyle: React.CSSProperties = {
   position: 'absolute',
-  right: 'var(--ds-spacing-12)',
-  top: 'var(--ds-spacing-12)',
+  top: 4,
+  right: 4,
   minWidth: 44,
   minHeight: 44,
   padding: 10,

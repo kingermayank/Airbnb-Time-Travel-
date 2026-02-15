@@ -1,23 +1,68 @@
 .ds-search-field-section {
-  transition: box-shadow 0.2s ease;
+  /* No transition: active ↔ default snaps instantly on dismiss */
+}
+/* No scale-down on press for Where / Era / Who (override global button style) */
+.ds-search-field-section:active:not(:disabled) {
+  transform: none;
+}
+
+/* Active: white fill + subtle shadow; stack on top so shadow falls over adjacent sections */
+.ds-search-field-section--active {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 0 0 999px var(--ds-surface);
+}
+
+/* When one section is active, non-active sections get gray fill (same solid as container) */
+.ds-search-field-has-active .ds-search-field-section:not(.ds-search-field-section--active) {
+  box-shadow: inset 0 0 0 999px var(--ds-surface-icon-button);
+}
+
+/* Who zone when Who is active: white fill + subtle shadow; stack on top so shadow falls over adjacent sections */
+.ds-search-field-who-zone--active {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 0 0 999px var(--ds-surface);
+}
+/* When Who is active, inner button has --active (white); ensure non-active gray never wins (specificity) */
+.ds-search-field-has-active .ds-search-field-who-zone--active .ds-search-field-section {
+  box-shadow: none;
+}
+.ds-search-field-has-active .ds-search-field-who-zone--active .ds-search-field-section.ds-search-field-section--active {
+  box-shadow: inset 0 0 0 999px var(--ds-surface);
+}
+
+/* When another section is active, Who zone gets gray fill (same solid as container) */
+.ds-search-field-has-active .ds-search-field-who-zone:not(.ds-search-field-who-zone--active) {
+  box-shadow: inset 0 0 0 999px var(--ds-surface-icon-button);
 }
 
 .ds-search-field-who-zone {
   position: relative;
   border-radius: 40px;
-  transition: box-shadow 0.2s ease;
+  /* No transition: active ↔ default snaps instantly on dismiss */
 }
 
-.ds-search-field-who-zone--hover {
+/* Hover only when Who is not active; when active, --active (white) applies */
+.ds-search-field-who-zone--hover:not(.ds-search-field-who-zone--active) {
   box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
 }
 
 @media (hover: hover) {
-  .ds-search-field-section:hover:not(:disabled) {
+  /* Gray fill on hover only when section is not active; active section keeps its white fill on hover */
+  .ds-search-field-section:hover:not(:disabled):not(.ds-search-field-section--active) {
     box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
   }
-  /* Who zone already applies the overlay; avoid double overlay on the Who section button */
-  .ds-search-field-who-zone .ds-search-field-section:hover:not(:disabled) {
+  /* Active section: keep white fill + shadow when hovered */
+  .ds-search-field-section--active:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 0 0 999px var(--ds-surface);
+  }
+  /* Who zone applies overlay; avoid double overlay on the Who section button when zone is not active */
+  .ds-search-field-who-zone:not(.ds-search-field-who-zone--active) .ds-search-field-section:hover:not(:disabled) {
+    box-shadow: none;
+  }
+  /* When Who is active, inner button must not get gray on hover */
+  .ds-search-field-who-zone--active .ds-search-field-section:hover:not(:disabled) {
     box-shadow: none;
   }
 }

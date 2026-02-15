@@ -121,26 +121,12 @@ export const AirbnbUi = () => {
 
   const pickerStorageBaseUrl = useMemo(() => {
     const url = (import.meta as { env?: { VITE_SUPABASE_URL?: string } }).env?.VITE_SUPABASE_URL;
-    console.log('🔍 [Picker Debug] VITE_SUPABASE_URL:', url);
-    if (!url || typeof url !== 'string') {
-      console.warn('⚠️ [Picker Debug] VITE_SUPABASE_URL not found or invalid, returning null');
-      return null;
-    }
+    if (!url || typeof url !== 'string') return null;
     const base = url.replace(/\/$/, '');
-    const fullUrl = `${base}/storage/v1/object/public/listing-images/Filter`;
-    console.log('✅ [Picker Debug] Picker base URL:', fullUrl);
-    return fullUrl;
+    return `${base}/storage/v1/object/public/listing-images/Filter`;
   }, []);
-  const themeOptions = useMemo(() => {
-    const options = getThemeOptions(pickerStorageBaseUrl);
-    console.log('🎨 [Picker Debug] Theme options:', options.map(o => ({ id: o.id, url: o.imageUrl })));
-    return options;
-  }, [pickerStorageBaseUrl]);
-  const eraOptions = useMemo(() => {
-    const options = getEraOptions(pickerStorageBaseUrl);
-    console.log('📅 [Picker Debug] Era options:', options.map(o => ({ id: o.id, url: o.imageUrl })));
-    return options;
-  }, [pickerStorageBaseUrl]);
+  const themeOptions = useMemo(() => getThemeOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
+  const eraOptions = useMemo(() => getEraOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
 
   const loadListings = useCallback(
     async (theme?: string, era?: string) => {

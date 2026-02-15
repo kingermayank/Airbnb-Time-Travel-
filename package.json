@@ -14,6 +14,7 @@
     "update-images-webp": "tsx scripts/update-listing-images-webp.ts",
     "generate-thumbnails": "tsx scripts/generate-thumbnails-for-existing.ts",
     "extract-portal-poster": "tsx scripts/extract-portal-poster.ts",
+    "upload-picker-images": "tsx scripts/upload-picker-images.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -73,6 +74,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "prettier": "3.5.3",
+    "sharp": "^0.34.5",
     "storybook": "8.6.15",
     "tailwindcss": "^4.0.9",
     "tsx": "^4.21.0",

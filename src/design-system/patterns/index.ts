@@ -20,6 +20,9 @@ export { ReviewsSection } from './ReviewsSection';
 export { ListingHeroGallery } from './ListingHeroGallery';
 export { Footer } from './Footer';
 export { UserMenu } from './UserMenu';
+export { EraPicker } from './EraPicker';
+export { ThemePicker } from './ThemePicker';
+export { GuestPicker } from './GuestPicker';
 
 export type { HeaderProps, NavItem } from './Header';
 export type { SearchBarProps, EraOption } from './SearchBar';
@@ -47,3 +50,6 @@ export type { ReviewsSectionProps } from './ReviewsSection';
 export type { ListingHeroGalleryProps, ListingHeroGalleryImage } from './ListingHeroGallery';
 export type { FooterProps, FooterLink } from './Footer';
 export type { UserMenuProps, UserMenuItem, UserMenuItemIcon } from './UserMenu';
+export type { EraPickerProps, EraPickerItem } from './EraPicker';
+export type { ThemePickerProps, ThemePickerItem } from './ThemePicker';
+export type { GuestPickerProps, GuestCategory } from './GuestPicker';

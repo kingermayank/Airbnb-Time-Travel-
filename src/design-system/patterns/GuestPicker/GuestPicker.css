@@ -1,0 +1,98 @@
+/* ---- GuestPicker ---- */
+
+.ds-guest-picker {
+  width: 420px;
+  background: var(--ds-surface);
+  border-radius: var(--ds-radius-xl);
+  padding: var(--ds-spacing-40) var(--ds-spacing-24);
+  box-shadow: var(--ds-shadow-card);
+}
+
+/* ---- Row ---- */
+
+.ds-guest-picker__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ds-spacing-24) 0;
+}
+
+.ds-guest-picker__row--first {
+  padding-top: 0;
+}
+
+.ds-guest-picker__row--last {
+  padding-bottom: 0;
+}
+
+/* ---- Text ---- */
+
+.ds-guest-picker__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-2);
+}
+
+/* ---- Stepper ---- */
+
+.ds-guest-picker__stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-8);
+  flex-shrink: 0;
+}
+
+/* ---- Count ---- */
+
+.ds-guest-picker__count {
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ---- Stepper buttons ---- */
+
+.ds-guest-picker__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ds-radius-full);
+  border: 1px solid var(--ds-border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ds-text-primary);
+  transition:
+    border-color var(--ds-motion-duration-sm) var(--ds-motion-ease-out),
+    color var(--ds-motion-duration-sm) var(--ds-motion-ease-out);
+}
+
+.ds-guest-picker__btn:hover:not(:disabled) {
+  border-color: var(--ds-text-primary);
+}
+
+.ds-guest-picker__btn:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.ds-guest-picker__btn--disabled,
+.ds-guest-picker__btn:disabled {
+  color: var(--ds-border);
+  border-color: var(--ds-border-light);
+  cursor: not-allowed;
+}
+
+/* ---- Divider ---- */
+
+.ds-guest-picker__divider {
+  margin: 0;
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-guest-picker__btn {
+    transition: none;
+  }
+}
