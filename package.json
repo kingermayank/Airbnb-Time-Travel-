@@ -14,7 +14,6 @@
     "update-images-webp": "tsx scripts/update-listing-images-webp.ts",
     "generate-thumbnails": "tsx scripts/generate-thumbnails-for-existing.ts",
     "extract-portal-poster": "tsx scripts/extract-portal-poster.ts",
-    "upload-picker-images": "tsx scripts/upload-picker-images.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
