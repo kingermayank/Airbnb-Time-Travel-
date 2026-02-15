@@ -1,13 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
-import { Header, SearchField, ListingCard, Button, Footer } from '../../design-system';
+import {
+  Header,
+  SearchField,
+  ListingCard,
+  Button,
+  Footer,
+  ThemePicker,
+  EraPicker,
+  GuestPicker,
+} from '../../design-system';
+import type { SearchFieldHoverSection } from '../../design-system';
+import {
+  getThemeOptions,
+  getEraOptions,
+  getThemeLabel,
+  getEraLabel,
+} from '../../lib/homepage-filters';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
-import { useDeviceType, useIsMobile } from '../../hooks/use-mobile';
+import { useIsMobile } from '../../hooks/use-mobile';
 
 // Mock data - fallback until Supabase is populated (prices in Bitcoin)
 // Ordered according to homepage display order
@@ -92,30 +108,87 @@ export const AirbnbUi = () => {
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const searchBarAreaRef = useRef<HTMLDivElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
   const [showHeaderDivider, setShowHeaderDivider] = useState(false);
 
-  useEffect(() => {
-    async function loadListings() {
-      if (!isSupabaseConfigured()) {
-        // Keep showing MOCK_LISTINGS; no fetch attempted
-        return;
-      }
+  // Filter state: applied only when user clicks Search
+  const [activeSection, setActiveSection] = useState<SearchFieldHoverSection>(null);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [selectedEra, setSelectedEra] = useState<string | null>(null);
+  const [adultsCount, setAdultsCount] = useState(0);
+  const [childrenCount, setChildrenCount] = useState(0);
+  const totalGuestCount = adultsCount + childrenCount;
+
+  const pickerStorageBaseUrl = useMemo(() => {
+    const url = (import.meta as { env?: { VITE_SUPABASE_URL?: string } }).env?.VITE_SUPABASE_URL;
+    console.log('🔍 [Picker Debug] VITE_SUPABASE_URL:', url);
+    if (!url || typeof url !== 'string') {
+      console.warn('⚠️ [Picker Debug] VITE_SUPABASE_URL not found or invalid, returning null');
+      return null;
+    }
+    const base = url.replace(/\/$/, '');
+    const fullUrl = `${base}/storage/v1/object/public/listing-images/picker`;
+    console.log('✅ [Picker Debug] Picker base URL:', fullUrl);
+    return fullUrl;
+  }, []);
+  const themeOptions = useMemo(() => {
+    const options = getThemeOptions(pickerStorageBaseUrl);
+    console.log('🎨 [Picker Debug] Theme options:', options.map(o => ({ id: o.id, url: o.imageUrl })));
+    return options;
+  }, [pickerStorageBaseUrl]);
+  const eraOptions = useMemo(() => {
+    const options = getEraOptions(pickerStorageBaseUrl);
+    console.log('📅 [Picker Debug] Era options:', options.map(o => ({ id: o.id, url: o.imageUrl })));
+    return options;
+  }, [pickerStorageBaseUrl]);
+
+  const loadListings = useCallback(
+    async (theme?: string, era?: string) => {
+      if (!isSupabaseConfigured()) return;
       try {
         setIsLoading(true);
         setError(null);
-        const data = await fetchListings();
+        const data = await fetchListings({ theme, era });
         if (data && data.length > 0) {
           setListings(data);
+        } else {
+          setListings([]);
         }
-        // If configured but no data returned, keep current state (mock or empty)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load listings');
       } finally {
         setIsLoading(false);
       }
-    }
+    },
+    []
+  );
+
+  useEffect(() => {
     loadListings();
-  }, []);
+  }, [loadListings]);
+
+  // Dismiss picker when tapping/clicking outside the search bar and open card
+  useEffect(() => {
+    const handlePointerDownOutside = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (
+        activeSection != null &&
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(target)
+      ) {
+        setActiveSection(null);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDownOutside);
+    return () => document.removeEventListener('pointerdown', handlePointerDownOutside);
+  }, [activeSection]);
+
+  const handleSearch = useCallback(() => {
+    setActiveSection(null);
+    if (isSupabaseConfigured()) {
+      loadListings(selectedTheme ?? undefined, selectedEra ?? undefined);
+    }
+  }, [selectedTheme, selectedEra, loadListings]);
 
   // Scroll listener to detect when search bar area moves behind the sticky header
   useEffect(() => {
@@ -164,16 +237,106 @@ export const AirbnbUi = () => {
           padding: 'var(--ds-spacing-12) 0 var(--ds-spacing-32) 0',
           backgroundColor: 'var(--ds-surface-header)',
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
           borderBottom: '1px solid var(--ds-border-light)',
+          position: 'relative',
         }}
       >
-        <SearchField
-          onSearch={() => {}}
-          where={{ label: 'Where', placeholder: 'Search destinations' }}
-          era={{ label: 'Era', placeholder: 'Select Timeline' }}
-          who={{ label: 'Who', placeholder: 'Add guests' }}
-        />
+        <div ref={searchDropdownRef} style={{ position: 'relative', width: '100%', maxWidth: 851, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <SearchField
+            activeSection={activeSection}
+            onSearch={handleSearch}
+            onWhereClick={() => setActiveSection((s) => (s === 'where' ? null : 'where'))}
+            onEraClick={() => setActiveSection((s) => (s === 'era' ? null : 'era'))}
+            onWhoClick={() => setActiveSection((s) => (s === 'who' ? null : 'who'))}
+            where={{
+              label: 'Where',
+              placeholder: getThemeLabel(selectedTheme) ?? 'Search destinations',
+            }}
+            era={{
+              label: 'Era',
+              placeholder: getEraLabel(selectedEra) ?? 'Select Timeline',
+            }}
+            who={{
+              label: 'Who',
+              placeholder: totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests',
+            }}
+          />
+          {activeSection === 'where' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: 4,
+                zIndex: 20,
+              }}
+              aria-label="Theme picker"
+            >
+              <ThemePicker
+                items={themeOptions}
+                selectedId={selectedTheme ?? undefined}
+                onSelect={(id) => setSelectedTheme((current) => (current === id ? null : id))}
+              />
+            </div>
+          )}
+          {activeSection === 'era' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginTop: 4,
+                zIndex: 20,
+              }}
+              aria-label="Era picker"
+            >
+              <EraPicker
+                items={eraOptions}
+                selectedId={selectedEra ?? undefined}
+                onSelect={(id) => setSelectedEra((current) => (current === id ? null : id))}
+              />
+            </div>
+          )}
+          {activeSection === 'who' && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                left: 'auto',
+                marginTop: 4,
+                zIndex: 20,
+              }}
+              aria-label="Guest picker"
+            >
+              <GuestPicker
+                categories={[
+                  {
+                    id: 'adults',
+                    label: 'Adults',
+                    subtitle: 'Ages 13 or above',
+                    count: adultsCount,
+                    max: 10,
+                  },
+                  {
+                    id: 'children',
+                    label: 'Children',
+                    subtitle: 'Ages 2 – 12',
+                    count: childrenCount,
+                    max: 10,
+                  },
+                ]}
+                onChange={(id, newCount) => {
+                  if (id === 'adults') setAdultsCount(newCount);
+                  else if (id === 'children') setChildrenCount(newCount);
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {!isSupabaseConfigured() && (
@@ -291,7 +454,7 @@ export const AirbnbUi = () => {
                 year={listing.date}
                 rating={listing.rating}
                 isGuestFavorite={listing.isGuestFavorite}
-                onClick={() => navigate(`/listing/${listing.id}`)}
+                onClick={() => navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } })}
               />
             ))}
           </div>
