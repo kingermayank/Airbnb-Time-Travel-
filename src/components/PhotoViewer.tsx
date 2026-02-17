@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
 
 interface PhotoViewerProps {
   images: string[];
@@ -8,16 +8,38 @@ interface PhotoViewerProps {
   layoutId?: string; // Deprecated: kept for backward compatibility, no longer used
 }
 
+// Slower, gentler ease-out so motion feels fluid and not abrupt
+const CAROUSEL_TRANSITION = {
+  type: 'tween' as const,
+  duration: 0.72,
+  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+};
+
 export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLiked, setIsLiked] = useState(false);
-  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
-  const [hasNavigated, setHasNavigated] = useState(false); // Track if user has navigated away from initial image
+  const shouldReduceMotion = useReducedMotion();
+  const mainImageFrameRef = useRef<HTMLDivElement>(null);
+
+  const n = images.length;
+  const prevIndex = n > 1 ? (currentIndex - 1 + n) % n : 0;
+  const nextIndex = n > 1 ? (currentIndex + 1) % n : 0;
+  const hasMultiple = n > 1;
+  const effectiveRightIndex = n === 2 ? null : nextIndex;
+  const slotTransition = shouldReduceMotion ? { duration: 0 } : CAROUSEL_TRANSITION;
+  const centerCardShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
-    setHasNavigated(false); // Reset when initialIndex changes
   }, [initialIndex]);
+
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
+  }, [n]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
+  }, [n]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,19 +59,7 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [currentIndex, direction]);
-
-  const handlePrevious = () => {
-    setDirection(-1);
-    setHasNavigated(true); // Mark that user has navigated
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-  };
-
-  const handleNext = () => {
-    setDirection(1);
-    setHasNavigated(true); // Mark that user has navigated
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-  };
+  }, [handlePrevious, handleNext, onClose]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -57,7 +67,6 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
         title: 'Check out this photo',
         url: images[currentIndex],
       }).catch(() => {
-        // Fallback: copy to clipboard
         navigator.clipboard.writeText(images[currentIndex]);
       });
     } else {
@@ -67,46 +76,16 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
 
   if (images.length === 0) return null;
 
-  // Fast slide transition for image navigation
-  const slideTransition = {
-    type: 'tween' as const,
-    duration: 0.3,
-    ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
-  };
-
-  // Backdrop - very quick appearance (minimal fade)
   const backdropVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: {
-        duration: 0.15,
-        ease: 'easeOut' as const,
-      },
+      transition: { duration: 0.15, ease: 'easeOut' as const },
     },
     exit: {
       opacity: 0,
-      transition: {
-        duration: 0.15,
-        ease: 'easeIn' as const,
-      },
+      transition: { duration: 0.15, ease: 'easeIn' as const },
     },
-  };
-
-  // Slide variants for directional image transitions
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 1,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      x: direction > 0 ? '-100%' : '100%',
-      opacity: 1,
-    }),
   };
 
   return (
@@ -129,83 +108,41 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
           justifyContent: 'center',
         }}
         onClick={(e) => {
-          if (e.target === e.currentTarget) {
+          const target = e.target as HTMLElement;
+          if (target.closest('[data-photo-viewer-control="true"]')) return;
+          if (!mainImageFrameRef.current?.contains(target)) {
             onClose();
           }
         }}
       >
-      {/* Top Bar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '80px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 24px',
-          zIndex: 10000,
-        }}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            fontSize: '14px',
-            fontFamily: '"Figtree", sans-serif',
-            fontWeight: 500,
-            cursor: 'pointer',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            transition: 'background-color 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          X Close
-        </button>
-
-        {/* Image Counter */}
+        {/* Top Bar - white text and icons on dark */}
         <div
+          data-photo-viewer-control="true"
           style={{
-            color: 'white',
-            fontSize: '14px',
-            fontFamily: '"Figtree", sans-serif',
-            fontWeight: 500,
-          }}
-        >
-          {currentIndex + 1} / {images.length}
-        </div>
-
-        {/* Right Actions */}
-        <div
-          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '80px',
             display: 'flex',
-            gap: '16px',
             alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 24px',
+            zIndex: 10000,
           }}
         >
-          {/* Share Button */}
           <button
-            onClick={handleShare}
+            onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
+              color: 'white',
+              fontSize: '14px',
+              fontFamily: '"Figtree", sans-serif',
+              fontWeight: 500,
               cursor: 'pointer',
-              padding: '8px',
+              padding: '8px 12px',
               borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               transition: 'background-color 0.2s',
             }}
             onMouseEnter={(e) => {
@@ -215,189 +152,370 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
+            X Close
           </button>
 
-          {/* Like Button */}
-          <button
-            onClick={() => setIsLiked(!isLiked)}
+          <div
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
+              color: 'white',
+              fontSize: '14px',
+              fontFamily: '"Figtree", sans-serif',
+              fontWeight: 500,
             }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isLiked ? '#FF385C' : 'none'}
-              stroke={isLiked ? '#FF385C' : 'white'}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            {currentIndex + 1} / {images.length}
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <button
+              onClick={handleShare}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-          </button>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+            </button>
+
+            <button
+              onClick={() => setIsLiked(!isLiked)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill={isLiked ? '#FF385C' : 'none'}
+                stroke={isLiked ? '#FF385C' : 'white'}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Main Image */}
-      <div
-        style={{
-          position: 'relative',
-          width: '60vw',
-          maxWidth: '60vw',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '60px 4vw',
-          margin: '0 auto',
-          boxSizing: 'border-box',
-          zIndex: 9999,
-          overflow: 'hidden',
-        }}
-      >
-        <AnimatePresence
-          mode="wait"
-          custom={direction}
-          initial={false}
-        >
-          <motion.img
-            key={currentIndex}
-            custom={direction}
-            variants={slideVariants}
-            initial={hasNavigated ? "enter" : false}
-            animate="center"
-            exit="exit"
-            transition={slideTransition}
-            src={images[currentIndex]}
-            alt={`Photo ${currentIndex + 1} of ${images.length}`}
+        {/* Carousel row: shared-layout animation so center/side images physically flow between slots */}
+        <LayoutGroup id="photo-viewer-carousel">
+          <div
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-              borderRadius: '8px',
-              position: 'absolute',
-            }}
-          />
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation Arrows */}
-      {images.length > 1 && (
-        <>
-          {/* Previous Button */}
-          <button
-            onClick={handlePrevious}
-            style={{
-              position: 'absolute',
-              left: '24px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(34, 34, 34, 0.6)',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
+              position: 'relative',
+              width: '100%',
+              height: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s',
-              zIndex: 10000,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.8)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.6)';
+              padding: '80px 0 60px',
+              boxSizing: 'border-box',
+              zIndex: 9999,
+              overflow: 'hidden',
+              maxHeight: '85vh',
             }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            {/* Left strip */}
+            <div
+              style={{
+                flex: '0 0 8%',
+                height: '68%',
+                minHeight: 120,
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '0 16px 16px 0',
+                background: 'transparent',
+              }}
             >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
+              {hasMultiple && (
+                <>
+                  <motion.div
+                    layout
+                    layoutId={`photo-viewer-image-${prevIndex}`}
+                    transition={slotTransition}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '0 16px 16px 0',
+                      overflow: 'hidden',
+                      transformOrigin: 'center',
+                      boxShadow: 'none',
+                    }}
+                  >
+                    <img
+                      src={images[prevIndex]}
+                      alt=""
+                      aria-hidden
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'right center',
+                        filter: 'brightness(0.92)',
+                      }}
+                    />
+                    <motion.div
+                      transition={slotTransition}
+                      animate={{ opacity: 1 }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.28)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </motion.div>
+                </>
+              )}
+            </div>
 
-          {/* Next Button */}
-          <button
-            onClick={handleNext}
-            style={{
-              position: 'absolute',
-              right: '24px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(34, 34, 34, 0.6)',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s',
-              zIndex: 10000,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.8)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.6)';
-            }}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            {/* Center slot */}
+            <div
+              style={{
+                flex: '1 1 84%',
+                minWidth: 0,
+                alignSelf: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 64px',
+                position: 'relative',
+                height: '100%',
+              }}
             >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        </>
-      )}
+              <div
+                ref={mainImageFrameRef}
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '100%',
+                  aspectRatio: '16 / 9',
+                  overflow: 'hidden',
+                  borderRadius: 16,
+                  background: 'transparent',
+                }}
+              >
+                <motion.div
+                  layout
+                  layoutId={`photo-viewer-image-${currentIndex}`}
+                  transition={slotTransition}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    transformOrigin: 'center',
+                    boxShadow: centerCardShadow,
+                    scale: 1,
+                  }}
+                >
+                  <img
+                    src={images[currentIndex]}
+                    alt={`Photo ${currentIndex + 1} of ${images.length}`}
+                    style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                  }}
+                />
+                  <motion.div
+                    transition={slotTransition}
+                    animate={{ opacity: 0 }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(0, 0, 0, 0.28)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Right strip */}
+            <div
+              style={{
+                flex: '0 0 8%',
+                height: '68%',
+                minHeight: 120,
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: '16px 0 0 16px',
+                background: 'transparent',
+              }}
+            >
+              {hasMultiple && effectiveRightIndex != null && (
+                <>
+                  <motion.div
+                    layout
+                    layoutId={`photo-viewer-image-${effectiveRightIndex}`}
+                    transition={slotTransition}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '16px 0 0 16px',
+                      overflow: 'hidden',
+                      transformOrigin: 'center',
+                      boxShadow: 'none',
+                    }}
+                  >
+                    <img
+                      src={images[effectiveRightIndex]}
+                      alt=""
+                      aria-hidden
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'left center',
+                        filter: 'brightness(0.92)',
+                      }}
+                    />
+                    <motion.div
+                      transition={slotTransition}
+                      animate={{ opacity: 1 }}
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.28)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </motion.div>
+                </>
+              )}
+            </div>
+          </div>
+        </LayoutGroup>
+
+        {/* Navigation Arrows - black background, white icon (over side panels) */}
+        {hasMultiple && (
+          <>
+            <button
+              onClick={handlePrevious}
+              data-photo-viewer-control="true"
+              style={{
+                position: 'absolute',
+                left: '24px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(34, 34, 34, 0.6)',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s',
+                zIndex: 10000,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.6)';
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+
+            <button
+              onClick={handleNext}
+              data-photo-viewer-control="true"
+              style={{
+                position: 'absolute',
+                right: '24px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(34, 34, 34, 0.6)',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s',
+                zIndex: 10000,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(34, 34, 34, 0.6)';
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );

@@ -7,6 +7,7 @@ import { ListingDetailPage } from './components/ListingDetailPage';
 import { ConfirmationPage } from './components/ConfirmationPage';
 import { FaqPage } from './components/FaqPage';
 import { FeedbackPage } from './components/FeedbackPage';
+import { NotFoundPage } from './components/NotFoundPage';
 
 let theme: Theme = 'light';
 // only use 'centered' container for standalone components, never for full page apps or websites.
@@ -35,6 +36,7 @@ function App() {
       <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
       <Route path="/faq" element={<FaqPage />} />
       <Route path="/feedback" element={<FeedbackPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 

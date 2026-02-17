@@ -4,6 +4,9 @@ import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
 import { Header, Button, IconButton } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
+import { WarpTransactionLoader } from './WarpTransactionLoader';
+import { getConfirmationBackgroundColor } from '../lib/warp-loading-messages';
+import { playSound } from '../lib/sound-effects';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { useDeviceType } from '../hooks/use-mobile';
@@ -113,18 +116,20 @@ export function ConfirmationPage() {
   const [guestCount, setGuestCount] = useState(1);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
+  const [showWarpLoader, setShowWarpLoader] = useState(false);
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
   const { isMobile, isTablet } = useDeviceType();
 
-  // Match Magic Path BookingConfirmation page background when confirmation view is shown
+  // Match confirmation page background to listing era when confirmation view is shown
+  const confirmationBgColor = listing ? getConfirmationBackgroundColor(listing.title) : 'rgba(243, 239, 236, 1)';
   useEffect(() => {
-    if (!bookingConfirmed || !listing) return;
+    if ((!bookingConfirmed && !showWarpLoader) || !listing) return;
     const prev = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = 'rgba(243, 239, 236, 1)';
+    document.body.style.backgroundColor = confirmationBgColor;
     return () => {
       document.body.style.backgroundColor = prev;
     };
-  }, [bookingConfirmed, listing]);
+  }, [bookingConfirmed, showWarpLoader, listing, confirmationBgColor]);
 
   const fetchListingForConfirm = useCallback(async () => {
     if (!id) return;
@@ -272,6 +277,58 @@ export function ConfirmationPage() {
   const pricing = calculatePricing();
   if (!pricing) return null;
 
+  // Warp loading interstitial — shows listing-specific humorous messages
+  if (showWarpLoader && listing) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        style={{
+          width: '100%',
+          minHeight: '100vh',
+          backgroundColor: confirmationBgColor,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: '"Figtree", sans-serif',
+          padding: '40px 20px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          style={{
+            textAlign: 'center',
+            marginBottom: 40,
+          }}
+        >
+          <div style={{
+            fontSize: 28,
+            fontWeight: 600,
+            color: 'rgba(34, 34, 34, 1)',
+            letterSpacing: '-0.5px',
+            lineHeight: '36px',
+            marginBottom: 8,
+          }}>
+            Initiating temporal transfer
+          </div>
+          <div style={{
+            fontSize: 16,
+            color: 'rgba(113, 113, 113, 1)',
+            lineHeight: '24px',
+          }}>
+            {listing.title}
+          </div>
+        </motion.div>
+        <WarpTransactionLoader listingTitle={listing.title} />
+      </motion.div>
+    );
+  }
+
   // Post-booking confirmation view (Figma: Securing arrival window)
   if (bookingConfirmed && listing) {
     const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
@@ -286,6 +343,7 @@ export function ConfirmationPage() {
         price={confirmationTotal}
         imageUrl={listing.main_image}
         onLogoClick={() => navigate('/')}
+        style={{ backgroundColor: confirmationBgColor }}
       />
     );
   }
@@ -678,29 +736,51 @@ export function ConfirmationPage() {
                 }}>
                   Yes, add peace of mind for 40{selectedPaymentMethod.symbol}.
                 </div>
-                <div
+                <motion.div
                   onClick={() => setInsuranceSelected(!insuranceSelected)}
                   onMouseEnter={() => setInsuranceCheckboxHovered(true)}
                   onMouseLeave={() => setInsuranceCheckboxHovered(false)}
+                  animate={{
+                    borderColor: insuranceSelected ? 'rgba(34, 34, 34, 1)' : (insuranceCheckboxHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)'),
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 30,
+                  }}
                   style={{
                     width: '24px',
                     height: '24px',
                     borderRadius: '6px',
-                    border: `${insuranceSelected ? '2' : '1'}px solid ${insuranceCheckboxHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)'}`,
+                    borderWidth: insuranceSelected ? 2 : 1,
+                    borderStyle: 'solid',
                     backgroundColor: insuranceSelected ? 'rgba(34, 34, 34, 1)' : 'white',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexShrink: 0
+                    flexShrink: 0,
                   }}
                 >
                   {insuranceSelected && (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <motion.svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 500,
+                        damping: 25,
+                      }}
+                    >
                       <path d="M13 4L6 11L3 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    </motion.svg>
                   )}
-                </div>
+                </motion.div>
               </div>
               <div style={{
                 fontFamily: 'var(--ds-font-family)',
@@ -1060,8 +1140,13 @@ export function ConfirmationPage() {
                       console.error('Error creating booking:', saveError);
                       setBookingSaveFailed(true);
                     }
-                    // Always show confirmation page so the user sees their booking details
-                    setBookingConfirmed(true);
+                    // Show warp loader interstitial, then transition to confirmation
+                    playSound('warpWhoosh', 0.3);
+                    setShowWarpLoader(true);
+                    setTimeout(() => {
+                      setShowWarpLoader(false);
+                      setBookingConfirmed(true);
+                    }, 6000); // 6 seconds of loading messages
                   } catch (error) {
                     console.error('Error in booking flow:', error);
                     alert('Something went wrong. Please try again.');

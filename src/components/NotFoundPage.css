@@ -1,0 +1,210 @@
+/* ── 404 Not Found Page ─────────────────────────────────── */
+
+.nf-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(250, 248, 246, 1);
+  overflow: hidden;
+  font-family: 'Figtree', sans-serif;
+}
+
+/* Background layer for floating elements */
+.nf-bg-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Content sits above background */
+.nf-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 520px;
+}
+
+/* ── Melting Clock Illustration ────────────────────────── */
+
+.nf-illustration {
+  margin-bottom: 12px;
+}
+
+.nf-clock-img {
+  width: 180px;
+  height: auto;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.10));
+}
+
+/* ── Glitchy 404 Number ───────────────────────────────── */
+
+.nf-404 {
+  margin-bottom: 24px;
+}
+
+.nf-404-text {
+  font-size: 120px;
+  font-weight: 700;
+  letter-spacing: -4px;
+  line-height: 1;
+  color: rgba(34, 34, 34, 1);
+  position: relative;
+  display: inline-block;
+}
+
+/* Glitch layers using pseudo-elements */
+.nf-404-text::before,
+.nf-404-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.nf-404-text::before {
+  color: rgba(230, 30, 77, 0.6);
+  animation: nf-glitch-1 3s infinite;
+  clip-path: inset(0 0 65% 0);
+}
+
+.nf-404-text::after {
+  color: rgba(0, 100, 200, 0.4);
+  animation: nf-glitch-2 3s infinite;
+  clip-path: inset(60% 0 0 0);
+}
+
+@keyframes nf-glitch-1 {
+  0%, 90%, 100% {
+    transform: translate(0);
+  }
+  92% {
+    transform: translate(-3px, 1px);
+  }
+  94% {
+    transform: translate(3px, -1px);
+  }
+  96% {
+    transform: translate(-2px, 0);
+  }
+}
+
+@keyframes nf-glitch-2 {
+  0%, 88%, 100% {
+    transform: translate(0);
+  }
+  90% {
+    transform: translate(2px, -1px);
+  }
+  93% {
+    transform: translate(-3px, 1px);
+  }
+  95% {
+    transform: translate(1px, 0);
+  }
+}
+
+/* ── Title & Subtitle ─────────────────────────────────── */
+
+.nf-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: rgba(34, 34, 34, 1);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.nf-subtitle {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(113, 113, 113, 1);
+  margin: 0 0 32px;
+  max-width: 400px;
+}
+
+/* ── Actions ──────────────────────────────────────────── */
+
+.nf-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.nf-btn-primary {
+  padding: 14px 28px;
+  background: linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Figtree', sans-serif;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.nf-btn-primary:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(230, 30, 77, 0.25);
+}
+
+.nf-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ── Disclaimer ───────────────────────────────────────── */
+
+.nf-disclaimer {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(160, 160, 160, 1);
+  max-width: 360px;
+}
+
+/* ── Reduced Motion ───────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-404-text::before,
+  .nf-404-text::after {
+    animation: none;
+  }
+
+  .nf-clock,
+  .nf-bg-layer > * {
+    animation: none !important;
+  }
+}
+
+/* ── Mobile ───────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .nf-clock-img {
+    width: 140px;
+  }
+
+  .nf-404-text {
+    font-size: 80px;
+  }
+
+  .nf-title {
+    font-size: 26px;
+  }
+
+  .nf-subtitle {
+    font-size: 15px;
+  }
+}

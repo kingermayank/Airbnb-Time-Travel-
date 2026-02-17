@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Text } from '../../foundations/Text';
 import { Badge } from '../../foundations/Badge';
 import { Icon } from '../../foundations/Icon';
@@ -23,6 +23,8 @@ export interface ListingCardProps {
   style?: React.CSSProperties;
 }
 
+const MAX_TILT_DEG = 4;
+
 const cardWrapperStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -32,15 +34,7 @@ const cardWrapperStyle: React.CSSProperties = {
   width: '100%',
 };
 
-const imageContainerStyle: React.CSSProperties = {
-  height: 248,
-  borderRadius: 'var(--ds-radius-lg)',
-  overflow: 'hidden',
-  position: 'relative',
-  backgroundColor: '#f3f3f3',
-};
-
-/* Min 44px tap target for touch/a11y (Emil's design engineering). Pushed tight into top-right corner to mirror badge placement. */
+/* Min 44px tap target for touch/a11y. Pushed tight into top-right corner to mirror badge placement. */
 const heartButtonStyle: React.CSSProperties = {
   position: 'absolute',
   top: 4,
@@ -78,6 +72,10 @@ const priceRowStyle: React.CSSProperties = {
   gap: 'var(--ds-spacing-4)',
 };
 
+// Only enable tilt on devices that support hover (i.e. not touch)
+const supportsHover =
+  typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+
 export function ListingCard({
   id,
   image,
@@ -93,10 +91,46 @@ export function ListingCard({
   style,
 }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(defaultLiked);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const isActive = tilt.x !== 0 || tilt.y !== 0;
+
+  const handleImageMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!supportsHover) return;
+      const el = e.currentTarget;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const normX = (e.clientX - rect.left - cx) / cx;
+      const normY = (e.clientY - rect.top - cy) / cy;
+      setTilt({ x: -normY * MAX_TILT_DEG, y: normX * MAX_TILT_DEG });
+    },
+    [],
+  );
+
+  const handleImageMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+  }, []);
 
   const handleHeartClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLiked((prev) => !prev);
+  };
+
+  const imageContainerDynamicStyle: React.CSSProperties = {
+    height: 248,
+    borderRadius: 'var(--ds-radius-lg)',
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#f3f3f3',
+    transform: supportsHover
+      ? `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(${isActive ? 8 : 0}px)`
+      : undefined,
+    transition: 'transform 0.18s ease-out, box-shadow 0.22s ease',
+    boxShadow: isActive
+      ? '0 12px 28px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06)'
+      : 'none',
+    willChange: supportsHover ? 'transform' : undefined,
   };
 
   return (
@@ -108,7 +142,11 @@ export function ListingCard({
       role="button"
       tabIndex={0}
     >
-      <div style={imageContainerStyle}>
+      <div
+        style={imageContainerDynamicStyle}
+        onMouseMove={handleImageMouseMove}
+        onMouseLeave={handleImageMouseLeave}
+      >
         <img
           src={image}
           alt={title}
