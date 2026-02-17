@@ -1,45 +1,88 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
+import { Share, Heart, ChevronLeft } from 'lucide-react';
+import './PhotoViewer.css';
 
 interface PhotoViewerProps {
   images: string[];
   initialIndex: number;
   onClose: () => void;
+  onShareClick?: () => void;
   layoutId?: string; // Deprecated: kept for backward compatibility, no longer used
 }
 
 // Slower, gentler ease-out so motion feels fluid and not abrupt
 const CAROUSEL_TRANSITION = {
   type: 'tween' as const,
-  duration: 0.72,
-  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+  duration: 0.82,
+  ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
 };
 
-export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps) {
+export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layoutId }: PhotoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLiked, setIsLiked] = useState(false);
+  const [isShareHovered, setIsShareHovered] = useState(false);
+  const [isSaveHovered, setIsSaveHovered] = useState(false);
+  const [navDuration, setNavDuration] = useState(CAROUSEL_TRANSITION.duration);
+  const [navDirection, setNavDirection] = useState<1 | -1>(1);
   const shouldReduceMotion = useReducedMotion();
   const mainImageFrameRef = useRef<HTMLDivElement>(null);
+  const lastNavAtRef = useRef(0);
+  const navResetTimerRef = useRef<number | null>(null);
 
   const n = images.length;
   const prevIndex = n > 1 ? (currentIndex - 1 + n) % n : 0;
   const nextIndex = n > 1 ? (currentIndex + 1) % n : 0;
   const hasMultiple = n > 1;
   const effectiveRightIndex = n === 2 ? null : nextIndex;
-  const slotTransition = shouldReduceMotion ? { duration: 0 } : CAROUSEL_TRANSITION;
+  const slotTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { ...CAROUSEL_TRANSITION, duration: navDuration };
   const centerCardShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
+  const centerLayoutId =
+    layoutId && currentIndex === initialIndex
+      ? layoutId
+      : `photo-viewer-image-${currentIndex}`;
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
 
+  useEffect(() => {
+    return () => {
+      if (navResetTimerRef.current != null) {
+        window.clearTimeout(navResetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const tuneNavigationMomentum = useCallback((direction: 1 | -1) => {
+    if (shouldReduceMotion) return;
+    setNavDirection(direction);
+    const now = Date.now();
+    const rapid = now - lastNavAtRef.current < 280;
+    lastNavAtRef.current = now;
+    setNavDuration(rapid ? 0.38 : CAROUSEL_TRANSITION.duration);
+    if (navResetTimerRef.current != null) {
+      window.clearTimeout(navResetTimerRef.current);
+    }
+    navResetTimerRef.current = window.setTimeout(() => {
+      setNavDuration(CAROUSEL_TRANSITION.duration);
+    }, 280);
+  }, [shouldReduceMotion]);
+
+  // Direction model:
+  // - Right arrow: left -> center, center -> right (content flows right)
+  // - Left arrow: right -> center, center -> left (content flows left)
   const handlePrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
-  }, [n]);
+    tuneNavigationMomentum(-1);
+    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
+  }, [n, tuneNavigationMomentum]);
 
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
-  }, [n]);
+    tuneNavigationMomentum(1);
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
+  }, [n, tuneNavigationMomentum]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,6 +105,10 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
   }, [handlePrevious, handleNext, onClose]);
 
   const handleShare = () => {
+    if (onShareClick) {
+      onShareClick();
+      return;
+    }
     if (navigator.share) {
       navigator.share({
         title: 'Check out this photo',
@@ -124,116 +171,113 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
             left: 0,
             right: 0,
             height: '80px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
             padding: '0 24px',
             zIndex: 10000,
+            pointerEvents: 'none',
           }}
         >
           <button
             onClick={onClose}
+            aria-label="Back"
             style={{
-              background: 'none',
+              background: 'transparent',
               border: 'none',
               color: 'white',
-              fontSize: '14px',
-              fontFamily: '"Figtree", sans-serif',
-              fontWeight: 500,
               cursor: 'pointer',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              transition: 'background-color 0.2s',
+              width: '24px',
+              height: '24px',
+              borderRadius: 0,
+              transition: 'background-color 0.2s, transform 0.1s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              left: 24,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'auto',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(0.96)'; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
           >
-            X Close
+            <ChevronLeft size={20} strokeWidth={2.2} />
           </button>
 
           <div
             style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
               color: 'white',
               fontSize: '14px',
               fontFamily: '"Figtree", sans-serif',
               fontWeight: 500,
+              pointerEvents: 'none',
             }}
           >
             {currentIndex + 1} / {images.length}
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '24px',
+              alignItems: 'center',
+              position: 'absolute',
+              right: 24,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'auto',
+            }}
+          >
             <button
               onClick={handleShare}
+              className="pv-action-btn"
+              onMouseEnter={() => setIsShareHovered(true)}
+              onMouseLeave={() => setIsShareHovered(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background-color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
+                gap: '6px',
+                backgroundColor: isShareHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: 'white',
+                textDecoration: 'underline',
               }}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <path d="M12 8v8M8 12h8" />
-              </svg>
+              <Share size={18} strokeWidth={1.5} />
+              <span>Share</span>
             </button>
 
             <button
               onClick={() => setIsLiked(!isLiked)}
+              className={`pv-action-btn pv-save-btn${isLiked ? ' is-liked' : ''}`}
+              onMouseEnter={() => setIsSaveHovered(true)}
+              onMouseLeave={() => setIsSaveHovered(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'background-color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
+                gap: '6px',
+                backgroundColor: isSaveHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: 'white',
+                textDecoration: 'underline',
               }}
             >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill={isLiked ? '#FF385C' : 'none'}
+              <span className="pv-save-ripple" aria-hidden />
+              <Heart
+                size={18}
+                strokeWidth={1.5}
+                fill={isLiked ? '#FF385C' : 'transparent'}
                 stroke={isLiked ? '#FF385C' : 'white'}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
+                style={{ transition: 'fill 0.28s ease, stroke 0.28s ease' }}
+              />
+              <span>{isLiked ? 'Saved' : 'Save'}</span>
             </button>
           </div>
         </div>
@@ -272,6 +316,8 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
                     layout
                     layoutId={`photo-viewer-image-${prevIndex}`}
                     transition={slotTransition}
+                    initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     style={{
                       position: 'absolute',
                       inset: 0,
@@ -290,16 +336,36 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
                         height: '100%',
                         objectFit: 'cover',
                         objectPosition: 'right center',
-                        filter: 'brightness(0.92)',
+                        filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
+                        transform: 'scale(1.03)',
                       }}
                     />
                     <motion.div
+                      key={`left-overlay-${prevIndex}`}
+                      initial={shouldReduceMotion ? false : { opacity: navDirection === 1 ? 0.18 : 1 }}
                       transition={slotTransition}
                       animate={{ opacity: 1 }}
                       style={{
                         position: 'absolute',
                         inset: 0,
                         background: 'rgba(0, 0, 0, 0.28)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                        mixBlendMode: 'screen',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
                         pointerEvents: 'none',
                       }}
                     />
@@ -336,8 +402,13 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
               >
                 <motion.div
                   layout
-                  layoutId={`photo-viewer-image-${currentIndex}`}
+                  layoutId={centerLayoutId}
                   transition={slotTransition}
+                  initial={shouldReduceMotion ? false : {
+                    scale: 0.94,
+                    x: navDirection === 1 ? -18 : 18,
+                  }}
+                  animate={{ scale: 1, x: 0 }}
                   style={{
                     position: 'absolute',
                     inset: 0,
@@ -359,6 +430,8 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
                   }}
                 />
                   <motion.div
+                    key={`center-overlay-${currentIndex}`}
+                    initial={shouldReduceMotion ? false : { opacity: 0.38 }}
                     transition={slotTransition}
                     animate={{ opacity: 0 }}
                     style={{
@@ -390,6 +463,8 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
                     layout
                     layoutId={`photo-viewer-image-${effectiveRightIndex}`}
                     transition={slotTransition}
+                    initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     style={{
                       position: 'absolute',
                       inset: 0,
@@ -408,16 +483,36 @@ export function PhotoViewer({ images, initialIndex, onClose }: PhotoViewerProps)
                         height: '100%',
                         objectFit: 'cover',
                         objectPosition: 'left center',
-                        filter: 'brightness(0.92)',
+                        filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
+                        transform: 'scale(1.03)',
                       }}
                     />
                     <motion.div
+                      key={`right-overlay-${effectiveRightIndex}`}
+                      initial={shouldReduceMotion ? false : { opacity: navDirection === -1 ? 0.18 : 1 }}
                       transition={slotTransition}
                       animate={{ opacity: 1 }}
                       style={{
                         position: 'absolute',
                         inset: 0,
                         background: 'rgba(0, 0, 0, 0.28)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                        mixBlendMode: 'screen',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
                         pointerEvents: 'none',
                       }}
                     />

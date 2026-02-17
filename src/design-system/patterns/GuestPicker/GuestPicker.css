@@ -42,11 +42,19 @@
   flex-shrink: 0;
 }
 
+.ds-guest-picker__stepper--limit-nudge {
+  animation: ds-guest-picker-limit-nudge 220ms ease;
+}
+
 /* ---- Count ---- */
 
 .ds-guest-picker__count {
   min-width: 20px;
   text-align: center;
+}
+
+.ds-guest-picker__count--bump {
+  animation: ds-guest-picker-count-bump 200ms ease;
 }
 
 /* ---- Stepper buttons ---- */
@@ -64,11 +72,18 @@
   color: var(--ds-text-primary);
   transition:
     border-color var(--ds-motion-duration-sm) var(--ds-motion-ease-out),
-    color var(--ds-motion-duration-sm) var(--ds-motion-ease-out);
+    color var(--ds-motion-duration-sm) var(--ds-motion-ease-out),
+    transform var(--ds-motion-duration-sm) var(--ds-motion-ease-out),
+    background-color var(--ds-motion-duration-sm) var(--ds-motion-ease-out);
 }
 
-.ds-guest-picker__btn:hover:not(:disabled) {
+.ds-guest-picker__btn:hover:not([aria-disabled='true']) {
   border-color: var(--ds-text-primary);
+}
+
+.ds-guest-picker__btn:active:not([aria-disabled='true']) {
+  transform: scale(0.92);
+  background-color: var(--ds-surface-icon-button);
 }
 
 .ds-guest-picker__btn:focus-visible {
@@ -77,7 +92,7 @@
 }
 
 .ds-guest-picker__btn--disabled,
-.ds-guest-picker__btn:disabled {
+.ds-guest-picker__btn[aria-disabled='true'] {
   color: var(--ds-border);
   border-color: var(--ds-border-light);
   cursor: not-allowed;
@@ -89,10 +104,44 @@
   margin: 0;
 }
 
+@keyframes ds-guest-picker-count-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ds-guest-picker-limit-nudge {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 /* ---- Reduced motion ---- */
 
 @media (prefers-reduced-motion: reduce) {
   .ds-guest-picker__btn {
     transition: none;
+  }
+  .ds-guest-picker__stepper--limit-nudge,
+  .ds-guest-picker__count--bump {
+    animation: none;
   }
 }

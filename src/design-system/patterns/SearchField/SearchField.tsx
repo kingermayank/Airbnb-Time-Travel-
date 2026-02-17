@@ -8,6 +8,8 @@ export type SearchFieldHoverSection = 'where' | 'era' | 'who' | null;
 export interface SearchFieldSectionConfig {
   label: string;
   placeholder: string;
+  /** Whether placeholder is a selected value (vs default prompt). */
+  isValueSelected?: boolean;
 }
 
 export interface SearchFieldProps {
@@ -30,14 +32,17 @@ export interface SearchFieldProps {
 const defaultWhere: SearchFieldSectionConfig = {
   label: 'Theme',
   placeholder: 'Select theme',
+  isValueSelected: false,
 };
 const defaultEra: SearchFieldSectionConfig = {
   label: 'Era',
   placeholder: 'Select Timeline',
+  isValueSelected: false,
 };
 const defaultWho: SearchFieldSectionConfig = {
   label: 'Who',
   placeholder: 'Add guests',
+  isValueSelected: false,
 };
 
 const containerStyle: React.CSSProperties = {
@@ -75,13 +80,18 @@ const dividerStyle: React.CSSProperties = {
 };
 
 const whoZoneBaseStyle: React.CSSProperties = {
-  flex: 1,
+  flex: 1.16,
   minWidth: 0,
   height: '100%',
   display: 'flex',
   alignItems: 'center',
   paddingRight: 'var(--ds-spacing-8)',
   position: 'relative',
+};
+
+const sectionFlexByType: Record<'where' | 'era', number> = {
+  where: 0.92,
+  era: 0.92,
 };
 
 export function SearchField({
@@ -103,8 +113,12 @@ export function SearchField({
   const effectiveSection = activeSection ?? effectiveHover;
 
   /** Hover only: gray fill. Active section fill is handled by CSS (white); don't override. */
-  const getSectionStyle = (section: SearchFieldHoverSection): React.CSSProperties => ({
+  const getSectionStyle = (
+    section: SearchFieldHoverSection,
+    sectionType?: 'where' | 'era'
+  ): React.CSSProperties => ({
     ...sectionBaseStyle,
+    ...(sectionType ? { flex: sectionFlexByType[sectionType] } : {}),
     boxShadow: effectiveSection === section && !isActive(section) ? 'inset 0 0 0 999px var(--ds-overlay-hover)' : undefined,
   });
 
@@ -125,13 +139,13 @@ export function SearchField({
 
   return (
     <div
-      className={[className, hasActiveSection ? 'ds-search-field-has-active' : ''].filter(Boolean).join(' ')}
+      className={['ds-search-field', className, hasActiveSection ? 'ds-search-field-has-active' : ''].filter(Boolean).join(' ')}
       style={{ ...containerStyleWithActive, ...style }}
     >
       <button
         type="button"
         className={`ds-search-field-section${isActive('where') ? ' ds-search-field-section--active' : ''}`}
-        style={getSectionStyle('where')}
+        style={getSectionStyle('where', 'where')}
         onClick={onWhereClick}
         onMouseEnter={() => setHoveredSection('where')}
         onMouseLeave={() => setHoveredSection(null)}
@@ -140,17 +154,25 @@ export function SearchField({
         <Text variant="label" color="primary">
           {where.label}
         </Text>
-        <Text variant="body" color="secondary">
+        <Text
+          variant="body"
+          color={where.isValueSelected ? 'primary' : 'secondary'}
+          weight={where.isValueSelected ? 'medium' : 'regular'}
+        >
           {where.placeholder}
         </Text>
       </button>
 
-      <div style={{ ...dividerStyle, backgroundColor: showDividerAfterWhere ? 'var(--ds-border)' : 'transparent' }} aria-hidden />
+      <div
+        className="ds-search-field-divider"
+        style={{ ...dividerStyle, backgroundColor: showDividerAfterWhere ? 'var(--ds-border)' : 'transparent' }}
+        aria-hidden
+      />
 
       <button
         type="button"
         className={`ds-search-field-section${isActive('era') ? ' ds-search-field-section--active' : ''}`}
-        style={{ ...getSectionStyle('era'), padding: '0 var(--ds-spacing-32)' }}
+        style={{ ...getSectionStyle('era', 'era'), padding: '0 var(--ds-spacing-32)' }}
         onClick={onEraClick}
         onMouseEnter={() => setHoveredSection('era')}
         onMouseLeave={() => setHoveredSection(null)}
@@ -159,12 +181,20 @@ export function SearchField({
         <Text variant="label" color="primary">
           {era.label}
         </Text>
-        <Text variant="body" color="secondary">
+        <Text
+          variant="body"
+          color={era.isValueSelected ? 'primary' : 'secondary'}
+          weight={era.isValueSelected ? 'medium' : 'regular'}
+        >
           {era.placeholder}
         </Text>
       </button>
 
-      <div style={{ ...dividerStyle, backgroundColor: showDividerAfterEra ? 'var(--ds-border)' : 'transparent' }} aria-hidden />
+      <div
+        className="ds-search-field-divider"
+        style={{ ...dividerStyle, backgroundColor: showDividerAfterEra ? 'var(--ds-border)' : 'transparent' }}
+        aria-hidden
+      />
 
       <div
         className={`ds-search-field-who-zone${effectiveSection === 'who' ? ' ds-search-field-who-zone--hover' : ''}${isActive('who') ? ' ds-search-field-who-zone--active' : ''}`}
@@ -183,7 +213,11 @@ export function SearchField({
           <Text variant="label" color="primary">
             {who.label}
           </Text>
-          <Text variant="body" color="secondary">
+          <Text
+            variant="body"
+            color={who.isValueSelected ? 'primary' : 'secondary'}
+            weight={who.isValueSelected ? 'medium' : 'regular'}
+          >
             {who.placeholder}
           </Text>
         </button>
@@ -193,7 +227,7 @@ export function SearchField({
           onClick={onSearch}
           aria-label="Search"
         >
-          <Search size={24} strokeWidth={2} />
+          <Search size={18} strokeWidth={2} />
         </button>
       </div>
     </div>

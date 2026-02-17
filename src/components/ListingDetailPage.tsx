@@ -5,9 +5,7 @@ import { formatEraAppropriateDuration } from '../lib/era-time-measurements';
 import type {
   ListingDetails,
   Amenity,
-  HostBadge,
   ThingsToKnow,
-  ReviewBadge,
 } from '../types/database';
 
 // Duration options for teleportation
@@ -47,17 +45,18 @@ import { Header, Button } from '../design-system';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PhotoViewer } from './PhotoViewer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { HeroGridSkeleton } from './HeroGridSkeleton';
 import { TransactionLoader } from './TransactionLoader';
 import { Modal } from './Modal';
-import { useDeviceType, useIsMobile } from '../hooks/use-mobile';
+import { useDeviceType } from '../hooks/use-mobile';
 import { getAmenityIcon } from '../lib/amenity-icons';
 import {
   Package,
   Users,
   Lamp,
   CheckCircle,
+  Check,
   User,
   Wine,
   GlassWater,
@@ -77,6 +76,11 @@ import {
   Key,
   FileText,
   Share,
+  Mail,
+  Link2,
+  Linkedin,
+  Twitter,
+  Code2,
   Heart,
   Star,
   Clock,
@@ -126,46 +130,6 @@ function CrossDimensionalIcon() {
       <circle cx="12" cy="16" r="2" fill="white"/>
       <path d="M8 10L12 16L16 10" stroke="white" strokeWidth="1.5"/>
     </svg>
-  );
-}
-
-// Host badge pill component
-function HostBadgePill({ badge }: { badge: HostBadge }) {
-  const getBadgeIcon = () => {
-    switch (badge.type) {
-      case 'temporal_guardian':
-        return <TemporalGuardianIcon />;
-      case 'cross_dimensional_host':
-        return <CrossDimensionalIcon />;
-      case 'superhost':
-        return <Star size={14} fill="#FF385C" color="#FF385C" />;
-      case 'identity_verified':
-        return <ShieldCheck size={14} color="#FF385C" />;
-      default:
-        return <BadgeCheck size={14} color="#FF385C" />;
-    }
-  };
-
-  return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '6px',
-      padding: '4px 10px',
-      backgroundColor: '#FFF0F3',
-      borderRadius: '16px',
-      border: '1px solid #FFD9E0',
-    }}>
-      {getBadgeIcon()}
-      <span style={{
-        fontFamily: '"Figtree", sans-serif',
-        fontSize: '12px',
-        fontWeight: 500,
-        color: '#FF385C',
-      }}>
-        {badge.label}
-      </span>
-    </div>
   );
 }
 
@@ -223,15 +187,33 @@ export function ListingDetailPage() {
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
-  const [showAllReviews, setShowAllReviews] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
   const [isSaved, setIsSaved] = useState(false);
+  const [photoViewerLayoutId, setPhotoViewerLayoutId] = useState<string | undefined>(undefined);
+  const [hoveredHeroImageKey, setHoveredHeroImageKey] = useState<string | null>(null);
+  const [isShareHovered, setIsShareHovered] = useState(false);
+  const [isSaveHovered, setIsSaveHovered] = useState(false);
+  const [guestCountPulseTick, setGuestCountPulseTick] = useState(0);
+  const [guestLimitNudgeTick, setGuestLimitNudgeTick] = useState(0);
+  const [isBookingCardStuck, setIsBookingCardStuck] = useState(false);
+  const [hasEnteredBookingCard, setHasEnteredBookingCard] = useState(false);
+  const [visibleReviewCount, setVisibleReviewCount] = useState(6);
+  const [isHostCardHovered, setIsHostCardHovered] = useState(false);
+  const [hostCardTilt, setHostCardTilt] = useState({ x: 0, y: 0 });
   const guestDropdownRef = useRef<HTMLDivElement>(null);
   const durationDropdownRef = useRef<HTMLDivElement>(null);
+  const bookingCardRef = useRef<HTMLDivElement>(null);
   const appliedInitialGuestCountRef = useRef(false);
-  const isMobile = useIsMobile();
+  const { isMobile, isTablet } = useDeviceType();
+  const isCompactLayout = isMobile || isTablet;
+  const shouldReduceMotion = useReducedMotion();
+
+  const supportsHover =
+    typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
 
   // Pre-fill guest count from homepage when navigating with state
   useEffect(() => {
@@ -273,6 +255,10 @@ export function ListingDetailPage() {
     loadListing();
   }, [loadListing]);
 
+  useEffect(() => {
+    setVisibleReviewCount(6);
+  }, [id]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -288,8 +274,27 @@ export function ListingDetailPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleImageClick = (index: number) => {
+  useEffect(() => {
+    if (isCompactLayout) {
+      setIsBookingCardStuck(false);
+      return;
+    }
+    const STICKY_TOP = 125;
+    const handleScroll = () => {
+      const card = bookingCardRef.current;
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const stuck = rect.top <= STICKY_TOP + 1;
+      setIsBookingCardStuck(stuck);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isCompactLayout]);
+
+  const handleImageClick = (index: number, layoutId?: string) => {
     setPhotoViewerIndex(index);
+    setPhotoViewerLayoutId(layoutId);
     setShowPhotoViewer(true);
   };
 
@@ -329,6 +334,38 @@ export function ListingDetailPage() {
     });
   };
 
+  const showTemporaryShareFeedback = useCallback((label: string) => {
+    setShareFeedback(label);
+    window.setTimeout(() => setShareFeedback(null), 1400);
+  }, []);
+
+  const getShareUrl = useCallback(() => window.location.href, []);
+
+  const copyToClipboard = useCallback(async (text: string, feedbackLabel: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showTemporaryShareFeedback(feedbackLabel);
+    } catch {
+      showTemporaryShareFeedback('Could not copy');
+    }
+  }, [showTemporaryShareFeedback]);
+
+  const openShareWindow = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const changeGuestCount = useCallback((delta: number) => {
+    const minGuests = 1;
+    const maxGuests = listing?.guest_capacity || 10;
+    const nextCount = guestCount + delta;
+    if (nextCount < minGuests || nextCount > maxGuests) {
+      setGuestLimitNudgeTick((prev) => prev + 1);
+      return;
+    }
+    setGuestCount(nextCount);
+    setGuestCountPulseTick((prev) => prev + 1);
+  }, [guestCount, listing]);
+
   // Filter out any images that duplicate the main image so we don't
   // show the cover photo twice in the hero grid or gallery.
   const galleryImages = listing
@@ -340,58 +377,127 @@ export function ListingDetailPage() {
   const allImages = listing
     ? [listing.main_image, ...galleryImages.map((img) => img.image_url)]
     : [];
+  const reviewCount = listing?.reviews.length ?? 0;
+  const hasMoreReviews = reviewCount > visibleReviewCount;
+  const reviewsToRender = listing?.reviews.slice(0, visibleReviewCount) ?? [];
+
+  const revealMoreReviews = useCallback(() => {
+    setVisibleReviewCount((prev) => Math.min(prev + 6, reviewCount));
+  }, [reviewCount]);
+
+  useEffect(() => {
+    if (loading || error || !listing) return;
+    const frame = requestAnimationFrame(() => setHasEnteredBookingCard(true));
+    return () => cancelAnimationFrame(frame);
+  }, [loading, error, listing]);
+
+  const sectionContainerVariants = shouldReduceMotion
+    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
+    : {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.08,
+          delayChildren: 0.06,
+        },
+      },
+    };
+
+  const sectionItemVariants = shouldReduceMotion
+    ? { hidden: { opacity: 1, y: 0 }, visible: { opacity: 1, y: 0 } }
+    : {
+      hidden: { opacity: 0, y: 14 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { type: 'spring' as const, stiffness: 320, damping: 28 },
+      },
+    };
+
+  const dropdownTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
 
   if (loading) {
     return (
       <div style={{
-        backgroundColor: '#ffffff',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        <Header
-          brandName="warpbnb"
-          navItems={FIGMA_NAV_ITEMS}
-          activeNavLabel="Time Travel"
-          onNavClick={() => {}}
-          onLogoClick={() => navigate('/')}
-          rightSlot={<HeaderRightSlotWithUserMenu />}
-          showDivider
-        />
-        <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-          <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
-            {/* Title placeholder - same height as real title (lineHeight 40px + marginBottom 24px) so hero skeleton aligns */}
-            <div style={{ height: 64, marginBottom: '24px' }} />
-            <HeroGridSkeleton />
+          backgroundColor: '#ffffff',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <Header
+            brandName="warpbnb"
+            navItems={FIGMA_NAV_ITEMS}
+            activeNavLabel="Time Travel"
+            onNavClick={() => {}}
+            onLogoClick={() => navigate('/')}
+            rightSlot={<HeaderRightSlotWithUserMenu />}
+            showDivider
+          />
+          <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
+            <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+              {/* Title row placeholder: mirrors the real title/action row footprint so hero Y-position matches loaded state */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '24px',
+                  gap: '16px',
+                  flexWrap: isCompactLayout ? 'wrap' : 'nowrap',
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    height: isCompactLayout ? 32 : 40,
+                  }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: isCompactLayout ? '16px' : '24px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div style={{ width: 56, height: 18 }} />
+                  <div style={{ width: 56, height: 18 }} />
+                </div>
+              </div>
+              <HeroGridSkeleton />
+            </div>
           </div>
         </div>
-      </div>
     );
   }
 
   if (error || !listing) {
     return (
       <div style={{
-        backgroundColor: '#ffffff',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: '16px',
-      }}>
-        <h2 style={{ fontFamily: '"Figtree", sans-serif', fontSize: '24px', color: '#222' }}>
-          {error || 'Listing not found'}
-        </h2>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Button variant="primary" size="md" onClick={() => loadListing()}>
-            Retry
-          </Button>
-          <Button variant="secondary" size="md" onClick={() => navigate('/')}>
-            Back to Home
-          </Button>
+          backgroundColor: '#ffffff',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          <h2 style={{ fontFamily: '"Figtree", sans-serif', fontSize: '24px', color: '#222' }}>
+            {error || 'Listing not found'}
+          </h2>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Button variant="primary" size="md" onClick={() => loadListing()}>
+              Retry
+            </Button>
+            <Button variant="secondary" size="md" onClick={() => navigate('/')}>
+              Back to Home
+            </Button>
+          </div>
         </div>
-      </div>
     );
   }
 
@@ -410,26 +516,6 @@ export function ListingDetailPage() {
     ? JSON.parse(listing.sleeping_arrangements)
     : listing.sleeping_arrangements;
 
-  // Helper function to safely parse badges (handles double-encoded JSON)
-  const parseBadges = (badges: any): ReviewBadge[] | null => {
-    if (!badges) return null;
-    if (Array.isArray(badges)) return badges;
-    if (typeof badges === 'string') {
-      try {
-        const parsed = JSON.parse(badges);
-        return Array.isArray(parsed) ? parsed : null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  };
-
-  // Parse host badges if they're a string
-  const hostBadges = listing.hosts?.badges
-    ? parseBadges(listing.hosts.badges) as HostBadge[] | null
-    : null;
-
   // Calculate prices
   const baseFare = listing.price_per_night * selectedDuration.multiplier;
   const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
@@ -441,6 +527,42 @@ export function ListingDetailPage() {
   const btcRate = 0.000012;
   const btcTotal = (totalPrice * btcRate).toFixed(6);
   const btcBase = (baseFare * btcRate).toFixed(6);
+  const shareUrl = getShareUrl();
+  const shareTitle = listing.title;
+  const shareSummary = `${listing.property_type ?? 'Stay'} · ★${listing.overall_rating?.toFixed(2) ?? '—'} · ${listing.bedrooms} bedroom${listing.bedrooms !== 1 ? 's' : ''} · ${listing.beds} bed${listing.beds !== 1 ? 's' : ''} · ${listing.baths} bath${listing.baths !== 1 ? 's' : ''}`;
+  const shareWarmIntro = `Check out this place I found on WarpBnB: ${shareTitle}`;
+
+  const handleShareOption = (optionId: 'copy' | 'email' | 'messages' | 'linkedin' | 'twitter' | 'embed') => {
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(shareTitle);
+    const encodedWarmIntro = encodeURIComponent(shareWarmIntro);
+    const encodedBody = encodeURIComponent(`${shareWarmIntro}\n${shareUrl}`);
+
+    switch (optionId) {
+      case 'copy':
+        copyToClipboard(shareUrl, 'Link copied');
+        break;
+      case 'email':
+        window.location.href = `mailto:?subject=${encodedWarmIntro}&body=${encodedBody}`;
+        break;
+      case 'messages':
+        window.location.href = `sms:&body=${encodedBody}`;
+        break;
+      case 'linkedin':
+        openShareWindow(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&summary=${encodedBody}`);
+        break;
+      case 'twitter':
+        openShareWindow(`https://twitter.com/intent/tweet?text=${encodedWarmIntro}&url=${encodedUrl}`);
+        break;
+      case 'embed': {
+        const embedCode = `<iframe src="${shareUrl}" width="640" height="420" style="border:0;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+        copyToClipboard(embedCode, 'Embed code copied');
+        break;
+      }
+      default:
+        break;
+    }
+  };
 
   return (
     <>
@@ -452,6 +574,11 @@ export function ListingDetailPage() {
         <PhotoViewer
           images={allImages}
           initialIndex={photoViewerIndex}
+          layoutId={photoViewerLayoutId}
+          onShareClick={() => {
+            setShowPhotoViewer(false);
+            window.setTimeout(() => setShowShareModal(true), 0);
+          }}
           onClose={() => setShowPhotoViewer(false)}
         />
       )}
@@ -479,25 +606,37 @@ export function ListingDetailPage() {
         <div
           style={{
             flex: 1,
-            padding: isMobile ? '24px 16px 48px 16px' : '32px 24px 64px 24px',
+            padding: isMobile
+              ? '24px 16px 120px 16px'
+              : isTablet
+                ? '28px 20px 64px 20px'
+                : '32px 24px 64px 24px',
           }}
         >
-        <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
+        <motion.div
+          style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}
+          variants={sectionContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
         {/* Title with Share and Save buttons */}
-        <div style={{
+        <motion.div
+          variants={sectionItemVariants}
+          style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '24px',
           gap: '16px',
-          flexWrap: isMobile ? 'wrap' : 'nowrap',
-        }}>
+          flexWrap: isCompactLayout ? 'wrap' : 'nowrap',
+        }}
+        >
           <h1 style={{
             fontFamily: '"Figtree", sans-serif',
-            fontSize: isMobile ? '26px' : '30px',
+            fontSize: isMobile ? '26px' : isTablet ? '28px' : '30px',
             fontWeight: 500,
             color: '#000000',
-            lineHeight: isMobile ? '32px' : '40px',
+            lineHeight: isMobile ? '32px' : isTablet ? '36px' : '40px',
             letterSpacing: '-0.6px',
             margin: 0,
             flex: 1,
@@ -508,35 +647,15 @@ export function ListingDetailPage() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: isMobile ? '16px' : '24px',
+            gap: isCompactLayout ? '16px' : '24px',
             flexShrink: 0,
           }}>
             {/* Share Button */}
             <button
               type="button"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f0f0f0';
-                e.currentTarget.style.borderRadius = '8px';
-                e.currentTarget.style.padding = '4px 8px';
-                e.currentTarget.style.margin = '-4px -8px';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.padding = '0';
-                e.currentTarget.style.margin = '0';
-              }}
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: listing.title,
-                    url: window.location.href,
-                  }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(window.location.href).then(() => {
-                    // Could show a toast notification here
-                  });
-                }
-              }}
+              onMouseEnter={() => setIsShareHovered(true)}
+              onMouseLeave={() => setIsShareHovered(false)}
+              onClick={() => setShowShareModal(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -549,7 +668,11 @@ export function ListingDetailPage() {
                 fontWeight: 500,
                 color: '#000000',
                 textDecoration: 'underline',
-                transition: 'background-color 0.2s ease',
+                transition: 'background-color 0.2s ease, transform 0.1s ease',
+                backgroundColor: isShareHovered ? '#f0f0f0' : 'transparent',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                margin: '-4px -8px',
               }}
             >
               <Share size={18} strokeWidth={1.5} style={{ color: '#000000' }} />
@@ -558,17 +681,8 @@ export function ListingDetailPage() {
             {/* Save Button */}
             <button
               type="button"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f0f0f0';
-                e.currentTarget.style.borderRadius = '8px';
-                e.currentTarget.style.padding = '4px 8px';
-                e.currentTarget.style.margin = '-4px -8px';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.padding = '0';
-                e.currentTarget.style.margin = '0';
-              }}
+              onMouseEnter={() => setIsSaveHovered(true)}
+              onMouseLeave={() => setIsSaveHovered(false)}
               onClick={() => {
                 setIsSaved((prev) => !prev);
               }}
@@ -584,7 +698,11 @@ export function ListingDetailPage() {
                 fontWeight: 500,
                 color: '#000000',
                 textDecoration: 'underline',
-                transition: 'background-color 0.2s ease',
+                transition: 'background-color 0.2s ease, transform 0.1s ease',
+                backgroundColor: isSaveHovered ? '#f0f0f0' : 'transparent',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                margin: '-4px -8px',
               }}
             >
               <Heart
@@ -599,22 +717,28 @@ export function ListingDetailPage() {
               <span>{isSaved ? 'Saved' : 'Save'}</span>
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Hero Image Grid */}
-        <div style={{
+        <motion.div
+          variants={sectionItemVariants}
+          style={{
           display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr',
           gridTemplateRows: isMobile ? 'auto' : '1fr 1fr',
           gap: '8px',
-          height: isMobile ? 'auto' : '400px',
+          height: isMobile ? 'auto' : isTablet ? '340px' : '400px',
           marginBottom: '24px',
           borderRadius: '16px',
           overflow: 'hidden',
-        }}>
+          position: 'relative',
+        }}
+        >
           {/* Main Image */}
           <div
-            onClick={() => handleImageClick(0)}
+            onClick={() => handleImageClick(0, `listing-hero-image-0`)}
+            onMouseEnter={() => setHoveredHeroImageKey('main')}
+            onMouseLeave={() => setHoveredHeroImageKey((prev) => (prev === 'main' ? null : prev))}
             style={{
               gridRow: isMobile ? 'auto' : 'span 2',
               cursor: 'pointer',
@@ -624,27 +748,29 @@ export function ListingDetailPage() {
               height: '100%',
             }}
           >
-            {!isImageLoaded('main') && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
-                  backgroundSize: '200% 100%',
-                  animation: 'shimmer 1.5s ease-in-out infinite',
-                  borderRadius: isMobile ? '16px' : '16px 0 0 16px',
-                  zIndex: 1,
-                  margin: 0,
-                  padding: 0,
-                }}
-              />
-            )}
-            <img
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s ease-in-out infinite',
+                borderRadius: isMobile ? '16px' : '16px 0 0 16px',
+                zIndex: 1,
+                margin: 0,
+                padding: 0,
+                opacity: isImageLoaded('main') ? 0 : 1,
+                transition: 'opacity 0.38s ease',
+                pointerEvents: 'none',
+              }}
+            />
+            <motion.img
+              layoutId="listing-hero-image-0"
               src={listing.main_image}
               alt={listing.title}
               onLoad={() => handleImageLoad('main')}
@@ -655,15 +781,26 @@ export function ListingDetailPage() {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transition: 'transform 0.3s ease, opacity 0.3s ease',
+                transition: 'transform 0.3s ease, opacity 0.38s ease, filter 0.38s ease',
                 opacity: isImageLoaded('main') ? 1 : 0,
+                filter: isImageLoaded('main') ? 'blur(0px)' : 'blur(8px)',
                 zIndex: 2,
                 margin: 0,
                 padding: 0,
                 display: 'block',
+                transform: hoveredHeroImageKey === 'main' ? 'scale(1.04)' : 'scale(1)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.12)',
+                opacity: hoveredHeroImageKey === 'main' ? 1 : 0,
+                transition: 'opacity 0.22s ease',
+                pointerEvents: 'none',
+                zIndex: 3,
+              }}
             />
           </div>
 
@@ -686,7 +823,9 @@ export function ListingDetailPage() {
             return (
               <div
                 key={img.id}
-                onClick={() => handleImageClick(idx + 1)}
+                onClick={() => handleImageClick(idx + 1, `listing-hero-image-${idx + 1}`)}
+                onMouseEnter={() => setHoveredHeroImageKey(imageKey)}
+                onMouseLeave={() => setHoveredHeroImageKey((prev) => (prev === imageKey ? null : prev))}
                 style={{
                   cursor: 'pointer',
                   overflow: 'hidden',
@@ -695,27 +834,29 @@ export function ListingDetailPage() {
                   height: '100%',
                 }}
               >
-                {!isImageLoaded(imageKey) && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 1.5s ease-in-out infinite',
-                      borderRadius,
-                      zIndex: 1,
-                      margin: 0,
-                      padding: 0,
-                    }}
-                  />
-                )}
-                <img
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s ease-in-out infinite',
+                    borderRadius,
+                    zIndex: 1,
+                    margin: 0,
+                    padding: 0,
+                    opacity: isImageLoaded(imageKey) ? 0 : 1,
+                    transition: 'opacity 0.38s ease',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <motion.img
+                  layoutId={`listing-hero-image-${idx + 1}`}
                   src={img.image_url}
                   alt={img.caption || `Image ${idx + 2}`}
                   onLoad={() => handleImageLoad(imageKey)}
@@ -726,28 +867,64 @@ export function ListingDetailPage() {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    transition: 'transform 0.3s ease, opacity 0.3s ease',
+                    transition: 'transform 0.3s ease, opacity 0.38s ease, filter 0.38s ease',
                     opacity: isImageLoaded(imageKey) ? 1 : 0,
+                    filter: isImageLoaded(imageKey) ? 'blur(0px)' : 'blur(8px)',
                     zIndex: 2,
                     margin: 0,
                     padding: 0,
                     display: 'block',
+                    transform: hoveredHeroImageKey === imageKey ? 'scale(1.04)' : 'scale(1)',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.12)',
+                    opacity: hoveredHeroImageKey === imageKey ? 1 : 0,
+                    transition: 'opacity 0.22s ease',
+                    pointerEvents: 'none',
+                    zIndex: 3,
+                  }}
                 />
               </div>
             );
           })}
-        </div>
+          <button
+            type="button"
+            onClick={() => handleImageClick(0, 'listing-hero-image-0')}
+            style={{
+              position: 'absolute',
+              right: 16,
+              bottom: 16,
+              zIndex: 4,
+              border: '1px solid #DDDDDD',
+              background: 'rgba(255,255,255,0.95)',
+              borderRadius: 10,
+              padding: '10px 14px',
+              fontFamily: '"Figtree", sans-serif',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#222',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            }}
+          >
+            Show all photos
+          </button>
+        </motion.div>
 
         {/* Main Content Grid */}
-        <div style={{
+        <motion.div
+          variants={sectionItemVariants}
+          style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 370px',
-          gap: isMobile ? '32px' : '80px',
+          gridTemplateColumns: isCompactLayout ? '1fr' : '1fr 370px',
+          gap: isMobile ? '32px' : isTablet ? '40px' : '80px',
           marginBottom: '32px',
-        }}>
+        }}
+        >
           {/* Left Column - Details */}
           <div>
             {/* Property Info */}
@@ -963,22 +1140,36 @@ export function ListingDetailPage() {
               isOpen={showDescriptionModal}
               onClose={() => setShowDescriptionModal(false)}
             >
-              <div style={{
+              <motion.div
+                initial={shouldReduceMotion ? false : 'hidden'}
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: { staggerChildren: 0.05, delayChildren: 0.02 },
+                  },
+                }}
+                style={{
                 padding: '24px',
-                width: '560px',
+                width: '720px',
                 maxWidth: 'calc(100vw - 48px)',
                 maxHeight: '85vh',
                 overflow: 'auto',
                 boxSizing: 'border-box',
               }}>
-                <div style={{
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+                  }}
+                  style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
                   gap: '16px',
                   marginBottom: '24px',
                 }}>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setShowDescriptionModal(false)}
                     aria-label="Close"
@@ -994,8 +1185,13 @@ export function ListingDetailPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
-                  </button>
-                  <h2 style={{
+                  </motion.button>
+                  <motion.h2
+                    variants={{
+                      hidden: { opacity: 0, y: 8 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+                    }}
+                    style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '28px',
                     fontWeight: 600,
@@ -1005,9 +1201,14 @@ export function ListingDetailPage() {
                     textAlign: 'left',
                   }}>
                     About this space
-                  </h2>
-                </div>
-                <p style={{
+                  </motion.h2>
+                </motion.div>
+                <motion.p
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
+                  }}
+                  style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '16px',
                   lineHeight: '24px',
@@ -1016,8 +1217,8 @@ export function ListingDetailPage() {
                   margin: 0,
                 }}>
                   {listing.full_description || listing.short_description}
-                </p>
-              </div>
+                </motion.p>
+              </motion.div>
             </Modal>
 
             {/* Sleeping Arrangements */}
@@ -1087,7 +1288,7 @@ export function ListingDetailPage() {
                 </h3>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                  gridTemplateColumns: isCompactLayout ? '1fr' : '1fr 1fr',
                   gap: '16px',
                 }}>
                   {listing.amenities
@@ -1136,22 +1337,36 @@ export function ListingDetailPage() {
               isOpen={showAmenitiesModal}
               onClose={() => setShowAmenitiesModal(false)}
             >
-              <div style={{
+              <motion.div
+                initial={shouldReduceMotion ? false : 'hidden'}
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: { staggerChildren: 0.04, delayChildren: 0.02 },
+                  },
+                }}
+                style={{
                 padding: '24px',
-                width: '560px',
+                width: '720px',
                 maxWidth: 'calc(100vw - 48px)',
                 maxHeight: '85vh',
                 overflow: 'auto',
                 boxSizing: 'border-box',
               }}>
-                <div style={{
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+                  }}
+                  style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
                   gap: '16px',
                   marginBottom: '24px',
                 }}>
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => setShowAmenitiesModal(false)}
                     aria-label="Close"
@@ -1167,8 +1382,13 @@ export function ListingDetailPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
-                  </button>
-                  <h2 style={{
+                  </motion.button>
+                  <motion.h2
+                    variants={{
+                      hidden: { opacity: 0, y: 8 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+                    }}
+                    style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '28px',
                     fontWeight: 600,
@@ -1178,9 +1398,14 @@ export function ListingDetailPage() {
                     textAlign: 'left',
                   }}>
                     What this place offers
-                  </h2>
-                </div>
-                <div style={{
+                  </motion.h2>
+                </motion.div>
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+                  }}
+                  style={{
                   display: 'flex',
                   flexDirection: 'column',
                 }}>
@@ -1189,7 +1414,13 @@ export function ListingDetailPage() {
                     .map((amenity, idx) => {
                     const { Icon: IconComponent } = getAmenityIcon(amenity.name);
                     return (
-                      <div key={amenity.id}>
+                      <motion.div
+                        key={amenity.id}
+                        variants={{
+                          hidden: { opacity: 0, y: 6 },
+                          visible: { opacity: 1, y: 0, transition: { duration: 0.18 } },
+                        }}
+                      >
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1218,25 +1449,267 @@ export function ListingDetailPage() {
                             width: '100%',
                           }} />
                         )}
-                      </div>
+                      </motion.div>
                     );
                   })}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
+            </Modal>
+
+            {/* Share modal */}
+            <Modal
+              isOpen={showShareModal}
+              onClose={() => setShowShareModal(false)}
+            >
+              <motion.div
+                initial={shouldReduceMotion ? false : 'hidden'}
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: { staggerChildren: 0.04, delayChildren: 0.02 },
+                  },
+                }}
+                style={{
+                  padding: '24px',
+                  width: '760px',
+                  maxWidth: 'calc(100vw - 48px)',
+                  maxHeight: '85vh',
+                  overflow: 'auto',
+                  boxSizing: 'border-box',
+                  position: 'relative',
+                }}
+              >
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    marginBottom: '24px',
+                  }}
+                >
+                  <h2
+                    style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '28px',
+                      fontWeight: 600,
+                      color: '#222',
+                      margin: 0,
+                      lineHeight: 1.25,
+                      textAlign: 'left',
+                    }}
+                  >
+                    Share this place
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowShareModal(false)}
+                    aria-label="Close"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      lineHeight: 1,
+                      color: '#222',
+                      marginTop: '2px',
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </motion.div>
+
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    marginBottom: '22px',
+                  }}
+                >
+                  <img
+                    src={listing.main_image}
+                    alt={listing.title}
+                    style={{
+                      width: 86,
+                      height: 86,
+                      borderRadius: 14,
+                      objectFit: 'cover',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '18px',
+                        fontWeight: 500,
+                        color: '#222',
+                        lineHeight: '24px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      {shareTitle}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '15px',
+                        color: '#4b4b4b',
+                        lineHeight: '21px',
+                      }}
+                    >
+                      {shareSummary}
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 8 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
+                  }}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: isCompactLayout ? '1fr' : '1fr 1fr',
+                    gap: '14px',
+                  }}
+                >
+                  {[
+                    { id: 'copy' as const, label: 'Copy link', Icon: Link2 },
+                    { id: 'email' as const, label: 'Email', Icon: Mail },
+                    { id: 'messages' as const, label: 'Messages', Icon: MessageCircle },
+                    { id: 'linkedin' as const, label: 'LinkedIn', Icon: Linkedin },
+                    { id: 'twitter' as const, label: 'Twitter', Icon: Twitter },
+                    { id: 'embed' as const, label: 'Embed', Icon: Code2 },
+                  ].map((item) => (
+                    <motion.button
+                      key={item.id}
+                      type="button"
+                      whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
+                      whileTap={shouldReduceMotion ? undefined : { scale: 0.985 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.12 }}
+                      onClick={() => handleShareOption(item.id)}
+                      style={{
+                        width: '100%',
+                        border: '1px solid #d5d5d5',
+                        borderRadius: '18px',
+                        background: '#fff',
+                        minHeight: '74px',
+                        padding: '0 22px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '18px',
+                        fontWeight: 500,
+                        color: '#222',
+                      }}
+                    >
+                      <item.Icon size={24} strokeWidth={1.9} />
+                      <span>{item.label}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+
+                <AnimatePresence>
+                  {shareFeedback && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        bottom: '20px',
+                        transform: 'translateX(-50%)',
+                        zIndex: 5,
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <motion.div
+                        initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
+                        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '11px 20px',
+                          borderRadius: '20px',
+                          border: '1px solid #E6E6E6',
+                          background: '#FFFFFF',
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                          fontFamily: '"Figtree", sans-serif',
+                          fontSize: '14px',
+                          color: '#222',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '999px',
+                            backgroundColor: '#16A34A',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                        </span>
+                        <span style={{ fontSize: '14px', fontWeight: 500, lineHeight: 1.1 }}>
+                          {shareFeedback}
+                        </span>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </Modal>
 
           </div>
 
           {/* Right Column - Booking Card */}
           <div style={{ position: 'relative' }}>
-            <div style={{
-              position: isMobile ? 'static' : 'sticky',
-              top: isMobile ? undefined : '125px',
+            <motion.div
+              ref={bookingCardRef}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 18, scale: 0.985 }}
+              animate={hasEnteredBookingCard
+                ? {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  boxShadow: isBookingCardStuck
+                    ? '0px 12px 28px rgba(0, 0, 0, 0.18)'
+                    : '0px 6px 20px rgba(0, 0, 0, 0.2)',
+                  borderColor: isBookingCardStuck ? '#cfcfcf' : '#DDDDDD',
+                }
+                : { opacity: 1, y: 0, scale: 1 }
+              }
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+              position: isCompactLayout ? 'static' : 'sticky',
+              top: isCompactLayout ? undefined : '125px',
               padding: '24px',
               border: '1px solid #DDDDDD',
               borderRadius: '16px',
               boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.2)',
-            }}>
+              backgroundColor: isBookingCardStuck ? '#FFFFFF' : 'transparent',
+            }}
+            >
               {/* Price */}
               <div style={{ marginBottom: '24px' }}>
                 <span style={{
@@ -1262,12 +1735,14 @@ export function ListingDetailPage() {
                   onClick={() => setShowDurationDropdown(!showDurationDropdown)}
                   style={{
                     padding: '12px',
-                    border: '1px solid #B0B0B0',
+                    border: showDurationDropdown ? '1px solid #222' : '1px solid #B0B0B0',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                    boxShadow: showDurationDropdown ? '0 0 0 3px rgba(34,34,34,0.08)' : 'none',
                   }}
                 >
                   <div>
@@ -1288,13 +1763,26 @@ export function ListingDetailPage() {
                       {selectedDuration.label}
                     </div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <motion.svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    animate={{ rotate: showDurationDropdown ? 180 : 0 }}
+                    transition={dropdownTransition}
+                  >
                     <path d="M4 6L8 10L12 6" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  </motion.svg>
                 </div>
 
-                {showDurationDropdown && (
-                  <div style={{
+                <AnimatePresence>
+                  {showDurationDropdown && (
+                  <motion.div
+                    initial={shouldReduceMotion ? false : { opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
+                    transition={dropdownTransition}
+                    style={{
                     position: 'absolute',
                     top: '100%',
                     left: 0,
@@ -1325,8 +1813,9 @@ export function ListingDetailPage() {
                         {option.label}
                       </div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
 
               {/* Guest Selector */}
@@ -1335,12 +1824,14 @@ export function ListingDetailPage() {
                   onClick={() => setShowGuestDropdown(!showGuestDropdown)}
                   style={{
                     padding: '12px',
-                    border: '1px solid #B0B0B0',
+                    border: showGuestDropdown ? '1px solid #222' : '1px solid #B0B0B0',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                    boxShadow: showGuestDropdown ? '0 0 0 3px rgba(34,34,34,0.08)' : 'none',
                   }}
                 >
                   <div>
@@ -1361,13 +1852,32 @@ export function ListingDetailPage() {
                       {guestCount} guest{guestCount !== 1 ? 's' : ''}
                     </div>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <motion.svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    animate={{ rotate: showGuestDropdown ? 180 : 0 }}
+                    transition={dropdownTransition}
+                  >
                     <path d="M4 6L8 10L12 6" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  </motion.svg>
                 </div>
 
-                {showGuestDropdown && (
-                  <div style={{
+                <AnimatePresence>
+                  {showGuestDropdown && (
+                  <motion.div
+                    key={`guest-dropdown-${guestLimitNudgeTick}`}
+                    initial={shouldReduceMotion ? false : { opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      x: guestLimitNudgeTick > 0 ? [0, -3, 3, -2, 0] : 0,
+                    }}
+                    exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
+                    transition={dropdownTransition}
+                    style={{
                     position: 'absolute',
                     top: '100%',
                     left: 0,
@@ -1395,8 +1905,8 @@ export function ListingDetailPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.max(1, guestCount - 1)); }}
-                          disabled={guestCount <= 1}
+                          onClick={(e) => { e.stopPropagation(); changeGuestCount(-1); }}
+                          aria-disabled={guestCount <= 1}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -1409,7 +1919,11 @@ export function ListingDetailPage() {
                         >
                           -
                         </button>
-                        <span style={{
+                        <motion.span
+                          key={`guest-count-${guestCountPulseTick}`}
+                          animate={shouldReduceMotion ? undefined : { scale: [1, 1.14, 1] }}
+                          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
+                          style={{
                           fontFamily: '"Figtree", sans-serif',
                           fontSize: '16px',
                           color: '#222',
@@ -1417,11 +1931,11 @@ export function ListingDetailPage() {
                           textAlign: 'center',
                         }}>
                           {guestCount}
-                        </span>
+                        </motion.span>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setGuestCount(Math.min(listing.guest_capacity || 10, guestCount + 1)); }}
-                          disabled={guestCount >= (listing.guest_capacity || 10)}
+                          onClick={(e) => { e.stopPropagation(); changeGuestCount(1); }}
+                          aria-disabled={guestCount >= (listing.guest_capacity || 10)}
                           style={{
                             width: '32px',
                             height: '32px',
@@ -1436,14 +1950,18 @@ export function ListingDetailPage() {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
 
               {/* Reserve Button */}
-              <button
+              <motion.button
                 onClick={handleReserve}
                 disabled={isBooking || guestCount < 1}
+                whileHover={isBooking ? undefined : { scale: 1.01, filter: 'brightness(1.03)' }}
+                whileTap={isBooking ? undefined : { scale: 0.98 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.14 }}
                 style={{
                   width: '100%',
                   padding: '14px',
@@ -1457,10 +1975,11 @@ export function ListingDetailPage() {
                   fontFamily: '"Figtree", sans-serif',
                   marginBottom: '16px',
                   opacity: isBooking ? 0.7 : 1,
+                  transition: 'transform 0.12s ease, filter 0.2s ease, opacity 0.2s ease',
                 }}
               >
                 {isBooking ? 'Processing...' : 'Reserve'}
-              </button>
+              </motion.button>
 
               <p style={{
                 fontFamily: '"Figtree", sans-serif',
@@ -1471,15 +1990,15 @@ export function ListingDetailPage() {
               }}>
                 You won't be charged yet
               </p>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Full-width divider between grid and lower sections */}
-        <div style={{ width: '100%', borderTop: '1px solid #EBEBEB' }} />
+        <motion.div variants={sectionItemVariants} style={{ width: '100%', borderTop: '1px solid #EBEBEB' }} />
 
         {/* Full-width sections: Reviews, Meet your host, Things to know */}
-        <div style={{ width: '100%' }}>
+        <motion.div variants={sectionItemVariants} style={{ width: '100%' }}>
             {/* Reviews Section */}
             {listing.reviews.length > 0 && (
               <div id="reviews-section" style={{
@@ -1505,11 +2024,24 @@ export function ListingDetailPage() {
 
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                  gap: '40px',
+                  gridTemplateColumns: isCompactLayout ? '1fr' : '1fr 1fr',
+                  columnGap: isCompactLayout ? '0' : '28px',
+                  rowGap: '28px',
                 }}>
-                  {listing.reviews.slice(0, showAllReviews ? undefined : 6).map((review) => (
-                    <div key={review.id}>
+                  <AnimatePresence initial={false}>
+                  {reviewsToRender.map((review, idx) => (
+                    <motion.div
+                      key={review.id}
+                      layout
+                      initial={shouldReduceMotion ? false : { opacity: 0, y: 14, scale: 0.985 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+                      transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        borderTop: idx >= 2 || isCompactLayout ? '1px solid #F1F1F1' : 'none',
+                        paddingTop: idx >= 2 || isCompactLayout ? '18px' : 0,
+                      }}
+                    >
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1556,8 +2088,9 @@ export function ListingDetailPage() {
                           </div>
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
-                            fontSize: '14px',
-                            color: '#717171',
+                            fontSize: '13px',
+                            color: '#8A8A8A',
+                            letterSpacing: '-0.01em',
                           }}>
                             {review.reviewer_city && review.reviewer_era
                               ? `${review.reviewer_city}, ${review.reviewer_era}`
@@ -1569,34 +2102,35 @@ export function ListingDetailPage() {
                       <p style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '15px',
-                        lineHeight: '22px',
+                        lineHeight: '24px',
                         color: '#222',
                         margin: 0,
+                        maxWidth: '56ch',
                       }}>
                         {review.comment}
                       </p>
 
                       {review.response_to_reviewer && review.response_comment && (
                         <div style={{
-                          marginTop: '12px',
-                          padding: '12px',
-                          backgroundColor: '#F7F7F7',
-                          borderRadius: '8px',
+                          marginTop: '14px',
+                          padding: '12px 14px',
+                          backgroundColor: '#FAFAFA',
+                          borderRadius: '10px',
                           borderLeft: '3px solid #FF385C',
                         }}>
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             fontWeight: 500,
                             color: '#717171',
-                            marginBottom: '4px',
+                            marginBottom: '6px',
                           }}>
                             Response to {review.response_to_reviewer}:
                           </div>
                           <p style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '14px',
-                            lineHeight: '20px',
+                            lineHeight: '21px',
                             color: '#222',
                             margin: 0,
                             fontStyle: 'italic',
@@ -1605,18 +2139,19 @@ export function ListingDetailPage() {
                           </p>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
+                  </AnimatePresence>
                 </div>
 
-                {listing.reviews.length > 6 && !showAllReviews && (
+                {hasMoreReviews && (
                   <Button
                     variant="secondary"
                     size="lg"
-                    onClick={() => setShowAllReviews(true)}
+                    onClick={revealMoreReviews}
                     style={{ marginTop: '24px' }}
                   >
-                    Show all {listing.reviews.length} reviews
+                    Show more reviews ({reviewsToRender.length}/{listing.reviews.length})
                   </Button>
                 )}
               </div>
@@ -1643,22 +2178,43 @@ export function ListingDetailPage() {
                   display: 'flex',
                   gap: '32px',
                   alignItems: 'flex-start',
-                  flexDirection: isMobile ? 'column' : 'row',
+                  flexDirection: isCompactLayout ? 'column' : 'row',
                 }}>
-                  <div style={{
-                  width: isMobile ? '100%' : '400px',
+                  <motion.div
+                  onHoverStart={() => setIsHostCardHovered(true)}
+                  onHoverEnd={() => {
+                    setIsHostCardHovered(false);
+                    setHostCardTilt({ x: 0, y: 0 });
+                  }}
+                  onMouseMove={(e) => {
+                    if (isCompactLayout || shouldReduceMotion || !supportsHover) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const cx = rect.width / 2;
+                    const cy = rect.height / 2;
+                    const dx = (e.clientX - rect.left - cx) / cx;
+                    const dy = (e.clientY - rect.top - cy) / cy;
+                    setHostCardTilt({ x: -dy * 4, y: dx * 5 });
+                  }}
+                  whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                  width: isCompactLayout ? '100%' : '400px',
                   flexShrink: 0,
                   padding: '24px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '24px',
                   boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
                   display: 'flex',
-                  flexDirection: isMobile ? 'column' : 'row',
+                  flexDirection: isCompactLayout ? 'column' : 'row',
                   alignItems: 'stretch',
+                  transform: isCompactLayout || shouldReduceMotion || !supportsHover
+                    ? undefined
+                    : `perspective(900px) rotateX(${hostCardTilt.x}deg) rotateY(${hostCardTilt.y}deg) translateZ(0)`,
+                  willChange: isCompactLayout || shouldReduceMotion || !supportsHover ? undefined : 'transform',
                 }}>
                     {/* Left: avatar, name, Host — column width sized so 24px card padding gives equal space left/right of avatar */}
                     <div style={{
-                      width: '218px',
+                      width: isCompactLayout ? '100%' : '218px',
                       flexShrink: 0,
                       display: 'flex',
                       flexDirection: 'column',
@@ -1717,7 +2273,7 @@ export function ListingDetailPage() {
 
                     {/* Right: Reviews, Rating, Years hosting (stacked, with dividers) */}
                     <div style={{
-                      width: '134px',
+                      width: isCompactLayout ? '100%' : '134px',
                       flexShrink: 0,
                       minWidth: 0,
                       display: 'flex',
@@ -1728,9 +2284,10 @@ export function ListingDetailPage() {
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        paddingLeft: '24px',
+                        paddingLeft: isCompactLayout ? '0' : '24px',
                         paddingRight: '0',
-                        paddingTop: '12px',
+                        paddingTop: isCompactLayout ? '16px' : '12px',
+                        borderTop: isCompactLayout ? '1px solid #EBEBEB' : 'none',
                       }}>
                         <div style={{
                           paddingBottom: '12px',
@@ -1812,7 +2369,7 @@ export function ListingDetailPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   <div style={{ flex: 1, paddingTop: '8px' }}>
                     {listing.hosts.description ? (
@@ -1855,7 +2412,7 @@ export function ListingDetailPage() {
                 </h3>
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+                  gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr',
                   gap: '24px',
                 }}>
                   <div>
@@ -1869,7 +2426,7 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <Key size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      <Key size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
                       House rules
                     </h4>
                     {(thingsToKnow.house_rules || []).map((rule, idx) => (
@@ -1899,7 +2456,7 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <Shield size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      <Shield size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
                       Safety
                     </h4>
                     {(thingsToKnow.safety_and_property || []).map((item, idx) => (
@@ -1939,7 +2496,7 @@ export function ListingDetailPage() {
                       alignItems: 'center',
                       gap: '8px',
                     }}>
-                      <FileText size={18} color="#222" strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                      <FileText size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
                       Cancellation Policy
                     </h4>
                     <p style={{
@@ -1955,8 +2512,81 @@ export function ListingDetailPage() {
                 </div>
               </div>
             )}
-        </div>
-        </div>
+        </motion.div>
+        {isMobile && (
+          <motion.div
+            initial={shouldReduceMotion ? false : { y: 90, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: 'fixed',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 40,
+              background: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(8px)',
+              borderTop: '1px solid #EBEBEB',
+              padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            <div
+              style={{
+                maxWidth: 1120,
+                margin: '0 auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#222',
+                  }}
+                >
+                  ₿{btcBase}
+                  <span style={{ fontWeight: 400 }}> / {selectedDuration.label}</span>
+                </div>
+                <div
+                  style={{
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '12px',
+                    color: '#717171',
+                  }}
+                >
+                  {guestCount} guest{guestCount !== 1 ? 's' : ''} · You won't be charged yet
+                </div>
+              </div>
+              <motion.button
+                onClick={handleReserve}
+                disabled={isBooking || guestCount < 1}
+                whileTap={isBooking ? undefined : { scale: 0.98 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.12 }}
+                style={{
+                  border: 'none',
+                  borderRadius: 9999,
+                  padding: '12px 20px',
+                  background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                  color: '#fff',
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: isBooking ? 'not-allowed' : 'pointer',
+                  opacity: isBooking ? 0.7 : 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isBooking ? 'Processing...' : 'Reserve'}
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+        </motion.div>
         </div>
       </motion.div>
     </>

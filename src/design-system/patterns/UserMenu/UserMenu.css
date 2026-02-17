@@ -53,9 +53,9 @@
   display: flex;
   align-items: center;
   gap: var(--ds-spacing-8);
-  margin: 0 12px;
+  margin: 0 8px;
   padding: 10px 16px;
-  width: calc(100% - 24px);
+  width: calc(100% - 16px);
   border: none;
   border-radius: 8px;
   background: none;
@@ -108,9 +108,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--ds-spacing-4);
-  margin: 0 12px;
+  margin: 0 8px;
   padding: 10px 16px;
-  width: calc(100% - 24px);
+  width: calc(100% - 16px);
   border: none;
   border-radius: 8px;
   background: none;
@@ -166,9 +166,9 @@
 .ds-user-menu__logout {
   display: flex;
   align-items: center;
-  margin: 0 12px;
+  margin: 0 8px;
   padding: 10px 16px;
-  width: calc(100% - 24px);
+  width: calc(100% - 16px);
   border: none;
   border-radius: 8px;
   background: none;

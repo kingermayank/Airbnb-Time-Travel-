@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Text } from '../../foundations/Text';
 import { useDeviceType } from '../../../hooks/use-mobile';
 import './Header.css';
@@ -131,6 +131,53 @@ export function Header({
   style,
 }: HeaderProps) {
   const { isMobile } = useDeviceType();
+  const [comingSoonShakeByLabel, setComingSoonShakeByLabel] = useState<Record<string, number>>({});
+  const [comingSoonClickCountByLabel, setComingSoonClickCountByLabel] = useState<Record<string, number>>({});
+  const [comingSoonExpandedUntilByLabel, setComingSoonExpandedUntilByLabel] = useState<Record<string, number>>({});
+  const [hoveredComingSoonLabel, setHoveredComingSoonLabel] = useState<string | null>(null);
+  const hoveredComingSoonLabelRef = useRef<string | null>(null);
+  const comingSoonExpandEndTimeoutRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    hoveredComingSoonLabelRef.current = hoveredComingSoonLabel;
+  }, [hoveredComingSoonLabel]);
+
+  useEffect(() => {
+    const endTimeouts = comingSoonExpandEndTimeoutRef.current;
+    return () => {
+      Object.values(endTimeouts).forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+    };
+  }, []);
+
+  const scheduleComingSoonScaleDown = (label: string, expandedUntil: number) => {
+    const existingTimeoutId = comingSoonExpandEndTimeoutRef.current[label];
+    if (existingTimeoutId) {
+      window.clearTimeout(existingTimeoutId);
+    }
+
+    const timeoutDelay = Math.max(expandedUntil - Date.now(), 0) + 20;
+    comingSoonExpandEndTimeoutRef.current[label] = window.setTimeout(() => {
+      setComingSoonExpandedUntilByLabel((prev) => {
+        const currentUntil = prev[label];
+        if (!currentUntil || Date.now() < currentUntil) return prev;
+        if (hoveredComingSoonLabelRef.current === label) return prev;
+        const next = { ...prev };
+        delete next[label];
+        return next;
+      });
+    }, timeoutDelay);
+  };
+
+  const triggerComingSoonExpansion = (label: string) => {
+    const expandedUntil = Date.now() + 2000;
+    setComingSoonExpandedUntilByLabel((prev) => ({
+      ...prev,
+      [label]: expandedUntil,
+    }));
+    scheduleComingSoonScaleDown(label, expandedUntil);
+  };
 
   // Preload nav icon images so they appear instantly (same as other header assets)
   useEffect(() => {
@@ -203,16 +250,52 @@ export function Header({
           padding: isMobile ? '0 0 var(--ds-spacing-8)' : 0,
         }}
       >
-{navItems.map((item, index) => {
+        {navItems.map((item, index) => {
             const isActive = activeNavLabel === item.label && !item.disabled;
             const isDisabled = item.disabled === true;
+            const comingSoonShakeCount = comingSoonShakeByLabel[item.label] ?? 0;
+            const isComingSoonExpanded = (comingSoonExpandedUntilByLabel[item.label] ?? 0) > 0;
             return (
             <button
               key={item.label}
               type="button"
               className="ds-header-nav-tab"
-              onClick={() => !isDisabled && onNavClick?.(item.label)}
-              disabled={isDisabled}
+              onClick={() => {
+                if (isDisabled) {
+                  setComingSoonShakeByLabel((prev) => ({
+                    ...prev,
+                    [item.label]: (prev[item.label] ?? 0) + 1,
+                  }));
+                  setComingSoonClickCountByLabel((prev) => {
+                    const nextClickCount = (prev[item.label] ?? 0) + 1;
+                    if (nextClickCount >= 3) {
+                      triggerComingSoonExpansion(item.label);
+                      return { ...prev, [item.label]: 0 };
+                    }
+                    return { ...prev, [item.label]: nextClickCount };
+                  });
+                  return;
+                }
+                onNavClick?.(item.label);
+              }}
+              onMouseEnter={() => {
+                if (isDisabled) {
+                  setHoveredComingSoonLabel(item.label);
+                }
+              }}
+              onMouseLeave={() => {
+                if (!isDisabled) return;
+                setHoveredComingSoonLabel((prev) => (prev === item.label ? null : prev));
+                setComingSoonExpandedUntilByLabel((prev) => {
+                  const expandedUntil = prev[item.label];
+                  if (!expandedUntil || Date.now() < expandedUntil) return prev;
+                  const next = { ...prev };
+                  delete next[item.label];
+                  return next;
+                });
+              }}
+              aria-disabled={isDisabled}
+              tabIndex={isDisabled ? -1 : undefined}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -220,7 +303,7 @@ export function Header({
                 gap: 'var(--ds-spacing-2)',
                 background: 'none',
                 border: 'none',
-                cursor: isDisabled ? 'default' : 'pointer',
+                cursor: 'pointer',
                 padding: isMobile ? 'var(--ds-spacing-4) 0 0 0' : 'var(--ds-spacing-8) 0 0 0',
                 height: isMobile ? 72 : 80,
                 justifyContent: 'center',
@@ -262,7 +345,12 @@ export function Header({
                 ) : null}
                 <div className="ds-header-nav-label" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, position: 'relative' }}>
                   {isDisabled && (
-                    <span className="ds-header-coming-soon-badge ds-header-coming-soon-badge--above-label">COMING SOON</span>
+                    <span
+                      key={`coming-soon-${item.label}-${comingSoonShakeCount}`}
+                      className={`ds-header-coming-soon-badge ds-header-coming-soon-badge--above-label${comingSoonShakeCount > 0 ? ' ds-header-coming-soon-badge--jiggle' : ''}${isComingSoonExpanded ? ' ds-header-coming-soon-badge--expanded' : ''}`}
+                    >
+                      COMING SOON
+                    </span>
                   )}
                   <Text
                     variant="body"
@@ -270,7 +358,7 @@ export function Header({
                     color={isActive ? 'primary' : 'secondary'}
                     style={
                       isDisabled
-                        ? { color: 'var(--ds-text-muted)', cursor: 'default' }
+                        ? { color: 'var(--ds-text-muted)' }
                         : isActive
                           ? { color: 'var(--ds-navbar-active)' }
                           : { color: 'var(--ds-text-nav-inactive)' }

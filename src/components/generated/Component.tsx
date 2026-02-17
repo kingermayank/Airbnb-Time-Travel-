@@ -122,15 +122,21 @@ const exitTransition = {
 const slideVariants = {
   enter: (dir: number) => ({
     x: dir * SLIDE_OFFSET,
+    y: -6,
+    scale: 0.97,
     opacity: 0,
   }),
   center: {
     x: 0,
+    y: 0,
+    scale: 1,
     opacity: 1,
     transition: enterTransition,
   },
   exit: (dir: number) => ({
-    x: dir * -SLIDE_OFFSET,
+    x: dir * -SLIDE_OFFSET * 0.65,
+    y: -4,
+    scale: 0.98,
     opacity: 0,
     transition: exitTransition,
   }),
@@ -138,9 +144,9 @@ const slideVariants = {
 
 const instantTransition = { duration: 0 };
 const reducedMotionVariants = {
-  enter: { opacity: 0 },
+  enter: { opacity: 0, scale: 1 },
   center: { opacity: 1, transition: instantTransition },
-  exit: { opacity: 0, transition: instantTransition },
+  exit: { opacity: 0, scale: 1, transition: instantTransition },
 };
 
 export const AirbnbUi = () => {
@@ -190,6 +196,67 @@ export const AirbnbUi = () => {
   }, []);
   const themeOptions = useMemo(() => getThemeOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
   const eraOptions = useMemo(() => getEraOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
+
+  const listingGridVariants = useMemo(
+    () => (
+      shouldReduceMotion
+        ? {
+          hidden: { opacity: 1 },
+          show: { opacity: 1 },
+        }
+        : {
+          hidden: { opacity: 1 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.05,
+              delayChildren: 0.04,
+            },
+          },
+        }
+    ),
+    [shouldReduceMotion]
+  );
+
+  const listingItemVariants = useMemo(
+    () => (
+      shouldReduceMotion
+        ? {
+          hidden: { opacity: 1, y: 0, scale: 1 },
+          show: { opacity: 1, y: 0, scale: 1 },
+        }
+        : {
+          hidden: { opacity: 0, y: 14, scale: 0.985 },
+          show: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+              type: 'spring' as const,
+              stiffness: 380,
+              damping: 30,
+              mass: 0.7,
+            },
+          },
+        }
+    ),
+    [shouldReduceMotion]
+  );
+
+  const listingResultsKey = useMemo(
+    () => `${selectedTheme ?? 'all'}-${selectedEra ?? 'all'}-${listings.map((l) => l.id).join('|')}`,
+    [selectedTheme, selectedEra, listings]
+  );
+
+  const measureEraTabCenter = useCallback(() => {
+    if (!searchDropdownRef.current) return;
+    const buttons = searchDropdownRef.current.querySelectorAll('button[aria-expanded]');
+    const eraButton = buttons[1] as HTMLElement | undefined;
+    if (!eraButton) return;
+    const containerRect = searchDropdownRef.current.getBoundingClientRect();
+    const eraRect = eraButton.getBoundingClientRect();
+    setEraTabCenterLeft(eraRect.left + eraRect.width / 2 - containerRect.left);
+  }, []);
 
   const loadListings = useCallback(
     async (theme?: string, era?: string) => {
@@ -283,7 +350,9 @@ export const AirbnbUi = () => {
         ref={searchBarAreaRef}
         style={{
           width: '100%',
-          padding: 'var(--ds-spacing-12) 0 var(--ds-spacing-32) 0',
+          padding: isMobile
+            ? 'var(--ds-spacing-12) 0 var(--ds-spacing-20) 0'
+            : 'var(--ds-spacing-12) 0 var(--ds-spacing-32) 0',
           backgroundColor: 'var(--ds-surface-header)',
           display: 'flex',
           flexDirection: 'column',
@@ -292,38 +361,125 @@ export const AirbnbUi = () => {
           position: 'relative',
         }}
       >
-        <div ref={searchDropdownRef} style={{ position: 'relative', width: '100%', maxWidth: 851, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <SearchField
-            activeSection={activeSection}
-            onSearch={handleSearch}
-            onWhereClick={() => setActiveSection((s) => (s === 'where' ? null : 'where'))}
-            onEraClick={() => {
-              // Measure era button center before toggling, so the picker is positioned correctly on first render
-              if (searchDropdownRef.current) {
-                const buttons = searchDropdownRef.current.querySelectorAll('button[aria-expanded]');
-                const eraButton = buttons[1] as HTMLElement | undefined;
-                if (eraButton) {
-                  const containerRect = searchDropdownRef.current.getBoundingClientRect();
-                  const eraRect = eraButton.getBoundingClientRect();
-                  setEraTabCenterLeft(eraRect.left + eraRect.width / 2 - containerRect.left);
-                }
-              }
-              setActiveSection((s) => (s === 'era' ? null : 'era'));
-            }}
-            onWhoClick={() => setActiveSection((s) => (s === 'who' ? null : 'who'))}
-            where={{
-              label: 'Theme',
-              placeholder: getThemeLabel(selectedTheme) ?? 'Select theme',
-            }}
-            era={{
-              label: 'Era',
-              placeholder: getEraLabel(selectedEra) ?? 'Select Timeline',
-            }}
-            who={{
-              label: 'Who',
-              placeholder: totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests',
-            }}
-          />
+        <div
+          ref={searchDropdownRef}
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: isMobile ? 560 : 851,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            boxSizing: 'border-box',
+            padding: isMobile ? '0 var(--ds-spacing-16)' : 0,
+          }}
+        >
+          {isMobile ? (
+            <div
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--ds-surface)',
+                borderRadius: 24,
+                border: '1px solid var(--ds-border)',
+                boxShadow: '0px 0px 10px var(--ds-border), 0px 1px 2px rgba(0, 0, 0, 0.08)',
+                padding: 'var(--ds-spacing-8)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--ds-spacing-8)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveSection((s) => (s === 'where' ? null : 'where'))}
+                style={{
+                  border: '1px solid var(--ds-border-light)',
+                  borderRadius: 16,
+                  background: activeSection === 'where' ? 'var(--ds-surface-icon-button)' : 'transparent',
+                  minHeight: 52,
+                  textAlign: 'left',
+                  padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                  Theme
+                </div>
+                <div style={{ fontSize: 'var(--ds-text-14)', color: selectedTheme ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
+                  {getThemeLabel(selectedTheme) ?? 'Select theme'}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSection((s) => (s === 'era' ? null : 'era'))}
+                style={{
+                  border: '1px solid var(--ds-border-light)',
+                  borderRadius: 16,
+                  background: activeSection === 'era' ? 'var(--ds-surface-icon-button)' : 'transparent',
+                  minHeight: 52,
+                  textAlign: 'left',
+                  padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                  Era
+                </div>
+                <div style={{ fontSize: 'var(--ds-text-14)', color: selectedEra ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
+                  {getEraLabel(selectedEra) ?? 'Select Timeline'}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSection((s) => (s === 'who' ? null : 'who'))}
+                style={{
+                  border: '1px solid var(--ds-border-light)',
+                  borderRadius: 16,
+                  background: activeSection === 'who' ? 'var(--ds-surface-icon-button)' : 'transparent',
+                  minHeight: 52,
+                  textAlign: 'left',
+                  padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                  Who
+                </div>
+                <div style={{ fontSize: 'var(--ds-text-14)', color: totalGuestCount > 0 ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
+                  {totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests'}
+                </div>
+              </button>
+              <Button variant="primary" size="md" onClick={handleSearch} style={{ width: '100%', borderRadius: 999 }}>
+                Search
+              </Button>
+            </div>
+          ) : (
+            <SearchField
+              activeSection={activeSection}
+              onSearch={handleSearch}
+              onWhereClick={() => setActiveSection((s) => (s === 'where' ? null : 'where'))}
+              onEraClick={() => {
+                // Measure era button center before toggling, so the picker is positioned correctly on first render
+                measureEraTabCenter();
+                setActiveSection((s) => (s === 'era' ? null : 'era'));
+              }}
+              onWhoClick={() => setActiveSection((s) => (s === 'who' ? null : 'who'))}
+              where={{
+                label: 'Theme',
+                placeholder: getThemeLabel(selectedTheme) ?? 'Select theme',
+                isValueSelected: selectedTheme != null,
+              }}
+              era={{
+                label: 'Era',
+                placeholder: getEraLabel(selectedEra) ?? 'Select Timeline',
+                isValueSelected: selectedEra != null,
+              }}
+              who={{
+                label: 'Who',
+                placeholder: totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests',
+                isValueSelected: totalGuestCount > 0,
+              }}
+            />
+          )}
           <AnimatePresence mode="wait" custom={direction}>
             {activeSection && (
               <motion.div
@@ -334,15 +490,25 @@ export const AirbnbUi = () => {
                 animate="center"
                 exit="exit"
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  marginTop: 4,
+                  position: isMobile ? 'relative' : 'absolute',
+                  top: isMobile ? 'auto' : '100%',
+                  marginTop: isMobile ? 12 : 4,
                   zIndex: 20,
-                  ...(activeSection === 'where'
-                    ? { left: 0 }
-                    : activeSection === 'era'
-                      ? { left: eraTabCenterLeft != null ? eraTabCenterLeft - 210 : 0 }
-                      : { right: 0, left: 'auto' }),
+                  width: isMobile ? '100%' : undefined,
+                  transformOrigin: isMobile
+                    ? '50% top'
+                    : activeSection === 'where'
+                      ? '20% top'
+                      : activeSection === 'era'
+                        ? '50% top'
+                        : '80% top',
+                  ...(isMobile
+                    ? { left: 0, right: 0 }
+                    : activeSection === 'where'
+                      ? { left: 0 }
+                      : activeSection === 'era'
+                        ? { left: eraTabCenterLeft != null ? eraTabCenterLeft - 210 : 0 }
+                        : { right: 0, left: 'auto' }),
                 }}
                 aria-label={
                   activeSection === 'where'
@@ -354,20 +520,40 @@ export const AirbnbUi = () => {
               >
                 {activeSection === 'where' && (
                   <ThemePicker
+                    style={isMobile ? { width: '100%' } : undefined}
                     items={themeOptions}
                     selectedId={selectedTheme ?? undefined}
-                    onSelect={(id) => setSelectedTheme((current) => (current === id ? null : id))}
+                    onSelect={(id) => {
+                      const isDeselect = selectedTheme === id;
+                      setSelectedTheme(isDeselect ? null : id);
+                      if (isDeselect) {
+                        setActiveSection(isMobile ? null : 'where');
+                        return;
+                      }
+                      if (isMobile) {
+                        setActiveSection(null);
+                        return;
+                      }
+                      measureEraTabCenter();
+                      setActiveSection('era');
+                    }}
                   />
                 )}
                 {activeSection === 'era' && (
                   <EraPicker
+                    style={isMobile ? { width: '100%' } : undefined}
                     items={eraOptions}
                     selectedId={selectedEra ?? undefined}
-                    onSelect={(id) => setSelectedEra((current) => (current === id ? null : id))}
+                    onSelect={(id) => {
+                      const isDeselect = selectedEra === id;
+                      setSelectedEra(isDeselect ? null : id);
+                      setActiveSection(isMobile ? null : isDeselect ? 'era' : 'who');
+                    }}
                   />
                 )}
                 {activeSection === 'who' && (
                   <GuestPicker
+                    style={isMobile ? { width: '100%' } : undefined}
                     categories={[
                       {
                         id: 'adults',
@@ -494,7 +680,11 @@ export const AirbnbUi = () => {
             No listings found. Add listings via the Supabase dashboard.
           </div>
         ) : (
-          <div
+          <motion.div
+            key={listingResultsKey}
+            initial="hidden"
+            animate="show"
+            variants={listingGridVariants}
             style={{
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
@@ -503,18 +693,19 @@ export const AirbnbUi = () => {
             }}
           >
             {listings.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                id={listing.id}
-                image={listing.image}
-                title={listing.title}
-                year={listing.date}
-                rating={listing.rating}
-                isGuestFavorite={listing.isGuestFavorite}
-                onClick={() => navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } })}
-              />
+              <motion.div key={listing.id} variants={listingItemVariants}>
+                <ListingCard
+                  id={listing.id}
+                  image={listing.image}
+                  title={listing.title}
+                  year={listing.date}
+                  rating={listing.rating}
+                  isGuestFavorite={listing.isGuestFavorite}
+                  onClick={() => navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } })}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </main>
 

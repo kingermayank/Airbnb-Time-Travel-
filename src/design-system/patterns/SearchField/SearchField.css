@@ -1,5 +1,9 @@
+.ds-search-field {
+  transition: background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .ds-search-field-section {
-  /* No transition: active ↔ default snaps instantly on dismiss */
+  transition: box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 /* No scale-down on press for Where / Era / Who (override global button style) */
 .ds-search-field-section:active:not(:disabled) {
@@ -40,7 +44,11 @@
 .ds-search-field-who-zone {
   position: relative;
   border-radius: 40px;
-  /* No transition: active ↔ default snaps instantly on dismiss */
+  transition: box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ds-search-field-divider {
+  transition: background-color 0.18s ease;
 }
 
 /* Hover only when Who is not active; when active, --active (white) applies */

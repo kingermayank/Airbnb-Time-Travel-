@@ -92,7 +92,9 @@ export function ListingCard({
 }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(defaultLiked);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHoveringImage, setIsHoveringImage] = useState(false);
   const isActive = tilt.x !== 0 || tilt.y !== 0;
+  const isVisualHover = supportsHover && (isHoveringImage || isActive);
 
   const handleImageMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -109,6 +111,7 @@ export function ListingCard({
   );
 
   const handleImageMouseLeave = useCallback(() => {
+    setIsHoveringImage(false);
     setTilt({ x: 0, y: 0 });
   }, []);
 
@@ -135,7 +138,11 @@ export function ListingCard({
 
   return (
     <div
-      className={className}
+      className={[
+        'ds-listing-card',
+        isVisualHover ? 'ds-listing-card--hovering' : '',
+        className ?? '',
+      ].filter(Boolean).join(' ')}
       style={{ ...cardWrapperStyle, ...style }}
       onClick={onClick}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
@@ -144,6 +151,7 @@ export function ListingCard({
     >
       <div
         style={imageContainerDynamicStyle}
+        onMouseEnter={() => supportsHover && setIsHoveringImage(true)}
         onMouseMove={handleImageMouseMove}
         onMouseLeave={handleImageMouseLeave}
       >
@@ -155,6 +163,8 @@ export function ListingCard({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
+            transform: isVisualHover ? 'scale(1.04)' : 'scale(1)',
+            transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         />
         {isGuestFavorite && (
@@ -169,6 +179,7 @@ export function ListingCard({
           onClick={handleHeartClick}
           aria-label={isLiked ? 'Remove from favorites' : 'Add to favorites'}
         >
+          <span className="ds-listing-card-heart-ripple" aria-hidden />
           <Icon size="md" color="white" className="ds-listing-card-heart-icon">
             <Heart
               size={24}
@@ -179,7 +190,13 @@ export function ListingCard({
           </Icon>
         </button>
       </div>
-      <div style={infoStyle}>
+      <div
+        style={{
+          ...infoStyle,
+          transform: isVisualHover ? 'translateY(-2px)' : 'translateY(0)',
+          transition: 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
         <Text
           variant="body"
           weight="medium"

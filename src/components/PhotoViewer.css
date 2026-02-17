@@ -1,0 +1,61 @@
+.pv-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  font-family: "Figtree", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.pv-action-btn:active {
+  transform: scale(0.97);
+}
+
+.pv-save-btn {
+  position: relative;
+}
+
+.pv-save-ripple {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 2px solid #ff385c;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.25);
+  pointer-events: none;
+}
+
+.pv-save-btn.is-liked .pv-save-ripple {
+  animation: pv-heart-ripple 0.45s ease-out;
+}
+
+@keyframes pv-heart-ripple {
+  0% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-action-btn {
+    transition: none;
+  }
+  .pv-action-btn:active {
+    transform: none;
+  }
+  .pv-save-btn.is-liked .pv-save-ripple {
+    animation: none;
+  }
+}

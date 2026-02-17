@@ -12,6 +12,7 @@
 
 /* Coming soon pill – Figma: radial gradient #354668 → #657E9B, corner radius 16 16 16 6 */
 .ds-header-coming-soon-badge {
+  --ds-coming-soon-scale: 1;
   position: absolute;
   background: radial-gradient(circle, #354668 50%, #657E9B 100%);
   color: #ffffff;
@@ -24,11 +25,26 @@
   white-space: nowrap;
   text-transform: uppercase;
   box-shadow: var(--ds-header-coming-soon-glow);
-  opacity: 0.5;
-  transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1);
+  opacity: 0.45;
+  transform: scale(var(--ds-coming-soon-scale));
+  transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ds-header-coming-soon-badge--jiggle {
+  animation: ds-header-coming-soon-jiggle 280ms ease-in-out;
+}
+.ds-header-coming-soon-badge--expanded {
+  --ds-coming-soon-scale: 1.1;
+}
+@keyframes ds-header-coming-soon-jiggle {
+  0% { transform: translateX(0) scale(var(--ds-coming-soon-scale)); }
+  20% { transform: translateX(-2px) rotate(-2deg) scale(var(--ds-coming-soon-scale)); }
+  40% { transform: translateX(2px) rotate(2deg) scale(var(--ds-coming-soon-scale)); }
+  60% { transform: translateX(-1px) rotate(-1deg) scale(var(--ds-coming-soon-scale)); }
+  80% { transform: translateX(1px) rotate(1deg) scale(var(--ds-coming-soon-scale)); }
+  100% { transform: translateX(0) rotate(0deg) scale(var(--ds-coming-soon-scale)); }
 }
 @media (hover: hover) {
-  .ds-header-nav-tab:disabled:hover .ds-header-coming-soon-badge {
+  .ds-header-nav-tab[aria-disabled='true']:hover .ds-header-coming-soon-badge {
     opacity: 1;
   }
 }
@@ -69,8 +85,8 @@
 .ds-header-nav-tab {
   transition: opacity 0.2s ease, transform 0.1s ease;
 }
-.ds-header-nav-tab:active:not(:disabled) {
-  transform: scale(0.97);
+.ds-header-nav-tab:active {
+  transform: none !important;
 }
 
 /* Divider below header (variant: showDivider), e.g. Listing Details page */

@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { Text } from '../../foundations/Text';
 import '../EraPicker/EraPicker.css';
 
@@ -45,44 +46,52 @@ export function ThemePicker({
       className={`ds-era-picker${className ? ` ${className}` : ''}`}
       style={style}
     >
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className={`ds-era-picker__row${selectedId === item.id ? ' ds-era-picker__row--selected' : ''}`}
-          onClick={() => onSelect?.(item.id)}
-          aria-pressed={selectedId === item.id}
-        >
-          <div className="ds-era-picker__image-wrapper">
-            <img
-              className="ds-era-picker__image"
-              src={item.imageUrl}
-              alt={item.imageAlt ?? item.title}
-              loading="lazy"
-              onError={(e) => {
-                const el = e.currentTarget;
-                const letter = item.title.charAt(0);
-                const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#f3f3f3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="32" font-family="system-ui,sans-serif">${letter}</text></svg>`;
-                el.src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-              }}
-            />
-          </div>
+      {items.map((item) => {
+        const isSelected = selectedId === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            className={`ds-era-picker__row${isSelected ? ' ds-era-picker__row--selected' : ''}`}
+            onClick={() => onSelect?.(item.id)}
+            aria-pressed={isSelected}
+          >
+            <div className="ds-era-picker__image-wrapper">
+              <img
+                className="ds-era-picker__image"
+                src={item.imageUrl}
+                alt={item.imageAlt ?? item.title}
+                loading="lazy"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  const letter = item.title.charAt(0);
+                  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="#f3f3f3"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="32" font-family="system-ui,sans-serif">${letter}</text></svg>`;
+                  el.src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+                }}
+              />
+            </div>
 
-          <div className="ds-era-picker__text">
-            <Text
-              variant="h4"
-              weight="semibold"
-              color="primary"
-              as="div"
-            >
-              {item.title}
-            </Text>
-            <Text variant="body" color="secondary" as="div">
-              {item.subtitle}
-            </Text>
-          </div>
-        </button>
-      ))}
+            <div className="ds-era-picker__text">
+              <Text
+                variant="h4"
+                weight="semibold"
+                color="primary"
+                as="div"
+              >
+                {item.title}
+              </Text>
+              <Text variant="body" color="secondary" as="div">
+                {item.subtitle}
+              </Text>
+            </div>
+            {isSelected && (
+              <span className="ds-era-picker__clear-indicator" aria-hidden>
+                <X size={16} strokeWidth={2.25} />
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

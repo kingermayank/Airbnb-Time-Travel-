@@ -97,7 +97,7 @@ export function HeaderRightSlotWithUserMenu() {
           className={`ds-user-menu-wrapper ${isClosing ? 'ds-user-menu-wrapper--closing' : ''}`}
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
+            top: 'calc(100% + 10px)',
             right: 0,
             zIndex: 30,
           }}

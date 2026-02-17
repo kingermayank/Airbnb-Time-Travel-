@@ -61,6 +61,19 @@
   gap: var(--ds-spacing-2);
 }
 
+.ds-era-picker__clear-indicator {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ds-radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ds-text-secondary);
+  background: var(--ds-surface-icon-button);
+  flex-shrink: 0;
+}
+
 /* ---- Reduced motion ---- */
 
 @media (prefers-reduced-motion: reduce) {

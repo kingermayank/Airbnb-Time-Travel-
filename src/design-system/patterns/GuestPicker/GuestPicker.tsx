@@ -39,12 +39,51 @@ export function GuestPicker({
   className,
   style,
 }: GuestPickerProps) {
+  const [countPulseById, setCountPulseById] = React.useState<Record<string, number>>({});
+  const [limitNudgeById, setLimitNudgeById] = React.useState<Record<string, number>>({});
+  const previousCountsRef = React.useRef<Record<string, number>>({});
+
+  React.useEffect(() => {
+    const previousCounts = previousCountsRef.current;
+    const changedIds: string[] = [];
+
+    categories.forEach((cat) => {
+      if (previousCounts[cat.id] != null && previousCounts[cat.id] !== cat.count) {
+        changedIds.push(cat.id);
+      }
+      previousCounts[cat.id] = cat.count;
+    });
+
+    if (changedIds.length > 0) {
+      setCountPulseById((prev) => {
+        const next = { ...prev };
+        changedIds.forEach((id) => {
+          next[id] = (next[id] ?? 0) + 1;
+        });
+        return next;
+      });
+    }
+  }, [categories]);
+
+  const triggerLimitNudge = React.useCallback((categoryId: string) => {
+    setLimitNudgeById((prev) => ({
+      ...prev,
+      [categoryId]: (prev[categoryId] ?? 0) + 1,
+    }));
+  }, []);
+
   return (
     <div
       className={`ds-guest-picker${className ? ` ${className}` : ''}`}
       style={style}
     >
-      {categories.map((cat, index) => (
+      {categories.map((cat, index) => {
+        const canDecrement = cat.count > 0;
+        const canIncrement = cat.max == null || cat.count < cat.max;
+        const countPulseKey = countPulseById[cat.id] ?? 0;
+        const limitNudgeKey = limitNudgeById[cat.id] ?? 0;
+
+        return (
         <React.Fragment key={cat.id}>
           <div
             className={`ds-guest-picker__row${index === 0 ? ' ds-guest-picker__row--first' : ''}${index === categories.length - 1 ? ' ds-guest-picker__row--last' : ''}`}
@@ -58,36 +97,50 @@ export function GuestPicker({
               </Text>
             </div>
 
-            <div className="ds-guest-picker__stepper">
+            <div
+              key={`${cat.id}-stepper-${limitNudgeKey}`}
+              className={`ds-guest-picker__stepper${limitNudgeKey > 0 ? ' ds-guest-picker__stepper--limit-nudge' : ''}`}
+            >
               <button
                 type="button"
-                className={`ds-guest-picker__btn${cat.count <= 0 ? ' ds-guest-picker__btn--disabled' : ''}`}
-                onClick={() => cat.count > 0 && onChange?.(cat.id, cat.count - 1)}
-                disabled={cat.count <= 0}
+                className={`ds-guest-picker__btn${!canDecrement ? ' ds-guest-picker__btn--disabled' : ''}`}
+                onClick={() => {
+                  if (!canDecrement) {
+                    triggerLimitNudge(cat.id);
+                    return;
+                  }
+                  onChange?.(cat.id, cat.count - 1);
+                }}
+                aria-disabled={!canDecrement}
+                tabIndex={!canDecrement ? -1 : 0}
                 aria-label={`Decrease ${cat.label}`}
               >
                 <Minus size={16} strokeWidth={1.5} />
               </button>
 
               <Text
+                key={`${cat.id}-count-${countPulseKey}`}
                 variant="body"
                 weight="medium"
                 color="primary"
                 as="span"
-                className="ds-guest-picker__count"
+                className={`ds-guest-picker__count${countPulseKey > 0 ? ' ds-guest-picker__count--bump' : ''}`}
               >
                 {cat.count}
               </Text>
 
               <button
                 type="button"
-                className={`ds-guest-picker__btn${cat.max != null && cat.count >= cat.max ? ' ds-guest-picker__btn--disabled' : ''}`}
+                className={`ds-guest-picker__btn${!canIncrement ? ' ds-guest-picker__btn--disabled' : ''}`}
                 onClick={() => {
-                  if (cat.max == null || cat.count < cat.max) {
-                    onChange?.(cat.id, cat.count + 1);
+                  if (!canIncrement) {
+                    triggerLimitNudge(cat.id);
+                    return;
                   }
+                  onChange?.(cat.id, cat.count + 1);
                 }}
-                disabled={cat.max != null && cat.count >= cat.max}
+                aria-disabled={!canIncrement}
+                tabIndex={!canIncrement ? -1 : 0}
                 aria-label={`Increase ${cat.label}`}
               >
                 <Plus size={16} strokeWidth={1.5} />
@@ -99,7 +152,8 @@ export function GuestPicker({
             <Divider orientation="horizontal" className="ds-guest-picker__divider" />
           )}
         </React.Fragment>
-      ))}
+        );
+      })}
     </div>
   );
 }

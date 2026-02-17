@@ -2,7 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
-import { Header, Button, IconButton } from '../design-system';
+import { Header, Button, IconButton, Text, Divider } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import { WarpTransactionLoader } from './WarpTransactionLoader';
 import { getConfirmationBackgroundColor } from '../lib/warp-loading-messages';
@@ -11,7 +11,7 @@ import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Minus, Plus, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
@@ -83,6 +83,7 @@ const CONFIRMATION_NAV_ITEMS = [
 export function ConfirmationPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [listing, setListing] = useState<ListingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +98,11 @@ export function ConfirmationPage() {
   const [insuranceSelected, setInsuranceSelected] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [insuranceCheckboxHovered, setInsuranceCheckboxHovered] = useState(false);
+  const [adultsCount, setAdultsCount] = useState(1);
+  const [childrenCount, setChildrenCount] = useState(0);
+  const [showGuestModal, setShowGuestModal] = useState(false);
+  const [tempAdultsCount, setTempAdultsCount] = useState(1);
+  const [tempChildrenCount, setTempChildrenCount] = useState(0);
 
   // When playingVideoId is set, start that video at 2x; pause others at first frame
   useEffect(() => {
@@ -113,7 +119,8 @@ export function ConfirmationPage() {
       }
     });
   }, [playingVideoId]);
-  const [guestCount, setGuestCount] = useState(1);
+  const guestCount = adultsCount + childrenCount;
+  const guestCapacity = listing?.guest_capacity || 10;
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [showWarpLoader, setShowWarpLoader] = useState(false);
@@ -158,7 +165,17 @@ export function ConfirmationPage() {
       return;
     }
 
-    const routeState = (location as { state?: { listing?: ListingDetails } }).state;
+    const routeState = (location as {
+      state?: { listing?: ListingDetails; booking?: { guests?: number } };
+    }).state;
+    const bookingGuests = routeState?.booking?.guests;
+    if (typeof bookingGuests === 'number' && bookingGuests >= 1) {
+      setAdultsCount(bookingGuests);
+      setChildrenCount(0);
+      setTempAdultsCount(bookingGuests);
+      setTempChildrenCount(0);
+    }
+
     const stateListing = routeState?.listing;
     if (stateListing && stateListing.id === id && stateListing.price_per_night != null) {
       setListing(stateListing);
@@ -224,6 +241,36 @@ export function ConfirmationPage() {
   const handlePaymentMethodDone = () => {
     setSelectedPaymentMethod(tempSelectedPayment);
     setShowPaymentModal(false);
+  };
+
+  const handleGuestChangeOpen = () => {
+    setTempAdultsCount(adultsCount);
+    setTempChildrenCount(childrenCount);
+    setShowGuestModal(true);
+  };
+
+  const handleGuestsDone = () => {
+    setAdultsCount(tempAdultsCount);
+    setChildrenCount(tempChildrenCount);
+    setShowGuestModal(false);
+  };
+
+  const updateTempAdults = (delta: number) => {
+    setTempAdultsCount((prev) => {
+      const next = prev + delta;
+      if (next < 1) return prev;
+      if (next + tempChildrenCount > guestCapacity) return prev;
+      return next;
+    });
+  };
+
+  const updateTempChildren = (delta: number) => {
+    setTempChildrenCount((prev) => {
+      const next = prev + delta;
+      if (next < 0) return prev;
+      if (tempAdultsCount + next > guestCapacity) return prev;
+      return next;
+    });
   };
 
   if (isLoading) {
@@ -960,24 +1007,29 @@ export function ConfirmationPage() {
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
                   }}>
-                    {guestCount} {guestCount === 1 ? 'adult' : 'adults'}
+                    {childrenCount > 0
+                      ? `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}, ${childrenCount} ${childrenCount === 1 ? 'child' : 'children'}`
+                      : `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}`}
                   </div>
                 </div>
-                <button style={{
-                  backgroundColor: 'rgba(242, 242, 242, 1)',
-                  padding: '8px 2px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--ds-font-family)',
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  lineHeight: '20px',
-                  letterSpacing: '-0.28px',
-                  color: 'rgba(34, 34, 34, 1)',
-                  width: '96px',
-                  textAlign: 'center'
-                }}>
+                <button
+                  onClick={handleGuestChangeOpen}
+                  style={{
+                    backgroundColor: 'rgba(242, 242, 242, 1)',
+                    padding: '8px 2px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--ds-font-family)',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    lineHeight: '20px',
+                    letterSpacing: '-0.28px',
+                    color: 'rgba(34, 34, 34, 1)',
+                    width: '96px',
+                    textAlign: 'center'
+                  }}
+                >
                   Change
                 </button>
               </div>
@@ -1176,6 +1228,181 @@ export function ConfirmationPage() {
         </div>
       </div>
 
+      {/* Guests Selection Modal */}
+      <Modal
+        isOpen={showGuestModal}
+        onClose={() => setShowGuestModal(false)}
+      >
+        <div style={{
+          padding: 'var(--ds-spacing-24)',
+          width: '500px',
+          maxWidth: 'calc(100vw - 48px)',
+          maxHeight: '85vh',
+          overflow: 'auto',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'var(--ds-spacing-24)',
+          }}>
+            <Text variant="h1" weight="semibold">
+              Change guests
+            </Text>
+            <button
+              onClick={() => setShowGuestModal(false)}
+              aria-label="Close guest modal"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                cursor: 'pointer',
+                color: 'var(--ds-text-primary)',
+                lineHeight: 0,
+              }}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingBottom: 'var(--ds-spacing-20)',
+          }}>
+            <div>
+              <Text as="div" variant="h3" weight="semibold" style={{ marginBottom: 4 }}>
+                Adults
+              </Text>
+              <Text as="div" variant="body" color="secondary">
+                Age 13+
+              </Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <IconButton
+                onClick={() => updateTempAdults(-1)}
+                ariaLabel="Decrease adults"
+                disabled={tempAdultsCount <= 1}
+                icon={<Minus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+              <Text
+                as="div"
+                variant="h3"
+                weight="medium"
+                style={{ minWidth: 24, textAlign: 'center' }}
+              >
+                {tempAdultsCount}
+              </Text>
+              <IconButton
+                onClick={() => updateTempAdults(1)}
+                ariaLabel="Increase adults"
+                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
+                icon={<Plus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+            </div>
+          </div>
+
+          <Divider orientation="horizontal" style={{ marginBottom: 'var(--ds-spacing-20)' }} />
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingBottom: 'var(--ds-spacing-24)',
+          }}>
+            <div>
+              <Text as="div" variant="h3" weight="semibold" style={{ marginBottom: 4 }}>
+                Children
+              </Text>
+              <Text as="div" variant="body" color="secondary">
+                Ages 2-12
+              </Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <IconButton
+                onClick={() => updateTempChildren(-1)}
+                ariaLabel="Decrease children"
+                disabled={tempChildrenCount <= 0}
+                icon={<Minus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+              <Text
+                as="div"
+                variant="h3"
+                weight="medium"
+                style={{ minWidth: 24, textAlign: 'center' }}
+              >
+                {tempChildrenCount}
+              </Text>
+              <IconButton
+                onClick={() => updateTempChildren(1)}
+                ariaLabel="Increase children"
+                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
+                icon={<Plus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+            </div>
+          </div>
+
+          <Divider orientation="horizontal" />
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 'var(--ds-spacing-20)',
+          }}>
+            <Button
+              onClick={() => setShowGuestModal(false)}
+              variant="ghost"
+              size="lg"
+              style={{
+                paddingLeft: 0,
+                paddingRight: 0,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGuestsDone}
+              variant="primary"
+              size="lg"
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Payment Method Selection Modal */}
       <Modal
         isOpen={showPaymentModal}
@@ -1183,22 +1410,36 @@ export function ConfirmationPage() {
       >
         <div style={{
           padding: '24px',
-          width: '420px',
+          width: '520px',
           maxWidth: 'calc(100vw - 48px)',
           maxHeight: '85vh',
           overflow: 'auto',
           boxSizing: 'border-box',
         }}>
           <div style={{
-            fontFamily: 'var(--ds-font-family)',
-            fontWeight: 500,
-            fontSize: '20px',
-            lineHeight: '28px',
-            letterSpacing: '-0.4px',
-            color: 'rgba(0, 0, 0, 1)',
-            marginBottom: '16px'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
           }}>
-            Payment method
+            <Text as="div" variant="h1" weight="semibold">
+              Payment method
+            </Text>
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              aria-label="Close payment modal"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                cursor: 'pointer',
+                color: 'var(--ds-text-primary)',
+                lineHeight: 0,
+              }}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
           </div>
 
           <div style={{
