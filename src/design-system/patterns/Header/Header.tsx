@@ -37,8 +37,8 @@ export interface HeaderProps {
 }
 
 const iconBoxStyle: React.CSSProperties = {
-  width: 48,
-  height: 48,
+  width: 52,
+  height: 52,
   overflow: 'hidden',
   position: 'relative',
 };
@@ -244,8 +244,8 @@ export function Header({
                 ) : item.iconUrl ? (
                   <div
                     style={{
-                      width: 48,
-                      height: 48,
+                      width: 52,
+                      height: 52,
                       overflow: 'hidden',
                       position: 'relative',
                     }}
@@ -253,8 +253,8 @@ export function Header({
                     <img
                       src={item.iconUrl}
                       alt=""
-                      width={48}
-                      height={48}
+                      width={52}
+                      height={52}
                       fetchPriority={index === 0 ? 'high' : undefined}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     />
