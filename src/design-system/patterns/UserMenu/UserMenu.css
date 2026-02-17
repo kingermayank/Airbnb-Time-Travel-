@@ -36,32 +36,35 @@
 }
 
 .ds-user-menu {
-  min-width: 266px;
-  max-width: 346px;
+  min-width: 250px;
+  max-width: 330px;
   background: var(--ds-surface);
   border-radius: var(--ds-radius-lg);
   box-shadow: var(--ds-shadow-dropdown);
-  padding: var(--ds-spacing-12) 0;
+  padding: calc(var(--ds-spacing-12) + 4px) 0;
 }
 
 .ds-user-menu__section {
   padding: 0;
 }
 
+/* Hover states: 12px horizontal inset, 8px corner radius, +4px vertical spacing between items */
 .ds-user-menu__item {
   display: flex;
   align-items: center;
   gap: var(--ds-spacing-8);
-  padding: var(--ds-spacing-8) var(--ds-spacing-16);
-  width: 100%;
+  margin: 0 12px;
+  padding: 10px 16px;
+  width: calc(100% - 24px);
   border: none;
+  border-radius: 8px;
   background: none;
   cursor: pointer;
   text-align: left;
   font-family: var(--ds-font-family);
   font-size: var(--ds-text-14);
   line-height: var(--ds-leading-18);
-  font-weight: var(--ds-font-regular);
+  font-weight: var(--ds-font-medium);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
   transition: background-color 0.15s ease, transform 0.1s ease;
@@ -92,9 +95,9 @@
 
 .ds-user-menu__divider {
   height: 1px;
-  width: calc(100% - var(--ds-spacing-16) * 2);
+  width: calc(100% - 24px);
   max-width: 100%;
-  margin: var(--ds-spacing-8) var(--ds-spacing-16);
+  margin: 10px 12px;
   background-color: var(--ds-border-light);
   border: none;
   padding: 0;
@@ -105,9 +108,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--ds-spacing-4);
-  padding: var(--ds-spacing-6) var(--ds-spacing-16);
-  width: 100%;
+  margin: 0 12px;
+  padding: 10px 16px;
+  width: calc(100% - 24px);
   border: none;
+  border-radius: 8px;
   background: none;
   cursor: pointer;
   text-align: left;
@@ -161,16 +166,18 @@
 .ds-user-menu__logout {
   display: flex;
   align-items: center;
-  padding: var(--ds-spacing-8) var(--ds-spacing-16);
-  width: 100%;
+  margin: 0 12px;
+  padding: 10px 16px;
+  width: calc(100% - 24px);
   border: none;
+  border-radius: 8px;
   background: none;
   cursor: pointer;
   text-align: left;
   font-family: var(--ds-font-family);
   font-size: var(--ds-text-14);
   line-height: var(--ds-leading-18);
-  font-weight: var(--ds-font-regular);
+  font-weight: var(--ds-font-medium);
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
   transition: background-color 0.15s ease, transform 0.1s ease;

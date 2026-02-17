@@ -24,6 +24,13 @@
   white-space: nowrap;
   text-transform: uppercase;
   box-shadow: var(--ds-header-coming-soon-glow);
+  opacity: 0.5;
+  transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1);
+}
+@media (hover: hover) {
+  .ds-header-nav-tab:disabled:hover .ds-header-coming-soon-badge {
+    opacity: 1;
+  }
 }
 
 /* Position: on top of the label, 10px to the left */

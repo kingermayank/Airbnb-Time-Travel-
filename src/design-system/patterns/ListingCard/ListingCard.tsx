@@ -37,8 +37,8 @@ const cardWrapperStyle: React.CSSProperties = {
 /* Min 44px tap target for touch/a11y. Pushed tight into top-right corner to mirror badge placement. */
 const heartButtonStyle: React.CSSProperties = {
   position: 'absolute',
-  top: 4,
-  right: 4,
+  top: 0,
+  right: 0,
   minWidth: 44,
   minHeight: 44,
   padding: 10,
