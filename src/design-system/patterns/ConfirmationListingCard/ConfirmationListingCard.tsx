@@ -9,7 +9,7 @@ import React from 'react';
 export interface ConfirmationListingCardProps {
   /** Main listing image URL */
   imageUrl: string;
-  /** Listing title (e.g. "Area 51 Classified Barracks — Nevada, 1962") */
+  /** Listing title (e.g. "Classified Barracks, Area 51") */
   title: string;
   /** Era or date (e.g. "1734 CE", "1962 CE") */
   eraOrDate: string;

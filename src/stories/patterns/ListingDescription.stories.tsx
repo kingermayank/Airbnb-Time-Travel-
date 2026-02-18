@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ListingDescription } from '@/design-system/patterns';
 
 const longContent =
-  'Come and stay at the SpaceX Mars Colony Pod at Olympus Mons Base. Experience life in a fully pressurized habitat with stunning surface views, Starlink connectivity, and optional rover excursions. The pod includes a compact galley, climate control, and 24/7 base security.';
+  'Come and stay at the Mars Colony Pod at Olympus Mons Base. Experience life in a fully pressurized habitat with stunning surface views, Starlink connectivity, and optional rover excursions. The pod includes a compact galley, climate control, and 24/7 base security.';
 
 const meta = {
   title: 'Patterns/ListingDescription',

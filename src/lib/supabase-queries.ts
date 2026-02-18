@@ -76,11 +76,11 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
 
   // Only these specific listings should show the "frequently revisited" pill
   const FREQUENTLY_REVISITED_LISTINGS = [
-    'SpaceX', // SpaceX Mars Colony Pod at Olympus Mons
-    'Lost Atlantean Crystal Villa', // The Lost Atlantean Crystal Villa
-    'Pandora Floating Mountain', // Pandora Floating Mountain Bungalow (or Mangalore)
-    'Lunar Hilton Penthouse', // Lunar Hilton Penthouse — Moon, 2156
-    'Neo-Showa Capsule Pod', // Neo-Showa Capsule Pod in Parallel Tokyo 2087
+    'Mars Colony Pod', // Mars Colony Pod, Olympus Mons
+    'Crystal Villa', // Crystal Villa, Atlantis
+    'Floating Mountain Bungalow', // Floating Mountain Bungalow, Pandora
+    'Lunar Hilton Penthouse', // Lunar Hilton Penthouse, Moon
+    'Neo-Showa Capsule Pod', // Neo-Showa Capsule Pod, Parallel Tokyo
   ];
 
   // Helper function to check if a listing should show the frequently revisited badge
@@ -105,22 +105,21 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
 
   // Custom sort order for homepage display
   const SORT_ORDER_KEYWORDS = [
-    'Lost Atlantean', // 1. Lost Atlantean Crystal Villa
-    'Manhattan', // 2. 1990s Manhattan Loft
-    'Alexander', // 3. Alexander the Great's Campaign Tent
-    'Shah Jahan', // 4. Shah Jahan's Marble Suite
-    'SpaceX', // 5. SpaceX Mars Colony Pod
-    'Titanic', // 6. Titanic First-Class Suite
-    'Pandora Floating', // 7. Pandora Floating Mountain Bungalow
-    'Ancient Egyptian', // 8. Ancient Egyptian Nile Villa
-    'Lunar Hilton', // 9. Lunar Hilton Penthouse
-    'Neo-Showa', // 10. Neo-Showa Capsule Pod
-    'Area 51', // 11. Area 51
-    'Bermuda Triangle', // 12. Bermuda Triangle
-    'Federation', // 13. Federation Ambassador Premium (Star Trek)
-    'Cave', // 14. Cave dwelling
-    'World War II', // 15. WWII German Resistance Safehouse
-    'WWII', // 15. Alternative for WWII
+    'Crystal Villa', // 1. Crystal Villa, Atlantis
+    'Manhattan', // 2. Manhattan Loft, New York
+    'Alexander', // 3. Alexander's Campaign Tent, Persia
+    'Shah Jahan', // 4. Shah Jahan's Marble Suite, Agra
+    'Mars Colony Pod', // 5. Mars Colony Pod, Olympus Mons
+    'First-Class Suite', // 6. First-Class Suite, RMS Titanic
+    'Floating Mountain', // 7. Floating Mountain Bungalow, Pandora
+    'Nile Villa', // 8. Nile Villa, Ancient Egypt
+    'Lunar Hilton', // 9. Lunar Hilton Penthouse, Moon
+    'Neo-Showa', // 10. Neo-Showa Capsule Pod, Parallel Tokyo
+    'Area 51', // 11. Classified Barracks, Area 51
+    'Bermuda Triangle', // 12. Research Platform, Bermuda Triangle
+    'Federation', // 13. Federation Ambassador Suite, Earth
+    'Cave', // 14. Cave Dwelling, Lascaux
+    'Resistance Safehouse', // 15. Resistance Safehouse Loft, Berlin
   ];
 
   // Helper function to get sort priority (lower number = appears first)
@@ -155,7 +154,7 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
     'mock-2': {
       id: 'mock-2',
       host_id: 'mock-host-1',
-      title: "SpaceX Mars Colony Pod at Olympus Mons",
+      title: "Mars Colony Pod, Olympus Mons",
       main_image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
       property_type: "Space Pod",
       guest_capacity: 4,
@@ -169,8 +168,8 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
       is_guest_favorite: false,
       date: null,
       location_description: "Olympus Mons, Mars",
-      short_description: "Experience life on the Red Planet in this state-of-the-art SpaceX colony pod",
-      full_description: "Welcome to the future of space travel! This cutting-edge SpaceX Mars Colony Pod offers an unparalleled experience on the Red Planet. Located at the base of Olympus Mons, the solar system's largest volcano, you'll enjoy breathtaking views of the Martian landscape.\n\nFeatures include:\n- Fully pressurized living quarters\n- Life support systems\n- Panoramic dome views\n- Zero-gravity sleeping pods\n- Mars rover access\n- Communication array for Earth contact\n\nPerfect for space enthusiasts, scientists, or anyone looking for the ultimate adventure. Book your stay and become one of the first humans to experience life on Mars!",
+      short_description: "Experience life on the Red Planet in this state-of-the-art Mars colony pod",
+      full_description: "Welcome to the future of space travel! This cutting-edge Mars Colony Pod offers an unparalleled experience on the Red Planet. Located at the base of Olympus Mons, the solar system's largest volcano, you'll enjoy breathtaking views of the Martian landscape.\n\nFeatures include:\n- Fully pressurized living quarters\n- Life support systems\n- Panoramic dome views\n- Zero-gravity sleeping pods\n- Mars rover access\n- Communication array for Earth contact\n\nPerfect for space enthusiasts, scientists, or anyone looking for the ultimate adventure. Book your stay and become one of the first humans to experience life on Mars!",
       key_features: [
         {
           title: "Life Support Systems",

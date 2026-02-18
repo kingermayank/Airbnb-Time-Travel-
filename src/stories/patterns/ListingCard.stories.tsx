@@ -54,7 +54,7 @@ export const TwoLineTitle: Story = {
   args: {
     id: 'card-two-line',
     image: 'https://placehold.co/320x248',
-    title: "Alexander the Great's Campaign Tent — Macedon to the Indus",
+    title: "Alexander's Campaign Tent, Persia",
     year: '306 BC',
     price: '$600 / hour',
     rating: '4.88',
