@@ -80,7 +80,7 @@ const CONFIRMATION_NAV_ITEMS = [
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
-export function ConfirmationPage() {
+export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -403,16 +403,18 @@ export function ConfirmationPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <div>
-        <Header
-          brandName="warpbnb"
-          navItems={CONFIRMATION_NAV_ITEMS}
-          activeNavLabel="Time Travel"
-          onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
-          onLogoClick={() => navigate('/')}
-          rightSlot={<HeaderRightSlotWithUserMenu />}
-        />
-      </div>
+      {!hideHeader && (
+        <div>
+          <Header
+            brandName="warpbnb"
+            navItems={CONFIRMATION_NAV_ITEMS}
+            activeNavLabel="Time Travel"
+            onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
+            onLogoClick={() => navigate('/')}
+            rightSlot={<HeaderRightSlotWithUserMenu />}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <div style={{

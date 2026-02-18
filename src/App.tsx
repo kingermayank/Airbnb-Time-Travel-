@@ -8,10 +8,11 @@ import { ConfirmationPage } from './components/ConfirmationPage';
 import { FaqPage } from './components/FaqPage';
 import { FeedbackPage } from './components/FeedbackPage';
 import { NotFoundPage } from './components/NotFoundPage';
+import { AppLayout } from './components/AppLayout';
 
-let theme: Theme = 'light';
+const theme: Theme = 'light';
 // only use 'centered' container for standalone components, never for full page apps or websites.
-let container: Container = 'none';
+const container: Container = 'none';
 
 function App() {
   function setTheme(theme: Theme) {
@@ -26,17 +27,19 @@ function App() {
 
   const generatedComponent = useMemo(() => {
     // THIS IS WHERE THE TOP LEVEL GENRATED COMPONENT WILL BE RETURNED!
-    return <AirbnbUi />; // %EXPORT_STATEMENT%
+    return <AirbnbUi hideHeader />; // %EXPORT_STATEMENT%
   }, []);
 
   const routes = (
     <Routes>
-      <Route path="/" element={generatedComponent} />
-      <Route path="/listing/:id" element={<ListingDetailPage />} />
-      <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
-      <Route path="/faq" element={<FaqPage />} />
-      <Route path="/feedback" element={<FeedbackPage />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route element={<AppLayout />}>
+        <Route path="/" element={generatedComponent} />
+        <Route path="/listing/:id" element={<ListingDetailPage hideHeader />} />
+        <Route path="/listing/:id/confirm" element={<ConfirmationPage hideHeader />} />
+        <Route path="/faq" element={<FaqPage hideHeader />} />
+        <Route path="/feedback" element={<FeedbackPage hideHeader />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   );
 

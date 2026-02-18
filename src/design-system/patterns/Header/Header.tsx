@@ -107,7 +107,7 @@ const headerWrapperWithDividerStyle: React.CSSProperties = {
 const headerDividerStyle: React.CSSProperties = {
   width: '100%',
   height: 1,
-  backgroundColor: 'var(--ds-divider)',
+  backgroundColor: 'var(--ds-border-light)',
 };
 
 const headerScrollDividerStyle: React.CSSProperties = {

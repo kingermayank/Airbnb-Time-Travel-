@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { fetchListings } from '../../lib/supabase-queries';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
 import {
   Header,
   SearchField,
-  ListingCard,
+  ListingCard as ListingCardPattern,
   Button,
   Footer,
   ThemePicker,
@@ -149,11 +149,201 @@ const reducedMotionVariants = {
   exit: { opacity: 0, scale: 1, transition: instantTransition },
 };
 
-export const AirbnbUi = () => {
+interface TransitionListing {
+  id: string;
+  image: string;
+  title: string;
+  year?: string;
+  rating?: string;
+  isGuestFavorite?: boolean;
+}
+
+interface TransitionSnapshot {
+  listing: TransitionListing;
+  cardRect: { left: number; top: number; width: number; height: number };
+}
+
+interface CardProps {
+  listing: ListingCardType;
+  variants: Variants;
+  shouldReduceMotion: boolean;
+  onOpen: (listing: ListingCardType, element: HTMLDivElement) => void;
+}
+
+function Card({ listing, variants, shouldReduceMotion, onOpen }: CardProps) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  return (
+    <motion.div
+      variants={variants}
+      whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 560, damping: 40, mass: 0.55 }}
+    >
+      <div ref={wrapperRef}>
+        <ListingCardPattern
+          id={listing.id}
+          image={listing.image}
+          title={listing.title}
+          year={listing.date}
+          rating={listing.rating}
+          isGuestFavorite={listing.isGuestFavorite}
+          onClick={() => {
+            const el = wrapperRef.current;
+            if (el) onOpen(listing, el);
+          }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+interface CardGridProps {
+  listings: ListingCardType[];
+  listingResultsKey: string;
+  listingGridVariants: Variants;
+  listingItemVariants: Variants;
+  isMobile: boolean;
+  shouldReduceMotion: boolean;
+  onOpen: (listing: ListingCardType, element: HTMLDivElement) => void;
+}
+
+function CardGrid({
+  listings,
+  listingResultsKey,
+  listingGridVariants,
+  listingItemVariants,
+  isMobile,
+  shouldReduceMotion,
+  onOpen,
+}: CardGridProps) {
+  return (
+    <motion.div
+      key={listingResultsKey}
+      initial="hidden"
+      animate="show"
+      variants={listingGridVariants}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+        columnGap: 'var(--ds-spacing-16)',
+        rowGap: 'var(--ds-spacing-40)',
+      }}
+    >
+      {listings.map((listing) => (
+        <Card
+          key={listing.id}
+          listing={listing}
+          variants={listingItemVariants}
+          shouldReduceMotion={shouldReduceMotion}
+          onOpen={onOpen}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
+interface GenieTransitionLayerProps {
+  snapshot: TransitionSnapshot | null;
+  shouldReduceMotion: boolean;
+  onComplete: () => void;
+}
+
+function GenieTransitionLayer({ snapshot, shouldReduceMotion, onComplete }: GenieTransitionLayerProps) {
+  return (
+    <AnimatePresence>
+      {snapshot && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+            animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0.16 : 0.38, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(10, 14, 24, 0.30)',
+              zIndex: 80,
+              pointerEvents: 'none',
+            }}
+          />
+
+          <motion.div
+            initial={{
+              left: snapshot.cardRect.left,
+              top: snapshot.cardRect.top,
+              width: snapshot.cardRect.width,
+              height: snapshot.cardRect.height,
+              borderRadius: 24,
+            }}
+            animate={{
+              left: 0,
+              top: 0,
+              width: window.innerWidth,
+              height: window.innerHeight,
+              borderRadius: 0,
+            }}
+            exit={{ opacity: 0 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0.2 }
+                : { type: 'spring', stiffness: 205, damping: 23, mass: 0.9 }
+            }
+            onAnimationComplete={onComplete}
+            style={{
+              position: 'fixed',
+              overflow: 'hidden',
+              zIndex: 81,
+              background: '#ffffff',
+              boxShadow: '0 34px 90px rgba(0,0,0,0.30)',
+              pointerEvents: 'none',
+              willChange: 'transform, opacity',
+            }}
+          >
+            <motion.div
+              initial={{ scaleX: 1, scaleY: 1 }}
+              animate={
+                shouldReduceMotion
+                  ? { scaleX: 1, scaleY: 1 }
+                  : { scaleX: [1, 1.045, 0.985, 1], scaleY: [1, 0.95, 1.02, 1] }
+              }
+              transition={{ duration: 0.64, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                transformOrigin: 'center',
+              }}
+            />
+
+            <motion.img
+              src={snapshot.listing.image}
+              alt={snapshot.listing.title}
+              initial={{ opacity: 1, scale: 1 }}
+              animate={{ opacity: 0, scale: 1.08 }}
+              transition={{ duration: shouldReduceMotion ? 0.16 : 0.62, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none',
+                willChange: 'transform, opacity',
+              }}
+            />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const navigate = useNavigate();
   const [listings, setListings] = useState<ListingCardType[]>(MOCK_LISTINGS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTransition, setActiveTransition] = useState<TransitionSnapshot | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<{ listingId: string } | null>(null);
   const isMobile = useIsMobile();
   const searchBarAreaRef = useRef<HTMLDivElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
@@ -248,6 +438,49 @@ export const AirbnbUi = () => {
     [selectedTheme, selectedEra, listings]
   );
 
+  const openListing = useCallback(
+    (listing: ListingCardType, element: HTMLDivElement) => {
+      if (pendingNavigation) return;
+      if (shouldReduceMotion) {
+        navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } });
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      setActiveTransition({
+        listing: {
+          id: listing.id,
+          image: listing.image,
+          title: listing.title,
+          year: listing.date,
+          rating: listing.rating,
+          isGuestFavorite: listing.isGuestFavorite,
+        },
+        cardRect: {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        },
+      });
+      setPendingNavigation({ listingId: listing.id });
+    },
+    [navigate, pendingNavigation, shouldReduceMotion, totalGuestCount]
+  );
+
+  const handleTransitionComplete = useCallback(() => {
+    if (!pendingNavigation) return;
+    const { listingId } = pendingNavigation;
+    setPendingNavigation(null);
+    setActiveTransition(null);
+    navigate(`/listing/${listingId}`, {
+      state: {
+        guestCount: totalGuestCount,
+        fromGenieTransition: true,
+      },
+    });
+  }, [navigate, pendingNavigation, totalGuestCount]);
+
   const measureEraTabCenter = useCallback(() => {
     if (!searchDropdownRef.current) return;
     const buttons = searchDropdownRef.current.querySelectorAll('button[aria-expanded]');
@@ -337,16 +570,19 @@ export const AirbnbUi = () => {
         flexDirection: 'column',
       }}
     >
-      <Header
-        brandName="warpbnb"
-        navItems={FIGMA_NAV_ITEMS}
-        activeNavLabel="Time Travel"
-        onNavClick={() => {}}
-        rightSlot={<HeaderRightSlotWithUserMenu />}
-        showDividerOnScroll={showHeaderDivider}
-      />
+      {!hideHeader && (
+        <Header
+          brandName="warpbnb"
+          navItems={FIGMA_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={() => {}}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
+          showDividerOnScroll={showHeaderDivider}
+        />
+      )}
 
       <div
+        id="home-search-area"
         ref={searchBarAreaRef}
         style={{
           width: '100%',
@@ -680,34 +916,23 @@ export const AirbnbUi = () => {
             No listings found. Add listings via the Supabase dashboard.
           </div>
         ) : (
-          <motion.div
-            key={listingResultsKey}
-            initial="hidden"
-            animate="show"
-            variants={listingGridVariants}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-              columnGap: 'var(--ds-spacing-16)',
-              rowGap: 'var(--ds-spacing-40)',
-            }}
-          >
-            {listings.map((listing) => (
-              <motion.div key={listing.id} variants={listingItemVariants}>
-                <ListingCard
-                  id={listing.id}
-                  image={listing.image}
-                  title={listing.title}
-                  year={listing.date}
-                  rating={listing.rating}
-                  isGuestFavorite={listing.isGuestFavorite}
-                  onClick={() => navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } })}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+          <CardGrid
+            listings={listings}
+            listingResultsKey={listingResultsKey}
+            listingGridVariants={listingGridVariants}
+            listingItemVariants={listingItemVariants}
+            isMobile={isMobile}
+            shouldReduceMotion={Boolean(shouldReduceMotion)}
+            onOpen={openListing}
+          />
         )}
       </main>
+
+      <GenieTransitionLayer
+        snapshot={activeTransition}
+        shouldReduceMotion={Boolean(shouldReduceMotion)}
+        onComplete={handleTransitionComplete}
+      />
 
       <Footer
         copyrightText="© 2026 Warpbnb, Inc."

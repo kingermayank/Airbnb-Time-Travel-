@@ -24,7 +24,7 @@ const textareaStyle: React.CSSProperties = {
   resize: 'vertical',
 };
 
-export function FeedbackPage() {
+export function FeedbackPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -46,15 +46,17 @@ export function FeedbackPage() {
         flexDirection: 'column',
       }}
     >
-      <Header
-        brandName="warpbnb"
-        navItems={FEEDBACK_NAV_ITEMS}
-        activeNavLabel="Time Travel"
-        onNavClick={(label) => (label === 'Time Travel' ? navigate('/') : undefined)}
-        onLogoClick={() => navigate('/')}
-        rightSlot={<HeaderRightSlotWithUserMenu />}
-        showDivider
-      />
+      {!hideHeader && (
+        <Header
+          brandName="warpbnb"
+          navItems={FEEDBACK_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={(label) => (label === 'Time Travel' ? navigate('/') : undefined)}
+          onLogoClick={() => navigate('/')}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
+          showDivider
+        />
+      )}
 
       <main
         style={{

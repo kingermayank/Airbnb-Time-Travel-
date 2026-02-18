@@ -173,7 +173,7 @@ function formatHostingDuration(joinDate: string | null, listing: ListingDetails)
 // MAIN COMPONENT
 // ============================================================================
 
-export function ListingDetailPage() {
+export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -211,6 +211,9 @@ export function ListingDetailPage() {
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = useReducedMotion();
+  const shouldPlayGenieEntry =
+    Boolean((location.state as { fromGenieTransition?: boolean } | null)?.fromGenieTransition) &&
+    !shouldReduceMotion;
 
   const supportsHover =
     typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
@@ -427,15 +430,17 @@ export function ListingDetailPage() {
           display: 'flex',
           flexDirection: 'column',
         }}>
-          <Header
-            brandName="warpbnb"
-            navItems={FIGMA_NAV_ITEMS}
-            activeNavLabel="Time Travel"
-            onNavClick={() => {}}
-            onLogoClick={() => navigate('/')}
-            rightSlot={<HeaderRightSlotWithUserMenu />}
-            showDivider
-          />
+          {!hideHeader && (
+            <Header
+              brandName="warpbnb"
+              navItems={FIGMA_NAV_ITEMS}
+              activeNavLabel="Time Travel"
+              onNavClick={() => {}}
+              onLogoClick={() => navigate('/')}
+              rightSlot={<HeaderRightSlotWithUserMenu />}
+              showDivider
+            />
+          )}
           <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
             <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
               {/* Title row placeholder: mirrors the real title/action row footprint so hero Y-position matches loaded state */}
@@ -529,6 +534,7 @@ export function ListingDetailPage() {
   const btcBase = (baseFare * btcRate).toFixed(6);
   const shareUrl = getShareUrl();
   const shareTitle = listing.title;
+  const enableArea51Spotlight = /classified barracks, area 51|area 51 classified barracks/i.test(listing.title);
   const shareSummary = `${listing.property_type ?? 'Stay'} · ★${listing.overall_rating?.toFixed(2) ?? '—'} · ${listing.bedrooms} bedroom${listing.bedrooms !== 1 ? 's' : ''} · ${listing.beds} bed${listing.beds !== 1 ? 's' : ''} · ${listing.baths} bath${listing.baths !== 1 ? 's' : ''}`;
   const shareWarmIntro = `Check out this place I found on WarpBnB: ${shareTitle}`;
 
@@ -575,6 +581,7 @@ export function ListingDetailPage() {
           images={allImages}
           initialIndex={photoViewerIndex}
           layoutId={photoViewerLayoutId}
+          enableSpotlight={enableArea51Spotlight}
           onShareClick={() => {
             setShowPhotoViewer(false);
             window.setTimeout(() => setShowShareModal(true), 0);
@@ -584,9 +591,9 @@ export function ListingDetailPage() {
       )}
 
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={shouldPlayGenieEntry ? { opacity: 0.94 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: shouldPlayGenieEntry ? 0.24 : 0.3 }}
         style={{
           backgroundColor: '#ffffff',
           minHeight: '100vh',
@@ -594,15 +601,17 @@ export function ListingDetailPage() {
           flexDirection: 'column',
         }}
       >
-        <Header
-          brandName="warpbnb"
-          navItems={FIGMA_NAV_ITEMS}
-          activeNavLabel="Time Travel"
-          onNavClick={() => {}}
-          onLogoClick={() => navigate('/')}
-          rightSlot={<HeaderRightSlotWithUserMenu />}
-          showDivider
-        />
+        {!hideHeader && (
+          <Header
+            brandName="warpbnb"
+            navItems={FIGMA_NAV_ITEMS}
+            activeNavLabel="Time Travel"
+            onNavClick={() => {}}
+            onLogoClick={() => navigate('/')}
+            rightSlot={<HeaderRightSlotWithUserMenu />}
+            showDivider
+          />
+        )}
         <div
           style={{
             flex: 1,
@@ -612,6 +621,11 @@ export function ListingDetailPage() {
                 ? '28px 20px 64px 20px'
                 : '32px 24px 64px 24px',
           }}
+        >
+        <motion.div
+          initial={shouldPlayGenieEntry ? { y: 24, opacity: 0 } : { y: 0, opacity: 1 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={shouldPlayGenieEntry ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
         >
         <motion.div
           style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}
@@ -2586,6 +2600,7 @@ export function ListingDetailPage() {
             </div>
           </motion.div>
         )}
+        </motion.div>
         </motion.div>
         </div>
       </motion.div>

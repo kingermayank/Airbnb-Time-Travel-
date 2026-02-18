@@ -35,7 +35,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   },
 ];
 
-export function FaqPage() {
+export function FaqPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
 
   return (
@@ -48,15 +48,17 @@ export function FaqPage() {
         flexDirection: 'column',
       }}
     >
-      <Header
-        brandName="warpbnb"
-        navItems={FAQ_NAV_ITEMS}
-        activeNavLabel="Time Travel"
-        onNavClick={(label) => (label === 'Time Travel' ? navigate('/') : undefined)}
-        onLogoClick={() => navigate('/')}
-        rightSlot={<HeaderRightSlotWithUserMenu />}
-        showDivider
-      />
+      {!hideHeader && (
+        <Header
+          brandName="warpbnb"
+          navItems={FAQ_NAV_ITEMS}
+          activeNavLabel="Time Travel"
+          onNavClick={(label) => (label === 'Time Travel' ? navigate('/') : undefined)}
+          onLogoClick={() => navigate('/')}
+          rightSlot={<HeaderRightSlotWithUserMenu />}
+          showDivider
+        />
+      )}
 
       <main
         style={{
