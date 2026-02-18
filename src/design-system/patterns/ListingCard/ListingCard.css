@@ -24,36 +24,24 @@
   will-change: transform, opacity;
 }
 
-.ds-listing-card-reflection {
+.ds-listing-card-specular-highlight {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: hidden;
   border-radius: inherit;
   z-index: 1;
-}
-
-.ds-listing-card-reflection-band {
-  position: absolute;
-  top: -36%;
-  bottom: -36%;
-  left: -32%;
-  width: 58%;
-  pointer-events: none;
-  opacity: var(--ds-listing-reflection-opacity, 0);
-  transform: translate3d(var(--ds-listing-reflection-shift, 0px), 0, 0) rotate(-16deg);
-  transform-origin: center;
-  will-change: transform, opacity;
+  opacity: var(--ds-listing-highlight-opacity, 0);
+  will-change: opacity;
   mix-blend-mode: screen;
-  background: linear-gradient(
-    100deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.06) 28%,
-    rgba(255, 255, 255, 0.02) 48%,
-    rgba(255, 255, 255, 0.11) 68%,
-    rgba(255, 255, 255, 0) 100%
+  background: radial-gradient(
+    circle var(--ds-listing-highlight-size, 40px) at var(--ds-listing-highlight-x, 50%) var(--ds-listing-highlight-y, 50%),
+    hsla(2, 88%, 62%, 0.38) 0%,
+    hsla(44, 95%, 62%, 0.34) 28%,
+    hsla(190, 92%, 64%, 0.30) 56%,
+    hsla(318, 92%, 66%, 0.32) 78%,
+    hsla(318, 92%, 66%, 0) 100%
   );
-  filter: blur(0.4px);
+  filter: blur(4px) saturate(1.05);
 }
 
 
@@ -113,7 +101,7 @@
   .ds-listing-card-heart-icon,
   .ds-listing-card-heart-icon svg,
   .ds-listing-card-image-shell,
-  .ds-listing-card-reflection-band,
+  .ds-listing-card-specular-highlight,
   .ds-listing-card {
     transition: none;
   }
@@ -129,8 +117,7 @@
   .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-ripple {
     animation: none;
   }
-  .ds-listing-card-reflection-band {
+  .ds-listing-card-specular-highlight {
     opacity: 0 !important;
-    transform: rotate(-16deg);
   }
 }

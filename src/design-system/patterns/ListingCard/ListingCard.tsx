@@ -26,9 +26,13 @@ export interface ListingCardProps {
 const HOVER_LIFT_PX = 4;
 const HOVER_SCALE = 1.01;
 const TILT_MAX_DEG = 2.6;
-const REFLECTION_BAND_OPACITY = 0.16;
-const REFLECTION_BAND_SHIFT_PX = 28;
+const SPECULAR_OPACITY = 0.5;
 const CURSOR_LERP = 0.12;
+const SPECULAR_DRIFT_POINTS = 5;
+const SPECULAR_DRIFT_CYCLE_MS = 1800;
+const SPECULAR_DRIFT_PERCENT = 0.5;
+const SPECULAR_RIPPLE_AMOUNT = 0.4;
+const SPECULAR_RIPPLE_SPEED_MS = 2500;
 const HOVER_DURATION_MS = 220;
 
 const cardWrapperStyle: React.CSSProperties = {
@@ -79,6 +83,13 @@ const priceRowStyle: React.CSSProperties = {
 };
 
 const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const SPECULAR_WAYPOINTS = [
+  { x: -0.85, y: 0.7 },
+  { x: 0.9, y: -0.75 },
+  { x: 0.35, y: 0.95 },
+  { x: -1.0, y: -0.25 },
+  { x: 0.72, y: 0.2 },
+] as const;
 
 export function ListingCard({
   id,
@@ -98,8 +109,8 @@ export function ListingCard({
   const [isHoveringImage, setIsHoveringImage] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const targetRef = useRef({ x: 0, y: 0, band: 0, hover: 0 });
-  const currentRef = useRef({ x: 0, y: 0, band: 0, hover: 0 });
+  const targetRef = useRef({ x: 0, y: 0, px: 50, py: 50, hover: 0 });
+  const currentRef = useRef({ x: 0, y: 0, px: 50, py: 50, hover: 0 });
 
   const supportsHover =
     typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
@@ -116,11 +127,27 @@ export function ListingCard({
     const scale = 1 + (HOVER_SCALE - 1) * hoverProgress;
     const rotateX = -current.y * TILT_MAX_DEG * hoverProgress;
     const rotateY = current.x * TILT_MAX_DEG * hoverProgress;
+    const now = performance.now();
+    const driftProgress = (now % SPECULAR_DRIFT_CYCLE_MS) / SPECULAR_DRIFT_CYCLE_MS;
+    const segmentLength = 1 / SPECULAR_DRIFT_POINTS;
+    const segment = Math.min(SPECULAR_DRIFT_POINTS - 1, Math.floor(driftProgress / segmentLength));
+    const segmentT = (driftProgress - segment * segmentLength) / segmentLength;
+    const from = SPECULAR_WAYPOINTS[segment];
+    const to = SPECULAR_WAYPOINTS[(segment + 1) % SPECULAR_DRIFT_POINTS];
+    const driftX = (from.x + (to.x - from.x) * segmentT) * SPECULAR_DRIFT_PERCENT * hoverProgress;
+    const driftY = (from.y + (to.y - from.y) * segmentT) * SPECULAR_DRIFT_PERCENT * hoverProgress;
+    const rippleProgress = (now % SPECULAR_RIPPLE_SPEED_MS) / SPECULAR_RIPPLE_SPEED_MS;
+    const rippleWave = Math.sin(rippleProgress * Math.PI * 2) * SPECULAR_RIPPLE_AMOUNT * hoverProgress;
+    const highlightX = Math.max(0, Math.min(100, current.px + driftX));
+    const highlightY = Math.max(0, Math.min(100, current.py + driftY + rippleWave));
+    const highlightSize = 40 + SPECULAR_RIPPLE_AMOUNT * 6 * (0.5 + 0.5 * Math.sin(rippleProgress * Math.PI * 2));
 
     el.style.transform =
       `perspective(920px) translateY(${translateY.toFixed(3)}px) scale(${scale.toFixed(4)}) rotateX(${rotateX.toFixed(3)}deg) rotateY(${rotateY.toFixed(3)}deg)`;
-    el.style.setProperty('--ds-listing-reflection-shift', `${(current.band * REFLECTION_BAND_SHIFT_PX).toFixed(2)}px`);
-    el.style.setProperty('--ds-listing-reflection-opacity', `${(REFLECTION_BAND_OPACITY * hoverProgress).toFixed(3)}`);
+    el.style.setProperty('--ds-listing-highlight-x', `${highlightX.toFixed(2)}%`);
+    el.style.setProperty('--ds-listing-highlight-y', `${highlightY.toFixed(2)}%`);
+    el.style.setProperty('--ds-listing-highlight-opacity', `${(SPECULAR_OPACITY * hoverProgress).toFixed(3)}`);
+    el.style.setProperty('--ds-listing-highlight-size', `${highlightSize.toFixed(2)}px`);
   }, []);
 
   const animatePointer = useCallback(() => {
@@ -128,16 +155,18 @@ export function ListingCard({
     const current = currentRef.current;
     current.x += (target.x - current.x) * CURSOR_LERP;
     current.y += (target.y - current.y) * CURSOR_LERP;
-    current.band += (target.band - current.band) * CURSOR_LERP;
+    current.px += (target.px - current.px) * CURSOR_LERP;
+    current.py += (target.py - current.py) * CURSOR_LERP;
     current.hover += (target.hover - current.hover) * CURSOR_LERP;
     applyPointerStyles();
 
     const isSettled =
       Math.abs(target.x - current.x) < 0.001 &&
       Math.abs(target.y - current.y) < 0.001 &&
-      Math.abs(target.band - current.band) < 0.001 &&
+      Math.abs(target.px - current.px) < 0.01 &&
+      Math.abs(target.py - current.py) < 0.01 &&
       Math.abs(target.hover - current.hover) < 0.001;
-    if (!isSettled) {
+    if (!isSettled || target.hover > 0.001) {
       rafRef.current = window.requestAnimationFrame(animatePointer);
       return;
     }
@@ -159,9 +188,12 @@ export function ListingCard({
     const relativeY = e.clientY - rect.top;
     const normX = Math.max(-1, Math.min(1, (relativeX - cx) / cx));
     const normY = Math.max(-1, Math.min(1, (relativeY - cy) / cy));
+    const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+    const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
     targetRef.current.x = normX;
     targetRef.current.y = normY;
-    targetRef.current.band = normX;
+    targetRef.current.px = percentX;
+    targetRef.current.py = percentY;
   }, []);
 
   useEffect(() => {
@@ -194,8 +226,10 @@ export function ListingCard({
       ? '0 12px 28px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06)'
       : '0 4px 12px rgba(0,0,0,0.04)',
     willChange: 'transform, opacity',
-    ['--ds-listing-reflection-shift' as string]: '0px',
-    ['--ds-listing-reflection-opacity' as string]: '0',
+    ['--ds-listing-highlight-x' as string]: '50%',
+    ['--ds-listing-highlight-y' as string]: '50%',
+    ['--ds-listing-highlight-opacity' as string]: '0',
+    ['--ds-listing-highlight-size' as string]: '40px',
   };
 
   return (
@@ -232,7 +266,8 @@ export function ListingCard({
           if (!enableCursorEffects) return;
           targetRef.current.x = 0;
           targetRef.current.y = 0;
-          targetRef.current.band = 0;
+          targetRef.current.px = 50;
+          targetRef.current.py = 50;
           targetRef.current.hover = 0;
           queuePointerAnimation();
         }}
@@ -250,11 +285,9 @@ export function ListingCard({
           }}
         />
         <div
-          className="ds-listing-card-reflection"
+          className="ds-listing-card-specular-highlight"
           aria-hidden
-        >
-          <div className="ds-listing-card-reflection-band" />
-        </div>
+        />
         {isGuestFavorite && (
           <div style={badgeWrapperStyle}>
             <Badge>Frequently revisited</Badge>
