@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Text } from '../../foundations/Text';
 import { Badge } from '../../foundations/Badge';
 import { Icon } from '../../foundations/Icon';
@@ -23,7 +23,13 @@ export interface ListingCardProps {
   style?: React.CSSProperties;
 }
 
-const MAX_TILT_DEG = 4;
+const HOVER_LIFT_PX = 4;
+const HOVER_SCALE = 1.01;
+const TILT_MAX_DEG = 2.6;
+const REFLECTION_BAND_OPACITY = 0.16;
+const REFLECTION_BAND_SHIFT_PX = 28;
+const CURSOR_LERP = 0.12;
+const HOVER_DURATION_MS = 220;
 
 const cardWrapperStyle: React.CSSProperties = {
   display: 'flex',
@@ -72,9 +78,7 @@ const priceRowStyle: React.CSSProperties = {
   gap: 'var(--ds-spacing-4)',
 };
 
-// Only enable tilt on devices that support hover (i.e. not touch)
-const supportsHover =
-  typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 export function ListingCard({
   id,
@@ -91,42 +95,81 @@ export function ListingCard({
   style,
 }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(defaultLiked);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHoveringImage, setIsHoveringImage] = useState(false);
-  const [highlight, setHighlight] = useState({ x: 50, y: 50, visible: false });
-  const isActive = tilt.x !== 0 || tilt.y !== 0;
-  const isVisualHover = supportsHover && (isHoveringImage || isActive);
+  const imageContainerRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const targetRef = useRef({ x: 0, y: 0, band: 0, hover: 0 });
+  const currentRef = useRef({ x: 0, y: 0, band: 0, hover: 0 });
 
-  const updatePointerEffects = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!supportsHover) return;
-      const el = e.currentTarget;
-      const rect = el.getBoundingClientRect();
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-      const relativeX = e.clientX - rect.left;
-      const relativeY = e.clientY - rect.top;
-      const normX = (relativeX - cx) / cx;
-      const normY = (relativeY - cy) / cy;
-      const xPercent = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
-      const yPercent = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
-      setTilt({ x: -normY * MAX_TILT_DEG, y: normX * MAX_TILT_DEG });
-      setHighlight({ x: xPercent, y: yPercent, visible: true });
-    },
-    [],
-  );
+  const supportsHover =
+    typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const enableCursorEffects = supportsHover && !prefersReducedMotion;
 
-  const handleImageMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      updatePointerEffects(e);
-    },
-    [updatePointerEffects],
-  );
+  const applyPointerStyles = useCallback(() => {
+    const el = imageContainerRef.current;
+    if (!el) return;
+    const current = currentRef.current;
+    const hoverProgress = current.hover;
+    const translateY = -HOVER_LIFT_PX * hoverProgress;
+    const scale = 1 + (HOVER_SCALE - 1) * hoverProgress;
+    const rotateX = -current.y * TILT_MAX_DEG * hoverProgress;
+    const rotateY = current.x * TILT_MAX_DEG * hoverProgress;
 
-  const handleImageMouseLeave = useCallback(() => {
-    setIsHoveringImage(false);
-    setTilt({ x: 0, y: 0 });
-    setHighlight((prev) => ({ ...prev, visible: false }));
+    el.style.transform =
+      `perspective(920px) translateY(${translateY.toFixed(3)}px) scale(${scale.toFixed(4)}) rotateX(${rotateX.toFixed(3)}deg) rotateY(${rotateY.toFixed(3)}deg)`;
+    el.style.setProperty('--ds-listing-reflection-shift', `${(current.band * REFLECTION_BAND_SHIFT_PX).toFixed(2)}px`);
+    el.style.setProperty('--ds-listing-reflection-opacity', `${(REFLECTION_BAND_OPACITY * hoverProgress).toFixed(3)}`);
+  }, []);
+
+  const animatePointer = useCallback(() => {
+    const target = targetRef.current;
+    const current = currentRef.current;
+    current.x += (target.x - current.x) * CURSOR_LERP;
+    current.y += (target.y - current.y) * CURSOR_LERP;
+    current.band += (target.band - current.band) * CURSOR_LERP;
+    current.hover += (target.hover - current.hover) * CURSOR_LERP;
+    applyPointerStyles();
+
+    const isSettled =
+      Math.abs(target.x - current.x) < 0.001 &&
+      Math.abs(target.y - current.y) < 0.001 &&
+      Math.abs(target.band - current.band) < 0.001 &&
+      Math.abs(target.hover - current.hover) < 0.001;
+    if (!isSettled) {
+      rafRef.current = window.requestAnimationFrame(animatePointer);
+      return;
+    }
+    rafRef.current = null;
+  }, [applyPointerStyles]);
+
+  const queuePointerAnimation = useCallback(() => {
+    if (rafRef.current == null) {
+      rafRef.current = window.requestAnimationFrame(animatePointer);
+    }
+  }, [animatePointer]);
+
+  const syncPointerTarget = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const relativeX = e.clientX - rect.left;
+    const relativeY = e.clientY - rect.top;
+    const normX = Math.max(-1, Math.min(1, (relativeX - cx) / cx));
+    const normY = Math.max(-1, Math.min(1, (relativeY - cy) / cy));
+    targetRef.current.x = normX;
+    targetRef.current.y = normY;
+    targetRef.current.band = normX;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) {
+        window.cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   const handleHeartClick = (e: React.MouseEvent) => {
@@ -140,21 +183,26 @@ export function ListingCard({
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#f3f3f3',
-    transform: supportsHover
-      ? `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(${isActive ? 8 : 0}px)`
-      : undefined,
-    transition: 'transform 0.18s ease-out, box-shadow 0.22s ease',
-    boxShadow: isActive
+    transform:
+      !enableCursorEffects && isHoveringImage
+        ? `translateY(-${HOVER_LIFT_PX}px) scale(${HOVER_SCALE})`
+        : 'translateY(0) scale(1)',
+    transition: enableCursorEffects
+      ? undefined
+      : `transform ${HOVER_DURATION_MS}ms ${EASE_OUT}, box-shadow ${HOVER_DURATION_MS}ms ease`,
+    boxShadow: isHoveringImage
       ? '0 12px 28px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06)'
-      : 'none',
-    willChange: supportsHover ? 'transform' : undefined,
+      : '0 4px 12px rgba(0,0,0,0.04)',
+    willChange: 'transform, opacity',
+    ['--ds-listing-reflection-shift' as string]: '0px',
+    ['--ds-listing-reflection-opacity' as string]: '0',
   };
 
   return (
     <div
       className={[
         'ds-listing-card',
-        isVisualHover ? 'ds-listing-card--hovering' : '',
+        isHoveringImage ? 'ds-listing-card--hovering' : '',
         className ?? '',
       ].filter(Boolean).join(' ')}
       style={{ ...cardWrapperStyle, ...style }}
@@ -164,14 +212,30 @@ export function ListingCard({
       tabIndex={0}
     >
       <div
+        ref={imageContainerRef}
+        className="ds-listing-card-image-shell"
         style={imageContainerDynamicStyle}
         onMouseEnter={(e) => {
-          if (!supportsHover) return;
           setIsHoveringImage(true);
-          updatePointerEffects(e);
+          if (!enableCursorEffects) return;
+          targetRef.current.hover = 1;
+          syncPointerTarget(e);
+          queuePointerAnimation();
         }}
-        onMouseMove={handleImageMouseMove}
-        onMouseLeave={handleImageMouseLeave}
+        onMouseMove={(e) => {
+          if (!enableCursorEffects) return;
+          syncPointerTarget(e);
+          queuePointerAnimation();
+        }}
+        onMouseLeave={() => {
+          setIsHoveringImage(false);
+          if (!enableCursorEffects) return;
+          targetRef.current.x = 0;
+          targetRef.current.y = 0;
+          targetRef.current.band = 0;
+          targetRef.current.hover = 0;
+          queuePointerAnimation();
+        }}
       >
         <img
           src={image}
@@ -181,18 +245,16 @@ export function ListingCard({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transform: isVisualHover ? 'scale(1.04)' : 'scale(1)',
-            transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            transform: 'scale(1)',
+            transition: `transform ${HOVER_DURATION_MS}ms ${EASE_OUT}`,
           }}
         />
         <div
-          className="ds-listing-card-specular-highlight"
+          className="ds-listing-card-reflection"
           aria-hidden
-          style={{
-            opacity: isVisualHover && highlight.visible ? 0.8 : 0,
-            background: `radial-gradient(circle 40px at ${highlight.x}% ${highlight.y}%, hsla(2, 88%, 62%, 0.38) 0%, hsla(44, 95%, 62%, 0.34) 28%, hsla(190, 92%, 64%, 0.3) 56%, hsla(318, 92%, 66%, 0.32) 78%, hsla(318, 92%, 66%, 0) 100%)`,
-          }}
-        />
+        >
+          <div className="ds-listing-card-reflection-band" />
+        </div>
         {isGuestFavorite && (
           <div style={badgeWrapperStyle}>
             <Badge>Frequently revisited</Badge>
@@ -219,7 +281,7 @@ export function ListingCard({
       <div
         style={{
           ...infoStyle,
-          transform: isVisualHover ? 'translateY(-2px)' : 'translateY(0)',
+          transform: isHoveringImage ? 'translateY(-2px)' : 'translateY(0)',
           transition: 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >

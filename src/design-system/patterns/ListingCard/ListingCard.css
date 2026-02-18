@@ -20,44 +20,40 @@
   pointer-events: none;
 }
 
-.ds-listing-card-specular-highlight {
+.ds-listing-card-image-shell {
+  will-change: transform, opacity;
+}
+
+.ds-listing-card-reflection {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
   z-index: 1;
-  mix-blend-mode: overlay;
-  filter: blur(5px) saturate(1.08);
-  background-size: 230% 230%;
-  animation: ds-specular-ripple 2.4s linear infinite;
-  transition: opacity 140ms ease-out;
 }
 
-
-@keyframes ds-specular-ripple {
-  0% {
-    background-position: 34% 58%;
-    transform: scale(1);
-  }
-  20% {
-    background-position: 61% 36%;
-    transform: scale(1.08);
-  }
-  40% {
-    background-position: 43% 68%;
-    transform: scale(1.12);
-  }
-  60% {
-    background-position: 67% 53%;
-    transform: scale(1.06);
-  }
-  80% {
-    background-position: 39% 33%;
-    transform: scale(1.1);
-  }
-  100% {
-    background-position: 34% 58%;
-    transform: scale(1);
-  }
+.ds-listing-card-reflection-band {
+  position: absolute;
+  top: -36%;
+  bottom: -36%;
+  left: -32%;
+  width: 58%;
+  pointer-events: none;
+  opacity: var(--ds-listing-reflection-opacity, 0);
+  transform: translate3d(var(--ds-listing-reflection-shift, 0px), 0, 0) rotate(-16deg);
+  transform-origin: center;
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.06) 28%,
+    rgba(255, 255, 255, 0.02) 48%,
+    rgba(255, 255, 255, 0.11) 68%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  filter: blur(0.4px);
 }
 
 
@@ -116,7 +112,8 @@
   .ds-listing-card-heart-btn,
   .ds-listing-card-heart-icon,
   .ds-listing-card-heart-icon svg,
-  .ds-listing-card-specular-highlight,
+  .ds-listing-card-image-shell,
+  .ds-listing-card-reflection-band,
   .ds-listing-card {
     transition: none;
   }
@@ -132,7 +129,8 @@
   .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-ripple {
     animation: none;
   }
-  .ds-listing-card-specular-highlight {
-    animation: none;
+  .ds-listing-card-reflection-band {
+    opacity: 0 !important;
+    transform: rotate(-16deg);
   }
 }
