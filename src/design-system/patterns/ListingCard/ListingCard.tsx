@@ -93,26 +93,40 @@ export function ListingCard({
   const [isLiked, setIsLiked] = useState(defaultLiked);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHoveringImage, setIsHoveringImage] = useState(false);
+  const [highlight, setHighlight] = useState({ x: 50, y: 50, visible: false });
   const isActive = tilt.x !== 0 || tilt.y !== 0;
   const isVisualHover = supportsHover && (isHoveringImage || isActive);
 
-  const handleImageMouseMove = useCallback(
+  const updatePointerEffects = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!supportsHover) return;
       const el = e.currentTarget;
       const rect = el.getBoundingClientRect();
       const cx = rect.width / 2;
       const cy = rect.height / 2;
-      const normX = (e.clientX - rect.left - cx) / cx;
-      const normY = (e.clientY - rect.top - cy) / cy;
+      const relativeX = e.clientX - rect.left;
+      const relativeY = e.clientY - rect.top;
+      const normX = (relativeX - cx) / cx;
+      const normY = (relativeY - cy) / cy;
+      const xPercent = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+      const yPercent = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
       setTilt({ x: -normY * MAX_TILT_DEG, y: normX * MAX_TILT_DEG });
+      setHighlight({ x: xPercent, y: yPercent, visible: true });
     },
     [],
+  );
+
+  const handleImageMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      updatePointerEffects(e);
+    },
+    [updatePointerEffects],
   );
 
   const handleImageMouseLeave = useCallback(() => {
     setIsHoveringImage(false);
     setTilt({ x: 0, y: 0 });
+    setHighlight((prev) => ({ ...prev, visible: false }));
   }, []);
 
   const handleHeartClick = (e: React.MouseEvent) => {
@@ -151,7 +165,11 @@ export function ListingCard({
     >
       <div
         style={imageContainerDynamicStyle}
-        onMouseEnter={() => supportsHover && setIsHoveringImage(true)}
+        onMouseEnter={(e) => {
+          if (!supportsHover) return;
+          setIsHoveringImage(true);
+          updatePointerEffects(e);
+        }}
         onMouseMove={handleImageMouseMove}
         onMouseLeave={handleImageMouseLeave}
       >
@@ -165,6 +183,14 @@ export function ListingCard({
             objectFit: 'cover',
             transform: isVisualHover ? 'scale(1.04)' : 'scale(1)',
             transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        />
+        <div
+          className="ds-listing-card-specular-highlight"
+          aria-hidden
+          style={{
+            opacity: isVisualHover && highlight.visible ? 0.8 : 0,
+            background: `radial-gradient(circle 40px at ${highlight.x}% ${highlight.y}%, hsla(2, 88%, 62%, 0.38) 0%, hsla(44, 95%, 62%, 0.34) 28%, hsla(190, 92%, 64%, 0.3) 56%, hsla(318, 92%, 66%, 0.32) 78%, hsla(318, 92%, 66%, 0) 100%)`,
           }}
         />
         {isGuestFavorite && (

@@ -20,6 +20,47 @@
   pointer-events: none;
 }
 
+.ds-listing-card-specular-highlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+  filter: blur(5px) saturate(1.08);
+  background-size: 230% 230%;
+  animation: ds-specular-ripple 2.4s linear infinite;
+  transition: opacity 140ms ease-out;
+}
+
+
+@keyframes ds-specular-ripple {
+  0% {
+    background-position: 34% 58%;
+    transform: scale(1);
+  }
+  20% {
+    background-position: 61% 36%;
+    transform: scale(1.08);
+  }
+  40% {
+    background-position: 43% 68%;
+    transform: scale(1.12);
+  }
+  60% {
+    background-position: 67% 53%;
+    transform: scale(1.06);
+  }
+  80% {
+    background-position: 39% 33%;
+    transform: scale(1.1);
+  }
+  100% {
+    background-position: 34% 58%;
+    transform: scale(1);
+  }
+}
+
+
 /* Heart icon: scale on hover (110%), applied to the icon so the graphic grows while hovering the button */
 .ds-listing-card-heart-icon {
   transition: transform var(--ds-motion-duration-md) var(--ds-motion-ease);
@@ -75,6 +116,7 @@
   .ds-listing-card-heart-btn,
   .ds-listing-card-heart-icon,
   .ds-listing-card-heart-icon svg,
+  .ds-listing-card-specular-highlight,
   .ds-listing-card {
     transition: none;
   }
@@ -88,6 +130,9 @@
     animation: none;
   }
   .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-ripple {
+    animation: none;
+  }
+  .ds-listing-card-specular-highlight {
     animation: none;
   }
 }
