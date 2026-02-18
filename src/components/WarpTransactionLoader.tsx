@@ -8,11 +8,14 @@ interface WarpTransactionLoaderProps {
   listingTitle: string;
   /** How fast to cycle messages in ms (default 2800) */
   interval?: number;
+  /** Whether to reduce continuous animated effects */
+  reducedMotion?: boolean;
 }
 
 export function WarpTransactionLoader({
   listingTitle,
   interval = 2800,
+  reducedMotion = false,
 }: WarpTransactionLoaderProps) {
   const messages = useMemo(
     () => getWarpLoadingMessages(listingTitle),
@@ -67,11 +70,11 @@ export function WarpTransactionLoader({
         />
         {/* Animated progress fill */}
         <motion.div
-          animate={{ width: ['0%', '100%'] }}
+          animate={reducedMotion ? { width: '100%' } : { width: ['0%', '100%'] }}
           transition={{
-            duration: messages.length * (interval / 1000),
+            duration: reducedMotion ? 0.2 : messages.length * (interval / 1000),
             ease: 'linear',
-            repeat: Infinity,
+            repeat: reducedMotion ? 0 : Infinity,
           }}
           style={{
             position: 'absolute',
@@ -114,12 +117,12 @@ export function WarpTransactionLoader({
 
         {/* Animated traveler dot */}
         <motion.div
-          animate={{ left: ['0%', '100%'] }}
+          animate={reducedMotion ? { left: '50%' } : { left: ['0%', '100%'] }}
           transition={{
-            duration: 2.4,
+            duration: reducedMotion ? 0.2 : 2.4,
             ease: [0.4, 0, 0.2, 1],
-            repeat: Infinity,
-            repeatDelay: 0.6,
+            repeat: reducedMotion ? 0 : Infinity,
+            repeatDelay: reducedMotion ? 0 : 0.6,
           }}
           style={{
             position: 'absolute',
@@ -150,11 +153,11 @@ export function WarpTransactionLoader({
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+            initial={reducedMotion ? false : { opacity: 0, y: 12, filter: 'blur(4px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -12, filter: 'blur(4px)' }}
+            exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -12, filter: 'blur(4px)' }}
             transition={{
-              duration: 0.35,
+              duration: reducedMotion ? 0.01 : 0.35,
               ease: [0.4, 0, 0.2, 1],
             }}
             style={{
@@ -173,11 +176,17 @@ export function WarpTransactionLoader({
       </div>
 
       {/* Bouncing dots (existing pattern) */}
-      <div className="bouncing-dots-container">
-        <div className="bouncing-dot bouncing-dot-1 transaction-dot" />
-        <div className="bouncing-dot bouncing-dot-2 transaction-dot" />
-        <div className="bouncing-dot bouncing-dot-3 transaction-dot" />
-      </div>
+      {reducedMotion ? (
+        <div style={{ color: 'rgba(113, 113, 113, 1)', fontSize: 14, lineHeight: '20px' }}>
+          Processing temporal routing...
+        </div>
+      ) : (
+        <div className="bouncing-dots-container">
+          <div className="bouncing-dot bouncing-dot-1 transaction-dot" />
+          <div className="bouncing-dot bouncing-dot-2 transaction-dot" />
+          <div className="bouncing-dot bouncing-dot-3 transaction-dot" />
+        </div>
+      )}
     </div>
   );
 }

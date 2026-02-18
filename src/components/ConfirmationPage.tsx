@@ -12,7 +12,7 @@ import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/
 import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
 import { ChevronLeft, Minus, Plus, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
@@ -80,6 +80,34 @@ const CONFIRMATION_NAV_ITEMS = [
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
+function AnimatedSwapText({
+  value,
+  shouldReduceMotion,
+  layoutId,
+}: {
+  value: string;
+  shouldReduceMotion: boolean;
+  layoutId?: string;
+}) {
+  return (
+    <span style={{ display: 'inline-block', position: 'relative' }}>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={value}
+          layoutId={layoutId}
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 8, filter: 'blur(3px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, filter: 'blur(3px)' }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: 'inline-block' }}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
 export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -97,6 +125,7 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const vehicleVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const [insuranceSelected, setInsuranceSelected] = useState(false);
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [shimmerPulse, setShimmerPulse] = useState<Record<string, number>>({});
   const [insuranceCheckboxHovered, setInsuranceCheckboxHovered] = useState(false);
   const [adultsCount, setAdultsCount] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
@@ -126,6 +155,7 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const [showWarpLoader, setShowWarpLoader] = useState(false);
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
   const { isMobile, isTablet } = useDeviceType();
+  const shouldReduceMotion = !!useReducedMotion();
 
   // Match confirmation page background to listing era when confirmation view is shown
   const confirmationBgColor = listing ? getConfirmationBackgroundColor(listing.title) : 'rgba(243, 239, 236, 1)';
@@ -324,100 +354,156 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const pricing = calculatePricing();
   if (!pricing) return null;
 
-  // Warp loading interstitial — shows listing-specific humorous messages
-  if (showWarpLoader && listing) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        style={{
-          width: '100%',
-          minHeight: '100vh',
-          backgroundColor: confirmationBgColor,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: '"Figtree", sans-serif',
-          padding: '40px 20px',
-          boxSizing: 'border-box',
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          style={{
-            textAlign: 'center',
-            marginBottom: 40,
-          }}
-        >
-          <div style={{
-            fontSize: 28,
-            fontWeight: 600,
-            color: 'rgba(34, 34, 34, 1)',
-            letterSpacing: '-0.5px',
-            lineHeight: '36px',
-            marginBottom: 8,
-          }}>
-            Initiating temporal transfer
-          </div>
-          <div style={{
-            fontSize: 16,
-            color: 'rgba(113, 113, 113, 1)',
-            lineHeight: '24px',
-          }}>
-            {listing.title}
-          </div>
-        </motion.div>
-        <WarpTransactionLoader listingTitle={listing.title} />
-      </motion.div>
-    );
-  }
+  const viewState = showWarpLoader ? 'warp' : bookingConfirmed ? 'confirmed' : 'form';
+  const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
+  const eraOrDate = listing.date || '1734 CE';
 
-  // Post-booking confirmation view (Figma: Securing arrival window)
-  if (bookingConfirmed && listing) {
-    const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
-    const eraOrDate = listing.date || '1734 CE';
+  const pageStateVariants = {
+    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.35, ease: [0.22, 1, 0.36, 1] },
+    },
+    exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.995 },
+  } as const;
 
-    return (
-      <BookingConfirmation
-        title={listing.title}
-        location={eraOrDate}
-        date={eraOrDate}
-        guests={`${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
-        price={confirmationTotal}
-        imageUrl={listing.main_image}
-        onLogoClick={() => navigate('/')}
-        style={{ backgroundColor: confirmationBgColor }}
-      />
-    );
-  }
+  const stagedContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.08,
+        delayChildren: shouldReduceMotion ? 0 : 0.06,
+      },
+    },
+  } as const;
+
+  const stagedItem = {
+    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.32, ease: [0.22, 1, 0.36, 1] },
+    },
+  } as const;
+
+  const teleportCardsVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.07,
+      },
+    },
+  } as const;
 
   return (
-    <div style={{
-      width: '100%',
-      minHeight: '100vh',
-      backgroundColor: 'var(--ds-background)',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      {!hideHeader && (
-        <div>
-          <Header
-            brandName="warpbnb"
-            navItems={CONFIRMATION_NAV_ITEMS}
-            activeNavLabel="Time Travel"
-            onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
-            onLogoClick={() => navigate('/')}
-            rightSlot={<HeaderRightSlotWithUserMenu />}
-          />
-        </div>
-      )}
+    <LayoutGroup id={`confirmation-flow-${listing.id}`}>
+      <AnimatePresence mode="sync" initial={false}>
+        {viewState === 'warp' && (
+          <motion.div
+            key="warp"
+            variants={pageStateVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{
+              width: '100%',
+              minHeight: '100vh',
+              backgroundColor: confirmationBgColor,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: '"Figtree", sans-serif',
+              padding: '40px 20px',
+              boxSizing: 'border-box',
+            }}
+          >
+            <motion.div
+              variants={stagedItem}
+              initial="hidden"
+              animate="visible"
+              style={{ textAlign: 'center', marginBottom: 40 }}
+            >
+              <div style={{
+                fontSize: 28,
+                fontWeight: 600,
+                color: 'rgba(34, 34, 34, 1)',
+                letterSpacing: '-0.5px',
+                lineHeight: '36px',
+                marginBottom: 8,
+              }}>
+                Initiating temporal transfer
+              </div>
+              <div style={{
+                fontSize: 16,
+                color: 'rgba(113, 113, 113, 1)',
+                lineHeight: '24px',
+              }}>
+                {listing.title}
+              </div>
+            </motion.div>
+            <WarpTransactionLoader listingTitle={listing.title} reducedMotion={shouldReduceMotion} />
+          </motion.div>
+        )}
+
+        {viewState === 'confirmed' && (
+          <motion.div
+            key="confirmed"
+            variants={pageStateVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <BookingConfirmation
+              title={listing.title}
+              location={eraOrDate}
+              date={eraOrDate}
+              guests={`${guestCount} ${guestCount === 1 ? 'guest' : 'guests'}`}
+              price={confirmationTotal}
+              imageUrl={listing.main_image}
+              onLogoClick={() => navigate('/')}
+              style={{ backgroundColor: confirmationBgColor }}
+            />
+          </motion.div>
+        )}
+
+        {viewState === 'form' && (
+          <motion.div
+            key="form"
+            variants={pageStateVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{
+              width: '100%',
+              minHeight: '100vh',
+              backgroundColor: 'var(--ds-background)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {!hideHeader && (
+              <div>
+                <Header
+                  brandName="warpbnb"
+                  navItems={CONFIRMATION_NAV_ITEMS}
+                  activeNavLabel="Time Travel"
+                  onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
+                  onLogoClick={() => navigate('/')}
+                  rightSlot={<HeaderRightSlotWithUserMenu />}
+                />
+              </div>
+            )}
 
       {/* Main Content */}
-      <div style={{
+      <motion.div
+        variants={stagedContainer}
+        initial="hidden"
+        animate="visible"
+        style={{
         backgroundColor: 'white',
         display: 'flex',
         flexDirection: 'column',
@@ -430,7 +516,9 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
         boxSizing: 'border-box',
       }}>
         {/* Back Button and Title */}
-        <div style={{
+        <motion.div
+          variants={stagedItem}
+          style={{
           display: 'flex',
           flexDirection: 'row',
           gap: '16px',
@@ -453,10 +541,12 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
           }}>
             Confirm and pay
           </div>
-        </div>
+        </motion.div>
 
         {/* Two Column Layout */}
-        <div style={{
+        <motion.div
+          variants={stagedItem}
+          style={{
           display: 'flex',
           gap: isMobile ? 32 : isTablet ? 40 : 64,
           alignItems: 'flex-start',
@@ -464,7 +554,9 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
           flexDirection: isMobile ? 'column' : 'row',
         }}>
           {/* Left Column */}
-          <div style={{
+          <motion.div
+            variants={stagedContainer}
+            style={{
             display: 'flex',
             flexDirection: 'column',
             flex: '1 0 0',
@@ -472,7 +564,7 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
             alignItems: 'flex-start'
           }}>
             {/* Payment Method */}
-            <div style={{
+            <motion.div variants={stagedItem} style={{
               border: '1px solid rgba(221, 221, 221, 1)',
               borderRadius: '24px',
               padding: '24px',
@@ -546,10 +638,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                   Change
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Teleportation Method Selection */}
-            <div style={{
+            <motion.div variants={stagedItem} style={{
               border: '1px solid rgba(221, 221, 221, 1)',
               borderRadius: '24px',
               padding: '24px',
@@ -567,7 +659,9 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               }}>
                 Select teleportation method
               </div>
-              <div style={{
+              <motion.div
+                variants={teleportCardsVariants}
+                style={{
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '16px'
@@ -575,24 +669,33 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                 {TELEPORTATION_METHODS.map((method) => {
                   const isSelected = selectedTeleportation === method.id;
                   const isHovered = hoveredCardId === method.id;
+                  const shimmerKey = shimmerPulse[method.id] ?? 0;
                   const handleClick = () => {
                     setSelectedTeleportation(method.id);
                     setPlayingVideoId(method.id);
                   };
+                  const handleHoverStart = () => {
+                    setHoveredCardId(method.id);
+                    if (!shouldReduceMotion) {
+                      setShimmerPulse((prev) => ({
+                        ...prev,
+                        [method.id]: (prev[method.id] ?? 0) + 1,
+                      }));
+                    }
+                  };
                   return (
                     <motion.div
                       key={method.id}
+                      variants={stagedItem}
                       onClick={handleClick}
-                      onHoverStart={() => setHoveredCardId(method.id)}
+                      onHoverStart={handleHoverStart}
                       onHoverEnd={() => setHoveredCardId(null)}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{
+                      whileHover={shouldReduceMotion ? undefined : {
                         scale: 1.02,
                         boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                       }}
                       transition={{
-                        duration: 0.3,
+                        duration: shouldReduceMotion ? 0.01 : 0.3,
                         ease: [0.34, 1.56, 0.64, 1],
                       }}
                       style={{
@@ -608,25 +711,28 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                         overflow: 'hidden',
                       }}
                     >
-                      {/* Shimmer sweep effect on hover */}
-                      <motion.div
-                        initial={{ x: '-100%' }}
-                        animate={{ x: isHovered ? '200%' : '-100%' }}
-                        transition={{
-                          duration: 0.8,
-                          ease: 'easeInOut',
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '50%',
-                          height: '100%',
-                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
-                          pointerEvents: 'none',
-                          zIndex: 1,
-                        }}
-                      />
+                      {/* One-pass shimmer on hover enter */}
+                      {!shouldReduceMotion && shimmerKey > 0 && (
+                        <motion.div
+                          key={`${method.id}-${shimmerKey}`}
+                          initial={{ x: '-130%' }}
+                          animate={{ x: '220%' }}
+                          transition={{
+                            duration: 0.75,
+                            ease: 'easeInOut',
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '45%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.34), transparent)',
+                            pointerEvents: 'none',
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
 
                       <div
                         style={{
@@ -708,7 +814,8 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                           borderColor: isSelected || isHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)',
                         }}
                         transition={{
-                          type: 'spring',
+                          type: shouldReduceMotion ? 'tween' : 'spring',
+                          duration: shouldReduceMotion ? 0.01 : undefined,
                           stiffness: 500,
                           damping: 30,
                         }}
@@ -728,10 +835,11 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                       >
                         {isSelected && (
                           <motion.div
-                            initial={{ scale: 0 }}
+                            initial={shouldReduceMotion ? false : { scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{
-                              type: 'spring',
+                              type: shouldReduceMotion ? 'tween' : 'spring',
+                              duration: shouldReduceMotion ? 0.01 : undefined,
                               stiffness: 500,
                               damping: 25,
                             }}
@@ -747,11 +855,11 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                     </motion.div>
                   );
                 })}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Emergency Extraction Insurance */}
-            <div style={{
+            <motion.div variants={stagedItem} style={{
               borderRadius: '24px',
               padding: '24px',
               width: '100%',
@@ -792,9 +900,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                   animate={{
                     borderColor: insuranceSelected ? 'rgba(34, 34, 34, 1)' : (insuranceCheckboxHovered ? 'rgba(34, 34, 34, 1)' : 'rgba(140, 140, 140, 1)'),
                   }}
-                  whileTap={{ scale: 0.88 }}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.88 }}
                   transition={{
-                    type: 'spring',
+                    type: shouldReduceMotion ? 'tween' : 'spring',
+                    duration: shouldReduceMotion ? 0.01 : undefined,
                     stiffness: 500,
                     damping: 30,
                   }}
@@ -818,10 +927,11 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                       height="16"
                       viewBox="0 0 16 16"
                       fill="none"
-                      initial={{ scale: 0 }}
+                      initial={shouldReduceMotion ? false : { scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{
-                        type: 'spring',
+                        type: shouldReduceMotion ? 'tween' : 'spring',
+                        duration: shouldReduceMotion ? 0.01 : undefined,
                         stiffness: 500,
                         damping: 25,
                       }}
@@ -856,18 +966,20 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               }}>
                 Automatic recall if you exceed safe roaming distance or cause timeline instability. Includes medical bio-scan, memory stabilization, and priority return support.
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Right Column - Booking Summary */}
-          <div style={{
+          <motion.div
+            variants={stagedContainer}
+            style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
             width: isMobile ? '100%' : isTablet ? 320 : 380,
             flexShrink: 0
           }}>
-            <div style={{
+            <motion.div variants={stagedItem} style={{
               border: '1px solid rgba(221, 221, 221, 1)',
               borderRadius: '24px',
               padding: '24px',
@@ -1009,9 +1121,12 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
                   }}>
-                    {childrenCount > 0
-                      ? `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}, ${childrenCount} ${childrenCount === 1 ? 'child' : 'children'}`
-                      : `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}`}
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={childrenCount > 0
+                        ? `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}, ${childrenCount} ${childrenCount === 1 ? 'child' : 'children'}`
+                        : `${adultsCount} ${adultsCount === 1 ? 'adult' : 'adults'}`}
+                    />
                   </div>
                 </div>
                 <button
@@ -1082,7 +1197,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
                   }}>
-                    {pricing.baseFare}{selectedPaymentMethod.symbol}
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={`${pricing.baseFare}${selectedPaymentMethod.symbol}`}
+                    />
                   </div>
                 </div>
                 <div style={{
@@ -1106,7 +1224,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
                   }}>
-                    {pricing.vehicleClassFee}{selectedPaymentMethod.symbol}
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={`${pricing.vehicleClassFee}${selectedPaymentMethod.symbol}`}
+                    />
                   </div>
                 </div>
                 <div style={{
@@ -1130,9 +1251,50 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
                   }}>
-                    {pricing.serviceFee}{selectedPaymentMethod.symbol}
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={`${pricing.serviceFee}${selectedPaymentMethod.symbol}`}
+                    />
                   </div>
                 </div>
+                <AnimatePresence initial={false}>
+                  {insuranceSelected && (
+                    <motion.div
+                      initial={shouldReduceMotion ? false : { opacity: 0, height: 0, y: 8 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -8 }}
+                      transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div style={{
+                        fontFamily: 'var(--ds-font-family)',
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        letterSpacing: '-0.28px',
+                        color: 'rgba(0, 0, 0, 1)'
+                      }}>
+                        Insurance
+                      </div>
+                      <div style={{
+                        fontFamily: 'var(--ds-font-family)',
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        letterSpacing: '-0.28px',
+                        color: 'rgba(0, 0, 0, 1)'
+                      }}>
+                        <AnimatedSwapText
+                          shouldReduceMotion={shouldReduceMotion}
+                          value={`${pricing.insuranceFee}${selectedPaymentMethod.symbol}`}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div style={{
@@ -1167,7 +1329,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                   letterSpacing: '-0.32px',
                   color: 'rgba(34, 34, 34, 1)'
                 }}>
-                  {pricing.total.toLocaleString()}{selectedPaymentMethod.symbol}
+                  <AnimatedSwapText
+                    shouldReduceMotion={shouldReduceMotion}
+                    value={`${pricing.total.toLocaleString()}${selectedPaymentMethod.symbol}`}
+                  />
                 </div>
               </div>
 
@@ -1225,10 +1390,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               >
                 {isBookingSubmitting ? 'Processing...' : 'Confirm and Warp'}
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
       {/* Guests Selection Modal */}
       <Modal
@@ -1559,6 +1724,9 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
           </div>
         </div>
       </Modal>
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </LayoutGroup>
   );
 }

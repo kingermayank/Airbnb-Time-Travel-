@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useDeviceType } from '../hooks/use-mobile';
 
 interface BookingConfirmationProps {
   className?: string;
@@ -12,6 +14,9 @@ interface BookingConfirmationProps {
   onLogoClick?: () => void;
   /** Optional banner message (e.g. save-failed warning) shown above main content */
   topBanner?: React.ReactNode;
+  sharedLayoutIds?: {
+    image?: string;
+  };
 }
 
 export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
@@ -25,13 +30,18 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   imageUrl = '',
   onLogoClick,
   topBanner,
+  sharedLayoutIds,
 }) => {
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [isFeedbackHovered, setIsFeedbackHovered] = useState(false);
   const [cardTilt, setCardTilt] = useState({ x: 0, y: 0 });
+  const shouldReduceMotion = !!useReducedMotion();
+  const { isMobile, isTablet } = useDeviceType();
+  const disableTilt = shouldReduceMotion || isMobile || isTablet;
 
   const maxTiltDeg = 6;
   const handleCardMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (disableTilt) return;
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -45,7 +55,10 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
       y: normX * maxTiltDeg,
     });
   };
-  const handleCardMouseLeave = () => setCardTilt({ x: 0, y: 0 });
+  const handleCardMouseLeave = () => {
+    if (disableTilt) return;
+    setCardTilt({ x: 0, y: 0 });
+  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -69,18 +82,6 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   const s = 0.72;
   const px = (n: number) => `${Math.round(n * s)}px`;
 
-  const logo = (
-    <img
-      src="https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/c1e56ec2-9212-47a7-9bda-89298f7f301e.svg"
-      alt="Airbnb"
-      style={{
-        width: px(40),
-        height: px(40),
-        cursor: onLogoClick ? 'pointer' : 'default',
-      }}
-    />
-  );
-
   return (
     <div
       className={`booking-confirmation ${className}`}
@@ -98,33 +99,45 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         ...style,
       }}
     >
-      {/* Header / Logo – original structure, scaled */}
-      <nav
+      <div
         style={{
-          padding: `${px(30.5)} ${px(40)}`,
-          width: '100%',
-          boxSizing: 'border-box',
-          flexShrink: 0,
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background:
+            'radial-gradient(circle at 12% 22%, rgba(255,255,255,0.7), transparent 44%), radial-gradient(circle at 88% 78%, rgba(236,225,212,0.7), transparent 42%)',
+          zIndex: 0,
         }}
-      >
-        {onLogoClick ? (
-          <button
-            type="button"
-            onClick={onLogoClick}
-            style={{
-              padding: 0,
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-            }}
-            aria-label="Go to homepage"
-          >
-            {logo}
-          </button>
-        ) : (
-          logo
-        )}
-      </nav>
+      />
+      <motion.div
+        aria-hidden
+        animate={disableTilt ? undefined : { x: [0, 14, 0], y: [0, -10, 0] }}
+        transition={disableTilt ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute',
+          top: '14%',
+          right: '-5%',
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background:
+            'radial-gradient(circle, rgba(215,4,102,0.16) 0%, rgba(215,4,102,0.02) 65%, transparent 100%)',
+          filter: 'blur(6px)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          opacity: 0.05,
+          backgroundImage:
+            'repeating-linear-gradient(0deg, rgba(0,0,0,0.5) 0px, rgba(0,0,0,0.5) 1px, transparent 1px, transparent 3px)',
+          zIndex: 0,
+        }}
+      />
 
       {topBanner}
 
@@ -137,13 +150,15 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           flexDirection: 'row',
           flexWrap: 'wrap',
           justifyContent: 'center',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: px(112),
           padding: `${px(80)} ${px(40)}`,
           width: '100%',
           maxWidth: px(1512),
           margin: '0 auto',
           boxSizing: 'border-box',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* Booking Card – original structure, scaled; 3D tilt follows mouse */}
@@ -167,8 +182,10 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
               ? '0px 16px 32px rgba(31, 41, 55, 0.08), 0px 32px 48px rgba(31, 41, 55, 0.12)'
               : '0px 7.5px 7.5px rgba(31, 41, 55, 0.04), 0px 15px 18.75px rgba(31, 41, 55, 0.1)',
             borderRadius: px(27),
-            transition: 'transform 0.15s ease-out, box-shadow 0.2s ease',
-            transform: `perspective(900px) rotateX(${cardTilt.x}deg) rotateY(${cardTilt.y}deg) translateZ(${cardTilt.x !== 0 || cardTilt.y !== 0 ? 16 : 0}px)`,
+            transition: disableTilt ? 'box-shadow 0.25s ease' : 'transform 0.15s ease-out, box-shadow 0.2s ease',
+            transform: disableTilt
+              ? 'translateY(0)'
+              : `perspective(900px) rotateX(${cardTilt.x}deg) rotateY(${cardTilt.y}deg) translateZ(${cardTilt.x !== 0 || cardTilt.y !== 0 ? 16 : 0}px)`,
           }}
         >
           <div
@@ -179,7 +196,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
               width: '100%',
             }}
           >
-            <div
+            <motion.div
+              layoutId={sharedLayoutIds?.image}
               style={{
                 height: px(381),
                 backgroundColor: 'rgba(200, 200, 200, 1)',
@@ -255,7 +273,6 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: '42px',
-            marginTop: px(100),
             boxSizing: 'border-box',
           }}
         >

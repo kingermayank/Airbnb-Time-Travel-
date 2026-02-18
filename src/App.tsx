@@ -35,7 +35,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={generatedComponent} />
         <Route path="/listing/:id" element={<ListingDetailPage hideHeader />} />
-        <Route path="/listing/:id/confirm" element={<ConfirmationPage hideHeader />} />
+        <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
         <Route path="/faq" element={<FaqPage hideHeader />} />
         <Route path="/feedback" element={<FeedbackPage hideHeader />} />
         <Route path="*" element={<NotFoundPage />} />
