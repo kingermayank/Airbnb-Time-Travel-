@@ -27,6 +27,7 @@ export { GuestPicker } from './GuestPicker';
 export type { HeaderProps, NavItem } from './Header';
 export type { SearchBarProps, EraOption } from './SearchBar';
 export type {
+  SearchFieldExitAnimationConfig,
   SearchFieldProps,
   SearchFieldHoverSection,
   SearchFieldSectionConfig,
