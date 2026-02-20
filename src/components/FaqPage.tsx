@@ -1,18 +1,32 @@
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Header, Button, SectionTitle, Text } from '../design-system';
+import { Header, Icon, Text } from '../design-system';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
+import './FaqPage.css';
 
 const FAQ_NAV_ITEMS = [
   { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
   { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
 ];
 
-const FAQ_ITEMS: { question: string; answer: string }[] = [
+const FAQ_ITEMS: { question: string; answer: ReactNode }[] = [
   {
     question: 'Is any of this real?',
-    answer:
-      'No. Warpbnb is a fictional side project. Time travel is not real. All listings, hosts, and images shown here are AI-generated and speculative. They’re used to explore visual consistency, storytelling, and design–engineering.',
+    answer: (
+      <>
+        No. Warpbnb is a fictional side project. Time travel is not real. All listings, hosts, and
+        images shown here are AI-generated and speculative. They’re used to explore visual
+        consistency, storytelling, and design-engineering.
+        <img
+          src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzB1YmViZDRuNzl0eHQzMmo3eXk2eDRlZWhhYng5emFoMmcxODdpaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cUIfsYyFQgEzTQHc3G/giphy.gif"
+          alt="Playful time-travel themed GIF"
+          className="faq-answer-gif"
+          loading="lazy"
+        />
+      </>
+    ),
   },
   {
     question: 'Can I host my own listing?',
@@ -30,24 +44,43 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   },
   {
     question: 'How did you build this?',
-    answer:
-      'A mix of tools, experimentation, and iteration. Primarily Figma for planning and UI design; Cursor plus Claude Code for building; multiple AI models (Nano Banana Pro, Flux Schnell, Luma Photon) for image generation; Supabase for backend; and various tools for motion, image refinement, and layout exploration. A full breakdown of the process is planned for an upcoming newsletter post.',
+    answer: (
+      <>
+        A mix of tools, experimentation, and iteration. Figma for planning and UI design; Cursor
+        plus Claude Code for building; multiple AI models (Nano Banana Pro, Flux Schnell, Luma
+        Photon) for image generation; Supabase for backend; and various tools for motion, image
+        refinement, and layout exploration. I am planning to write a full breakdown of the process
+        on my{' '}
+        <a href="https://nextgendesigner.substack.com/" target="_blank" rel="noreferrer" className="faq-help-link">
+          newsletter
+        </a>
+        . Stay tuned!
+      </>
+    ),
+  },
+  {
+    question: 'Who built this?',
+    answer: (
+      <>
+        <a href="https://kingermayank.com" target="_blank" rel="noreferrer" className="faq-help-link">
+          This human being
+        </a>
+        .
+      </>
+    ),
   },
 ];
 
 export function FaqPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const navigate = useNavigate();
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const toggleItem = (index: number) => {
+    setOpenIndex((current) => (current === index ? null : index));
+  };
 
   return (
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        backgroundColor: 'var(--ds-background)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="faq-page">
       {!hideHeader && (
         <Header
           brandName="warpbnb"
@@ -60,54 +93,74 @@ export function FaqPage({ hideHeader = false }: { hideHeader?: boolean }) {
         />
       )}
 
-      <main
-        style={{
-          width: '100%',
-          maxWidth: 600,
-          margin: '0 auto',
-          padding: '44px var(--ds-spacing-16) var(--ds-spacing-32)',
-          boxSizing: 'border-box',
-        }}
-      >
-        <SectionTitle
-          style={{
-            textAlign: 'center',
-            fontSize: '30px',
-            marginBottom: '40px',
-          }}
-        >
-          Frequently asked questions
-        </SectionTitle>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--ds-spacing-20)',
-          }}
-        >
-          {FAQ_ITEMS.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                paddingBottom: 'var(--ds-spacing-20)',
-                borderBottom:
-                  i < FAQ_ITEMS.length - 1 ? `1px solid var(--ds-border-light)` : undefined,
-              }}
-            >
-              <Text
-                variant="h4"
-                color="primary"
-                as="p"
-                style={{ marginBottom: 'var(--ds-spacing-8)', fontSize: '18px' }}
-              >
-                {item.question}
-              </Text>
-              <Text variant="body" color="secondary" as="p">
-                {item.answer}
-              </Text>
-            </div>
-          ))}
-        </div>
+      <main className="faq-main">
+        <section className="faq-layout" aria-label="Frequently asked questions">
+          <aside className="faq-static-column">
+            <Text as="h1" variant="display" weight="semibold" color="primary" className="faq-heading">
+              Frequently asked questions
+            </Text>
+            <Text as="p" variant="h4" color="secondary" className="faq-help-copy">
+              For more questions visit the{' '}
+              <a href="https://www.airbnb.com/help" className="faq-help-link">
+                Help Center
+              </a>
+              .
+            </Text>
+          </aside>
+
+          <div className="faq-accordion-column">
+            {FAQ_ITEMS.map((item, index) => {
+              const isOpen = openIndex === index;
+              const itemId = `faq-item-${index}`;
+              const panelId = `faq-panel-${index}`;
+
+              return (
+                <div key={item.question} className="faq-row">
+                  <button
+                    type="button"
+                    className="faq-trigger"
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    id={itemId}
+                    onClick={() => toggleItem(index)}
+                  >
+                    <Text
+                      as="span"
+                      variant="h3"
+                      weight="medium"
+                      color="primary"
+                      className="faq-question-text"
+                    >
+                      {item.question}
+                    </Text>
+                    <Icon
+                      size="sm"
+                      color="primary"
+                      className={`faq-chevron ${isOpen ? 'faq-chevron-open' : ''}`}
+                    >
+                      <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+                        <path
+                          d="M4 6.5L8 10.5L12 6.5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Icon>
+                  </button>
+                  {isOpen && (
+                    <div role="region" id={panelId} aria-labelledby={itemId} className="faq-panel">
+                      <Text as="p" variant="body" color="secondary" className="faq-answer-text">
+                        {item.answer}
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </main>
     </div>
   );

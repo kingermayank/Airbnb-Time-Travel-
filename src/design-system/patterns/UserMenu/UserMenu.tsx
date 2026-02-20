@@ -43,7 +43,7 @@ export interface UserMenuProps {
 }
 
 const DEFAULT_MENU_ITEMS: UserMenuItem[] = [
-  { label: 'Help center', icon: 'lifeBuoy' },
+  { label: 'Help center', icon: 'lifeBuoy', to: '/support' },
   { label: 'Frequently asked questions', icon: 'circleHelp', to: '/faq' },
   { label: 'Give feedback', icon: 'messageSquare', to: '/feedback' },
 ];

@@ -1,0 +1,112 @@
+.feedback-page {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--ds-background);
+  display: flex;
+  flex-direction: column;
+}
+
+.feedback-main {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 120px var(--ds-spacing-16) var(--ds-spacing-32);
+  box-sizing: border-box;
+}
+
+.feedback-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-spacing-28);
+}
+
+.feedback-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-16);
+}
+
+.feedback-heading {
+  margin: 0;
+  max-width: 12ch;
+  line-height: 1.2;
+}
+
+.feedback-copy {
+  margin: 0;
+  max-width: 34ch;
+}
+
+.feedback-form-panel {
+  border: 1px solid var(--ds-border-light);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+  padding: var(--ds-spacing-20);
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-16);
+}
+
+.feedback-label {
+  display: block;
+  margin-bottom: 0;
+}
+
+.feedback-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-6);
+}
+
+.feedback-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 38px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5L8 10.5L12 6.5' stroke='%23222222' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+}
+
+.feedback-error {
+  margin: 0;
+  color: var(--ds-accent);
+}
+
+.feedback-success-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-16);
+}
+
+.feedback-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-spacing-12);
+}
+
+@media (min-width: 960px) {
+  .feedback-main {
+    padding: 120px var(--ds-spacing-80) var(--ds-spacing-40);
+  }
+
+  .feedback-layout {
+    grid-template-columns: minmax(280px, 360px) minmax(420px, 1fr);
+    align-items: start;
+    gap: clamp(32px, 4vw, 72px);
+  }
+
+  .feedback-intro {
+    position: sticky;
+    top: var(--ds-spacing-40);
+  }
+
+  .feedback-form-panel {
+    padding: var(--ds-spacing-24);
+  }
+}

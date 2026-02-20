@@ -7,6 +7,7 @@ import { ListingDetailPage } from './components/ListingDetailPage';
 import { ConfirmationPage } from './components/ConfirmationPage';
 import { FaqPage } from './components/FaqPage';
 import { FeedbackPage } from './components/FeedbackPage';
+import { SupportPage } from './components/SupportPage';
 import { NotFoundPage } from './components/NotFoundPage';
 import { AppLayout } from './components/AppLayout';
 
@@ -38,6 +39,7 @@ function App() {
         <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
         <Route path="/faq" element={<FaqPage hideHeader />} />
         <Route path="/feedback" element={<FeedbackPage hideHeader />} />
+        <Route path="/support" element={<SupportPage hideHeader />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
