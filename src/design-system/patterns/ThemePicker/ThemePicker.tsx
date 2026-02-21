@@ -61,7 +61,8 @@ export function ThemePicker({
                 className="ds-era-picker__image"
                 src={item.imageUrl}
                 alt={item.imageAlt ?? item.title}
-                loading="lazy"
+                loading="eager"
+                decoding="async"
                 onError={(e) => {
                   const el = e.currentTarget;
                   const letter = item.title.charAt(0);

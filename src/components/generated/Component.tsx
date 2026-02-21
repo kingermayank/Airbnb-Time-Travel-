@@ -103,27 +103,26 @@ const FIGMA_NAV_ITEMS = [
 ];
 
 // ── Picker transition animation constants ──────────────────────────────
-const TAB_INDEX: Record<string, number> = { where: 0, era: 1, who: 2 };
-const SLIDE_OFFSET = 80; // px
+const OPEN_FROM_BOTTOM = 0;
 
 const enterTransition = {
   type: 'spring' as const,
-  stiffness: 300,
-  damping: 28,
-  mass: 0.8,
+  stiffness: 220,
+  damping: 30,
+  mass: 0.95,
 };
 
 const exitTransition = {
   type: 'tween' as const,
-  duration: 0.15,
-  ease: 'easeIn' as const,
+  duration: 0.24,
+  ease: [0.25, 1, 0.5, 1] as const,
 };
 
 const slideVariants = {
-  enter: (dir: number) => ({
-    x: dir * SLIDE_OFFSET,
-    y: -6,
-    scale: 0.97,
+  enter: () => ({
+    x: 0,
+    y: 12,
+    scale: 0.992,
     opacity: 0,
   }),
   center: {
@@ -133,10 +132,10 @@ const slideVariants = {
     opacity: 1,
     transition: enterTransition,
   },
-  exit: (dir: number) => ({
-    x: dir * -SLIDE_OFFSET * 0.65,
-    y: -4,
-    scale: 0.98,
+  exit: () => ({
+    x: 0,
+    y: 6,
+    scale: 0.998,
     opacity: 0,
     transition: exitTransition,
   }),
@@ -361,18 +360,15 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const prevSectionRef = useRef<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  // Direction: +1 = forward (slide from right), -1 = backward (slide from left)
-  // Comparing numeric indices handles ALL 6 permutations including direct jumps (where<->who)
-  const direction = useMemo(() => {
-    const prev = prevSectionRef.current;
-    const curr = activeSection;
-    if (!prev || !curr) return 1;
-    return (TAB_INDEX[curr] ?? 0) > (TAB_INDEX[prev] ?? 0) ? 1 : -1;
-  }, [activeSection]);
+  const direction = useMemo(() => OPEN_FROM_BOTTOM, [activeSection]);
 
-  // Update ref AFTER direction is computed
+  // Update ref AFTER direction is computed; clear on close so next open uses bottom-entry.
   useEffect(() => {
-    if (activeSection) prevSectionRef.current = activeSection;
+    if (activeSection) {
+      prevSectionRef.current = activeSection;
+      return;
+    }
+    prevSectionRef.current = null;
   }, [activeSection]);
 
   // Era button center offset relative to searchDropdownRef (measured in onEraClick before state change)
@@ -386,6 +382,23 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   }, []);
   const themeOptions = useMemo(() => getThemeOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
   const eraOptions = useMemo(() => getEraOptions(pickerStorageBaseUrl), [pickerStorageBaseUrl]);
+
+  // Warm picker image cache so the first picker open has no visible lag.
+  useEffect(() => {
+    const urls = [...themeOptions, ...eraOptions].map((item) => item.imageUrl);
+    const preloaded = urls.map((url) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = url;
+      return img;
+    });
+
+    return () => {
+      preloaded.forEach((img) => {
+        img.src = '';
+      });
+    };
+  }, [themeOptions, eraOptions]);
 
   const listingGridVariants = useMemo(
     () => (
@@ -434,8 +447,8 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   );
 
   const listingResultsKey = useMemo(
-    () => `${selectedTheme ?? 'all'}-${selectedEra ?? 'all'}-${listings.map((l) => l.id).join('|')}`,
-    [selectedTheme, selectedEra, listings]
+    () => listings.map((l) => l.id).join('|'),
+    [listings]
   );
 
   const openListing = useCallback(
@@ -560,6 +573,24 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
     };
   }, []);
 
+  // Dismiss open picker as soon as the user starts scrolling away from search.
+  useEffect(() => {
+    if (activeSection == null) return;
+
+    const scrollYAtOpen = window.scrollY;
+    const DISMISS_SCROLL_THRESHOLD_PX = 6;
+
+    const handleDismissOnScroll = () => {
+      if (Math.abs(window.scrollY - scrollYAtOpen) < DISMISS_SCROLL_THRESHOLD_PX) return;
+      setActiveSection(null);
+    };
+
+    window.addEventListener('scroll', handleDismissOnScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleDismissOnScroll);
+    };
+  }, [activeSection]);
+
   return (
     <div
       style={{
@@ -572,7 +603,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
     >
       {!hideHeader && (
         <Header
-          brandName="warpbnb"
+          brandName="WarpBnB"
           navItems={FIGMA_NAV_ITEMS}
           activeNavLabel="Time Travel"
           onNavClick={() => {}}
@@ -935,17 +966,28 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
       />
 
       <Footer
-        copyrightText="© 2026 Warpbnb, Inc."
+        copyrightText="© 2026 Warpbnb Inc."
         links={[
-          { label: 'Built with Vibes' },
-          { label: 'Help' },
-          { label: 'FAQ' },
-          { label: 'Contact' },
+          { label: 'Built with vibes' },
+          { label: 'Help', href: '/support' },
+          { label: 'FAQ', href: '/faq' },
+          { label: 'Support', href: '/support' },
         ]}
         languageLabel="English (US)"
+        socialLinks={[
+          { platform: 'twitter', href: 'https://x.com/kingermayank', ariaLabel: 'Twitter' },
+          { platform: 'linkedin', href: 'https://www.linkedin.com/in/kingermayank', ariaLabel: 'LinkedIn' },
+          { platform: 'github', href: 'https://github.com/kingermayank', ariaLabel: 'GitHub' },
+        ]}
         style={{
-          paddingLeft: 'var(--ds-spacing-80)',
-          paddingRight: 'var(--ds-spacing-80)',
+          width: '100%',
+          maxWidth: 1280,
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          paddingLeft: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+          paddingRight: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+          paddingTop: 'var(--ds-section-padding-y)',
+          paddingBottom: 'var(--ds-section-padding-y)',
         }}
       />
 
