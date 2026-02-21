@@ -1359,13 +1359,10 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
                       console.error('Error creating booking:', saveError);
                       setBookingSaveFailed(true);
                     }
-                    // Show warp loader interstitial, then transition to confirmation
+                    // Skip interstitial loader and go straight to confirmation
                     playSound('warpWhoosh', 0.3);
-                    setShowWarpLoader(true);
-                    setTimeout(() => {
-                      setShowWarpLoader(false);
-                      setBookingConfirmed(true);
-                    }, 6000); // 6 seconds of loading messages
+                    setShowWarpLoader(false);
+                    setBookingConfirmed(true);
                   } catch (error) {
                     console.error('Error in booking flow:', error);
                     alert('Something went wrong. Please try again.');

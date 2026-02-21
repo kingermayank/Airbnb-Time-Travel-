@@ -100,11 +100,7 @@ export function FaqPage({ hideHeader = false }: { hideHeader?: boolean }) {
               Frequently asked questions
             </Text>
             <Text as="p" variant="h4" color="secondary" className="faq-help-copy">
-              For more questions visit the{' '}
-              <a href="https://www.airbnb.com/help" className="faq-help-link">
-                Help Center
-              </a>
-              .
+              For more questions, contact me at kingermayank[at]gmail.com
             </Text>
           </aside>
 

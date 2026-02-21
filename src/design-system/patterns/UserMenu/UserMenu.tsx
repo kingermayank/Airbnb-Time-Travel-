@@ -24,7 +24,7 @@ const MENU_ICON_MAP: Record<UserMenuItemIcon, LucideIcon> = {
 };
 
 export interface UserMenuProps {
-  /** Main menu items (Help center, Frequently asked questions, Give feedback by default) with semantic icons. */
+  /** Main menu items (Share & support and Frequently asked questions by default) with semantic icons. */
   menuItems?: UserMenuItem[];
   /** "Become a host" block: title. */
   becomeAHostTitle?: string;
@@ -43,9 +43,8 @@ export interface UserMenuProps {
 }
 
 const DEFAULT_MENU_ITEMS: UserMenuItem[] = [
-  { label: 'Help center', icon: 'lifeBuoy', to: '/support' },
+  { label: 'Share & support', icon: 'lifeBuoy', to: '/support' },
   { label: 'Frequently asked questions', icon: 'circleHelp', to: '/faq' },
-  { label: 'Give feedback', icon: 'messageSquare', to: '/feedback' },
 ];
 
 /**
