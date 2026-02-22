@@ -40,7 +40,7 @@ const FAQ_ITEMS: { question: string; answer: ReactNode }[] = [
   {
     question: 'How long did this take to build?',
     answer:
-      'About two weeks, mostly at night, with a mix of curiosity, caffeine, and questionable sleep decisions.',
+      'About 2–3 weeks, mostly at night, with a mix of curiosity, caffeine, and questionable sleep decisions.',
   },
   {
     question: 'How did you build this?',
