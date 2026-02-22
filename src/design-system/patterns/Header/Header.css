@@ -81,6 +81,20 @@
   transform: scale(0.97);
 }
 
+@media (hover: hover) {
+  .ds-header-become-host-btn.ds-button--ghost:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 999px var(--ds-surface-icon-button);
+    color: var(--ds-navbar-active);
+  }
+}
+
+.ds-header-become-host-btn.ds-button--ghost {
+  padding-left: calc(var(--ds-spacing-20) - 8px);
+  padding-right: calc(var(--ds-spacing-20) - 8px);
+  text-indent: 0;
+  margin-left: 4px;
+}
+
 /* Header navigation tabs */
 .ds-header-nav-tab {
   transition: opacity 0.2s ease, transform 0.1s ease;

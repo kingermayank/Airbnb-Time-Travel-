@@ -1,0 +1,34 @@
+.host-coming-soon {
+  width: 100%;
+  min-height: calc(100dvh - 101px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ds-spacing-16);
+  text-align: center;
+}
+
+.host-coming-soon__image {
+  width: min(100%, 180px);
+  height: auto;
+  display: block;
+}
+
+.host-coming-soon__title {
+  margin: clamp(18px, 3vw, 28px) 0 0;
+  font-family: var(--ds-font-family);
+  font-size: calc(clamp(24px, 4vw, 39px) - 8px);
+  line-height: 1.08;
+  font-weight: var(--ds-font-semibold);
+  color: #101010;
+  max-width: 16ch;
+  text-wrap: balance;
+}
+
+@media (max-width: 767px) {
+  .host-coming-soon {
+    min-height: calc(100dvh - 150px);
+  }
+}

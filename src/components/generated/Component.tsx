@@ -107,9 +107,9 @@ const OPEN_FROM_BOTTOM = 0;
 
 const enterTransition = {
   type: 'spring' as const,
-  stiffness: 220,
-  damping: 30,
-  mass: 0.95,
+  stiffness: 560,
+  damping: 26,
+  mass: 0.85,
 };
 
 const exitTransition = {
@@ -121,8 +121,8 @@ const exitTransition = {
 const slideVariants = {
   enter: () => ({
     x: 0,
-    y: 12,
-    scale: 0.992,
+    y: 8,
+    scale: 0.98,
     opacity: 0,
   }),
   center: {
@@ -692,7 +692,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
                   Era
                 </div>
                 <div style={{ fontSize: 'var(--ds-text-14)', color: selectedEra ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
-                  {getEraLabel(selectedEra) ?? 'Select Timeline'}
+                  {getEraLabel(selectedEra) ?? 'Select timeline'}
                 </div>
               </button>
               <button
@@ -737,7 +737,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
               }}
               era={{
                 label: 'Era',
-                placeholder: getEraLabel(selectedEra) ?? 'Select Timeline',
+                placeholder: getEraLabel(selectedEra) ?? 'Select timeline',
                 isValueSelected: selectedEra != null,
               }}
               who={{

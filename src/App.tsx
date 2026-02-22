@@ -9,6 +9,7 @@ import { FaqPage } from './components/FaqPage';
 import { FeedbackPage } from './components/FeedbackPage';
 import { SupportPage } from './components/SupportPage';
 import { NotFoundPage } from './components/NotFoundPage';
+import { HostOnboardingComingSoonPage } from './components/HostOnboardingComingSoonPage';
 import { AppLayout } from './components/AppLayout';
 
 const theme: Theme = 'light';
@@ -40,6 +41,7 @@ function App() {
         <Route path="/faq" element={<FaqPage hideHeader />} />
         <Route path="/feedback" element={<FeedbackPage hideHeader />} />
         <Route path="/support" element={<SupportPage hideHeader />} />
+        <Route path="/host/onboarding" element={<HostOnboardingComingSoonPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

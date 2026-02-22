@@ -2,16 +2,14 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
-import { Header, Button, IconButton, Text, Divider } from '../design-system';
+import { Button, IconButton, Text, Divider } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import { WarpTransactionLoader } from './WarpTransactionLoader';
 import { getConfirmationBackgroundColor } from '../lib/warp-loading-messages';
 import { playSound } from '../lib/sound-effects';
-import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
-import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
-import { ChevronLeft, Minus, Plus, X } from 'lucide-react';
+import { ChevronLeft, Minus, Plus, X, Link2, Mail, MessageCircle, Linkedin, Twitter, Code2 } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
@@ -75,11 +73,6 @@ const PAYMENT_METHODS = [
   }
 ];
 
-const CONFIRMATION_NAV_ITEMS = [
-  { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
-  { label: 'Mindscapes', iconUrl: MINDSCAPES_ICON_URL, disabled: true },
-];
-
 function AnimatedSwapText({
   value,
   shouldReduceMotion,
@@ -108,7 +101,7 @@ function AnimatedSwapText({
   );
 }
 
-export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean }) {
+export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHeader?: boolean }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,6 +125,8 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [tempAdultsCount, setTempAdultsCount] = useState(1);
   const [tempChildrenCount, setTempChildrenCount] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   // When playingVideoId is set, start that video at 2x; pause others at first frame
   useEffect(() => {
@@ -155,6 +150,7 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const [showWarpLoader, setShowWarpLoader] = useState(false);
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
   const { isMobile, isTablet } = useDeviceType();
+  const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = !!useReducedMotion();
 
   // Match confirmation page background to listing era when confirmation view is shown
@@ -303,6 +299,29 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
     });
   };
 
+  const showTemporaryShareFeedback = useCallback((label: string) => {
+    setShareFeedback(label);
+    window.setTimeout(() => setShareFeedback(null), 1400);
+  }, []);
+
+  const getShareUrl = useCallback(() => {
+    const path = `/listing/${listing?.id ?? id}`;
+    return `${window.location.origin}${path}`;
+  }, [listing?.id, id]);
+
+  const copyToClipboard = useCallback(async (text: string, feedbackLabel: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showTemporaryShareFeedback(feedbackLabel);
+    } catch {
+      showTemporaryShareFeedback('Could not copy');
+    }
+  }, [showTemporaryShareFeedback]);
+
+  const openShareWindow = useCallback((url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, []);
+
   if (isLoading) {
     return (
       <div style={{
@@ -357,6 +376,42 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
   const viewState = showWarpLoader ? 'warp' : bookingConfirmed ? 'confirmed' : 'form';
   const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
   const eraOrDate = listing.date || '1734 CE';
+  const shareUrl = getShareUrl();
+  const shareTitle = listing.title;
+  const shareSummary = `${listing.property_type ?? 'Stay'} · ★${listing.overall_rating?.toFixed(2) ?? '—'} · ${listing.bedrooms} bedroom${listing.bedrooms !== 1 ? 's' : ''} · ${listing.beds} bed${listing.beds !== 1 ? 's' : ''} · ${listing.baths} bath${listing.baths !== 1 ? 's' : ''}`;
+  const shareWarmIntro = `Check out this place I found on WarpBnB: ${shareTitle}`;
+
+  const handleShareOption = (option: 'copy' | 'email' | 'messages' | 'linkedin' | 'twitter' | 'embed') => {
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(shareTitle);
+    const encodedWarmIntro = encodeURIComponent(shareWarmIntro);
+    const encodedBody = encodeURIComponent(`${shareWarmIntro}\n${shareUrl}`);
+
+    switch (option) {
+      case 'copy':
+        copyToClipboard(shareUrl, 'Link copied');
+        return;
+      case 'email':
+        window.location.href = `mailto:?subject=${encodedTitle}&body=${encodedBody}`;
+        return;
+      case 'messages':
+        window.location.href = `sms:?&body=${encodedWarmIntro}%20${encodedUrl}`;
+        return;
+      case 'linkedin':
+        openShareWindow(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&summary=${encodedBody}`);
+        return;
+      case 'twitter':
+        openShareWindow(`https://twitter.com/intent/tweet?text=${encodedWarmIntro}&url=${encodedUrl}`);
+        return;
+      case 'embed': {
+        const embedCode = `<iframe src="${shareUrl}" width="640" height="420" style="border:0;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+        copyToClipboard(embedCode, 'Embed code copied');
+        return;
+      }
+      default:
+        return;
+    }
+  };
 
   const pageStateVariants = {
     hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 },
@@ -465,6 +520,8 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               price={confirmationTotal}
               imageUrl={listing.main_image}
               onLogoClick={() => navigate('/')}
+              onShareClick={() => setShowShareModal(true)}
+              onFeedbackClick={() => navigate('/support')}
               style={{ backgroundColor: confirmationBgColor }}
             />
           </motion.div>
@@ -485,19 +542,6 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               flexDirection: 'column',
             }}
           >
-            {!hideHeader && (
-              <div>
-                <Header
-                  brandName="warpbnb"
-                  navItems={CONFIRMATION_NAV_ITEMS}
-                  activeNavLabel="Time Travel"
-                  onNavClick={(label) => (label === 'Time Travel' ? undefined : navigate('/'))}
-                  onLogoClick={() => navigate('/')}
-                  rightSlot={<HeaderRightSlotWithUserMenu />}
-                />
-              </div>
-            )}
-
       {/* Main Content */}
       <motion.div
         variants={stagedContainer}
@@ -1339,36 +1383,34 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
               {/* Confirm and Warp Button – matches Reserve button on listing detail */}
               <button
                 disabled={isBookingSubmitting}
-                onClick={async () => {
-                  try {
-                    setIsBookingSubmitting(true);
-                    const bookingData = {
-                      listing_id: listing.id,
-                      listing_title: listing.title,
-                      price_usd: pricing.usdTotal,
-                      base_fare_usd: pricing.usdBasePrice,
-                      service_fee_usd: pricing.usdServiceFee,
-                      cleaning_fee_usd: pricing.usdCleaningFee,
-                      occupancy_tax_usd: pricing.usdOccupancyTax,
-                      guest_count: guestCount
-                    };
+                onClick={() => {
+                  if (isBookingSubmitting) return;
 
-                    try {
-                      await createBooking(bookingData);
-                    } catch (saveError) {
-                      console.error('Error creating booking:', saveError);
-                      setBookingSaveFailed(true);
-                    }
-                    // Skip interstitial loader and go straight to confirmation
-                    playSound('warpWhoosh', 0.3);
-                    setShowWarpLoader(false);
-                    setBookingConfirmed(true);
-                  } catch (error) {
-                    console.error('Error in booking flow:', error);
-                    alert('Something went wrong. Please try again.');
-                  } finally {
-                    setIsBookingSubmitting(false);
-                  }
+                  setIsBookingSubmitting(true);
+
+                  // Skip interstitial loader and go straight to confirmation.
+                  playSound('warpWhoosh', 0.3);
+                  setShowWarpLoader(false);
+                  setBookingConfirmed(true);
+
+                  const bookingData = {
+                    listing_id: listing.id,
+                    listing_title: listing.title,
+                    price_usd: pricing.usdTotal,
+                    base_fare_usd: pricing.usdBasePrice,
+                    service_fee_usd: pricing.usdServiceFee,
+                    cleaning_fee_usd: pricing.usdCleaningFee,
+                    occupancy_tax_usd: pricing.usdOccupancyTax,
+                    guest_count: guestCount,
+                  };
+
+                  // Persist booking in the background so UI transition is never blocked.
+                  void createBooking(bookingData).catch((saveError) => {
+                    console.error('Error creating booking:', saveError);
+                    setBookingSaveFailed(true);
+                  });
+
+                  setIsBookingSubmitting(false);
                 }}
                 style={{
                   width: '100%',
@@ -1391,6 +1433,228 @@ export function ConfirmationPage({ hideHeader = false }: { hideHeader?: boolean 
           </motion.div>
         </motion.div>
       </motion.div>
+
+      {/* Share Modal */}
+      <Modal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      >
+        <motion.div
+          initial={shouldReduceMotion ? false : 'hidden'}
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: {
+              transition: { staggerChildren: 0.04, delayChildren: 0.02 },
+            },
+          }}
+          style={{
+            padding: '24px',
+            width: '760px',
+            maxWidth: 'calc(100vw - 48px)',
+            maxHeight: '85vh',
+            overflow: 'auto',
+            boxSizing: 'border-box',
+            position: 'relative',
+          }}
+        >
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              marginBottom: '24px',
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: '28px',
+                fontWeight: 600,
+                color: '#222',
+                margin: 0,
+                lineHeight: 1.25,
+                textAlign: 'left',
+              }}
+            >
+              Share this place
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowShareModal(false)}
+              aria-label="Close"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                lineHeight: 1,
+                color: '#222',
+                marginTop: '2px',
+              }}
+            >
+              <X size={20} strokeWidth={2} />
+            </button>
+          </motion.div>
+
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 8 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.22 } },
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              marginBottom: '22px',
+            }}
+          >
+            <img
+              src={listing.main_image}
+              alt={listing.title}
+              style={{
+                width: 86,
+                height: 86,
+                borderRadius: 14,
+                objectFit: 'cover',
+                flexShrink: 0,
+              }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '18px',
+                  fontWeight: 500,
+                  color: '#222',
+                  lineHeight: '24px',
+                  marginBottom: '4px',
+                }}
+              >
+                {shareTitle}
+              </div>
+              <div
+                style={{
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '15px',
+                  color: '#4b4b4b',
+                  lineHeight: '21px',
+                }}
+              >
+                {shareSummary}
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 8 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
+            }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isCompactLayout ? '1fr' : '1fr 1fr',
+              gap: '14px',
+            }}
+          >
+            {[
+              { id: 'copy' as const, label: 'Copy link', Icon: Link2 },
+              { id: 'email' as const, label: 'Email', Icon: Mail },
+              { id: 'messages' as const, label: 'Messages', Icon: MessageCircle },
+              { id: 'linkedin' as const, label: 'LinkedIn', Icon: Linkedin },
+              { id: 'twitter' as const, label: 'Twitter', Icon: Twitter },
+              { id: 'embed' as const, label: 'Embed', Icon: Code2 },
+            ].map((item) => (
+              <motion.button
+                key={item.id}
+                type="button"
+                whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.985 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.12 }}
+                onClick={() => handleShareOption(item.id)}
+                style={{
+                  width: '100%',
+                  border: '1px solid #d5d5d5',
+                  borderRadius: '18px',
+                  background: '#fff',
+                  minHeight: '74px',
+                  padding: '0 22px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: '"Figtree", sans-serif',
+                  fontSize: '18px',
+                  fontWeight: 500,
+                  color: '#222',
+                }}
+              >
+                <item.Icon size={24} strokeWidth={1.9} />
+                <span>{item.label}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+
+          <AnimatePresence>
+            {shareFeedback && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: '20px',
+                  transform: 'translateX(-50%)',
+                  zIndex: 5,
+                  pointerEvents: 'none',
+                }}
+              >
+                <motion.div
+                  initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '11px 20px',
+                    borderRadius: '20px',
+                    border: '1px solid #E6E6E6',
+                    background: '#FFFFFF',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                    fontFamily: '"Figtree", sans-serif',
+                    fontSize: '14px',
+                    color: '#222',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#22c55e',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    ✓
+                  </span>
+                  <span>{shareFeedback}</span>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </Modal>
 
       {/* Guests Selection Modal */}
       <Modal

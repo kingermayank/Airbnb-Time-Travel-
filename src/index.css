@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
 @import './design-system/tokens/index.css';
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 @plugin "tailwindcss-animate";
 
@@ -62,6 +63,9 @@ body {
 }
 
 :root {
+  --clr-bg: #020617;
+  --clr-text: #fff;
+  --clr-primary: #fff;
   --radius: 0.625rem;
   --background: oklch(1.0000 0.0000 0);
   --foreground: oklch(0.145 0 0);
@@ -244,4 +248,9 @@ img.broken-image-fallback {
   --spacing-112: 112px;
   --spacing-128: 128px;
 
+}
+
+/* Hide scrollbar on mobile listing photo carousel (swipeable) */
+.listing-mobile-photo-carousel::-webkit-scrollbar {
+  display: none;
 }

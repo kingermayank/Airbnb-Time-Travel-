@@ -117,9 +117,9 @@ const headerScrollDividerStyle: React.CSSProperties = {
 };
 
 export function Header({
-  logoUrl = '/images/warp.svg',
+  logoUrl = '/images/warp_logo.svg',
   logoTextUrl,
-  brandName = 'warpbnb',
+  brandName = 'WarpBnB',
   navItems,
   activeNavLabel,
   onNavClick,

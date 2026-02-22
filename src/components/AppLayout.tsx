@@ -14,7 +14,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
-  const isConfirmFlowRoute = /^\/listing\/[^/]+\/confirm$/.test(location.pathname);
   const [showHomeScrollDivider, setShowHomeScrollDivider] = useState(false);
 
   useEffect(() => {
@@ -48,9 +47,8 @@ export function AppLayout() {
         backgroundColor: 'var(--ds-background)',
       }}
     >
-      {!isConfirmFlowRoute && (
-        <Header
-          brandName="warpbnb"
+      <Header
+          brandName="WarpBnB"
           navItems={APP_NAV_ITEMS}
           activeNavLabel="Time Travel"
           onNavClick={(label) => {
@@ -60,8 +58,7 @@ export function AppLayout() {
           rightSlot={<HeaderRightSlotWithUserMenu />}
           showDivider={!isHome}
           showDividerOnScroll={isHome && showHomeScrollDivider}
-        />
-      )}
+      />
 
       <main
         style={{

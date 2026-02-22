@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
 import { formatEraAppropriateDuration } from '../lib/era-time-measurements';
+import { getHostDisplayName } from '../lib/host-display-name';
 import type {
   ListingDetails,
   Amenity,
@@ -17,29 +18,6 @@ const DURATION_OPTIONS = [
   { value: 48, label: '2 days', multiplier: 7 },
   { value: 72, label: '3 days', multiplier: 9 },
 ];
-
-/**
- * Extracts the first name(s) from a full name.
- * Handles couple names (e.g., "Hans & Sophie Hoffmann" -> "Hans & Sophie")
- * and single names (e.g., "Neytiri te Tskaha Mo'at'ite" -> "Neytiri")
- */
-function getFirstName(fullName: string): string {
-  if (!fullName) return '';
-  
-  // If name contains "&", extract first names before the last name
-  if (fullName.includes(' & ')) {
-    const parts = fullName.split(' & ');
-    const firstParts = parts.map(part => {
-      const words = part.trim().split(/\s+/);
-      return words[0]; // Get first word of each part
-    });
-    return firstParts.join(' & ');
-  }
-  
-  // For single names, return the first word
-  const words = fullName.trim().split(/\s+/);
-  return words[0] || fullName;
-}
 
 import { Header, Button } from '../design-system';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
@@ -73,7 +51,7 @@ import {
   Sword,
   Rewind,
   VolumeX,
-  Key,
+  KeyRound,
   FileText,
   Share,
   Mail,
@@ -86,6 +64,7 @@ import {
   Clock,
   Sparkles,
   Shield,
+  ShieldAlert,
   Ban,
   AlertTriangle,
   Leaf,
@@ -97,6 +76,7 @@ import {
   Rocket,
   DoorOpen,
   Bed,
+  ChevronLeft,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -195,6 +175,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const [isSaved, setIsSaved] = useState(false);
   const [photoViewerLayoutId, setPhotoViewerLayoutId] = useState<string | undefined>(undefined);
   const [hoveredHeroImageKey, setHoveredHeroImageKey] = useState<string | null>(null);
+  const [heroGlare, setHeroGlare] = useState<{ key: string | null; x: number; y: number; active: boolean }>({
+    key: null,
+    x: 50,
+    y: 50,
+    active: false,
+  });
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [isSaveHovered, setIsSaveHovered] = useState(false);
   const [guestCountPulseTick, setGuestCountPulseTick] = useState(0);
@@ -211,12 +197,27 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = useReducedMotion();
-  const shouldPlayGenieEntry =
-    Boolean((location.state as { fromGenieTransition?: boolean } | null)?.fromGenieTransition) &&
-    !shouldReduceMotion;
-
   const supportsHover =
     typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+  const enableHeroCursorGlare = supportsHover && !shouldReduceMotion;
+  const heroGlareBackground =
+    'radial-gradient(circle 44px at var(--listing-glare-x, 50%) var(--listing-glare-y, 50%), hsla(2, 88%, 62%, 0.38) 0%, hsla(44, 95%, 62%, 0.34) 28%, hsla(190, 92%, 64%, 0.30) 56%, hsla(318, 92%, 66%, 0.32) 78%, hsla(318, 92%, 66%, 0) 100%)';
+
+  const updateHeroGlare = useCallback((imageKey: string, e: React.MouseEvent<HTMLDivElement>) => {
+    if (!enableHeroCursorGlare) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left;
+    const relativeY = e.clientY - rect.top;
+    const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+    const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
+    setHeroGlare({ key: imageKey, x: percentX, y: percentY, active: true });
+  }, [enableHeroCursorGlare]);
+
+  const clearHeroGlare = useCallback((imageKey: string) => {
+    setHeroGlare((prev) => (
+      prev.key === imageKey ? { ...prev, active: false } : prev
+    ));
+  }, []);
 
   // Pre-fill guest count from homepage when navigating with state
   useEffect(() => {
@@ -394,29 +395,15 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     return () => cancelAnimationFrame(frame);
   }, [loading, error, listing]);
 
-  const sectionContainerVariants = shouldReduceMotion
-    ? { hidden: { opacity: 1 }, visible: { opacity: 1 } }
-    : {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          staggerChildren: 0.08,
-          delayChildren: 0.06,
-        },
-      },
-    };
+  const sectionContainerVariants = {
+    hidden: { opacity: 1 },
+    visible: { opacity: 1 },
+  };
 
-  const sectionItemVariants = shouldReduceMotion
-    ? { hidden: { opacity: 1, y: 0 }, visible: { opacity: 1, y: 0 } }
-    : {
-      hidden: { opacity: 0, y: 14 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: { type: 'spring' as const, stiffness: 320, damping: 28 },
-      },
-    };
+  const sectionItemVariants = {
+    hidden: { opacity: 1, y: 0 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   const dropdownTransition = shouldReduceMotion
     ? { duration: 0 }
@@ -432,7 +419,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         }}>
           {!hideHeader && (
             <Header
-              brandName="warpbnb"
+              brandName="WarpBnB"
               navItems={FIGMA_NAV_ITEMS}
               activeNavLabel="Time Travel"
               onNavClick={() => {}}
@@ -591,9 +578,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
       )}
 
       <motion.div
-        initial={shouldPlayGenieEntry ? { opacity: 0.94 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: shouldPlayGenieEntry ? 0.24 : 0.3 }}
+        initial={false}
         style={{
           backgroundColor: '#ffffff',
           minHeight: '100vh',
@@ -603,7 +588,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
       >
         {!hideHeader && (
           <Header
-            brandName="warpbnb"
+            brandName="WarpBnB"
             navItems={FIGMA_NAV_ITEMS}
             activeNavLabel="Time Travel"
             onNavClick={() => {}}
@@ -622,11 +607,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 : '32px 24px 64px 24px',
           }}
         >
-        <motion.div
-          initial={shouldPlayGenieEntry ? { y: 24, opacity: 0 } : { y: 0, opacity: 1 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={shouldPlayGenieEntry ? { duration: 0.3, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
-        >
+        <motion.div initial={false}>
         <motion.div
           style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}
           variants={sectionContainerVariants}
@@ -733,15 +714,155 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           </div>
         </motion.div>
 
-        {/* Hero Image Grid */}
+        {/* Mobile: swipeable photo carousel with top bar (Back, Share, Save) */}
+        {isMobile && listing && allImages.length > 0 && (
+          <motion.div
+            variants={sectionItemVariants}
+            style={{
+              marginBottom: '24px',
+              marginLeft: -16,
+              marginRight: -16,
+              width: 'calc(100% + 32px)',
+              position: 'relative',
+              borderRadius: 0,
+              overflow: 'hidden',
+            }}
+          >
+            {/* Top overlay: Back (left), Share + Save (right) */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 8px 12px 8px',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%)',
+                pointerEvents: 'none',
+              }}
+            >
+              <div style={{ pointerEvents: 'auto' }}>
+                <button
+                  type="button"
+                  aria-label="Back to previous page"
+                  onClick={() => navigate(-1)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 44,
+                    height: 44,
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                  }}
+                >
+                  <ChevronLeft size={28} strokeWidth={2} />
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto' }}>
+                <button
+                  type="button"
+                  aria-label="Share"
+                  onClick={() => setShowShareModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 44,
+                    height: 44,
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                  }}
+                >
+                  <Share size={24} strokeWidth={1.5} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={isSaved ? 'Unsave listing' : 'Save listing'}
+                  onClick={() => setIsSaved((prev) => !prev)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 44,
+                    height: 44,
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                  }}
+                >
+                  <Heart
+                    size={24}
+                    strokeWidth={1.5}
+                    fill={isSaved ? '#fff' : 'transparent'}
+                    stroke="#fff"
+                  />
+                </button>
+              </div>
+            </div>
+            {/* Swipeable carousel */}
+            <div
+              role="region"
+              aria-label="Listing photos"
+              style={{
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                WebkitOverflowScrolling: 'touch',
+                display: 'flex',
+                height: 320,
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
+              className="listing-mobile-photo-carousel"
+            >
+              {allImages.map((url, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    minWidth: '100%',
+                    scrollSnapAlign: 'start',
+                    flexShrink: 0,
+                    position: 'relative',
+                  }}
+                >
+                  <img
+                    src={url}
+                    alt={idx === 0 ? listing.title : `${listing.title} photo ${idx + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                      verticalAlign: 'middle',
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Hero Image Grid (desktop/tablet only) */}
+        {!isMobile && (
         <motion.div
           variants={sectionItemVariants}
           style={{
           display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr',
-          gridTemplateRows: isMobile ? 'auto' : '1fr 1fr',
+          gridTemplateColumns: '2fr 1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
           gap: '8px',
-          height: isMobile ? 'auto' : isTablet ? '340px' : '400px',
+          height: isTablet ? '340px' : '400px',
           marginBottom: '24px',
           borderRadius: '16px',
           overflow: 'hidden',
@@ -751,8 +872,15 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           {/* Main Image */}
           <div
             onClick={() => handleImageClick(0, `listing-hero-image-0`)}
-            onMouseEnter={() => setHoveredHeroImageKey('main')}
-            onMouseLeave={() => setHoveredHeroImageKey((prev) => (prev === 'main' ? null : prev))}
+            onMouseEnter={(e) => {
+              setHoveredHeroImageKey('main');
+              updateHeroGlare('main', e);
+            }}
+            onMouseMove={(e) => updateHeroGlare('main', e)}
+            onMouseLeave={() => {
+              setHoveredHeroImageKey((prev) => (prev === 'main' ? null : prev));
+              clearHeroGlare('main');
+            }}
             style={{
               gridRow: isMobile ? 'auto' : 'span 2',
               cursor: 'pointer',
@@ -809,11 +937,26 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               style={{
                 position: 'absolute',
                 inset: 0,
+                background: heroGlareBackground,
+                opacity: heroGlare.key === 'main' && heroGlare.active ? 0.5 : 0,
+                transition: 'opacity 0.2s ease',
+                pointerEvents: 'none',
+                zIndex: 3,
+                mixBlendMode: 'screen',
+                filter: 'blur(4px) saturate(1.05)',
+                ['--listing-glare-x' as string]: `${heroGlare.key === 'main' ? heroGlare.x : 50}%`,
+                ['--listing-glare-y' as string]: `${heroGlare.key === 'main' ? heroGlare.y : 50}%`,
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
                 background: 'rgba(0,0,0,0.12)',
                 opacity: hoveredHeroImageKey === 'main' ? 1 : 0,
                 transition: 'opacity 0.22s ease',
                 pointerEvents: 'none',
-                zIndex: 3,
+                zIndex: 4,
               }}
             />
           </div>
@@ -838,8 +981,15 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               <div
                 key={img.id}
                 onClick={() => handleImageClick(idx + 1, `listing-hero-image-${idx + 1}`)}
-                onMouseEnter={() => setHoveredHeroImageKey(imageKey)}
-                onMouseLeave={() => setHoveredHeroImageKey((prev) => (prev === imageKey ? null : prev))}
+                onMouseEnter={(e) => {
+                  setHoveredHeroImageKey(imageKey);
+                  updateHeroGlare(imageKey, e);
+                }}
+                onMouseMove={(e) => updateHeroGlare(imageKey, e)}
+                onMouseLeave={() => {
+                  setHoveredHeroImageKey((prev) => (prev === imageKey ? null : prev));
+                  clearHeroGlare(imageKey);
+                }}
                 style={{
                   cursor: 'pointer',
                   overflow: 'hidden',
@@ -895,11 +1045,26 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   style={{
                     position: 'absolute',
                     inset: 0,
+                    background: heroGlareBackground,
+                    opacity: heroGlare.key === imageKey && heroGlare.active ? 0.5 : 0,
+                    transition: 'opacity 0.2s ease',
+                    pointerEvents: 'none',
+                    zIndex: 3,
+                    mixBlendMode: 'screen',
+                    filter: 'blur(4px) saturate(1.05)',
+                    ['--listing-glare-x' as string]: `${heroGlare.key === imageKey ? heroGlare.x : 50}%`,
+                    ['--listing-glare-y' as string]: `${heroGlare.key === imageKey ? heroGlare.y : 50}%`,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
                     background: 'rgba(0,0,0,0.12)',
                     opacity: hoveredHeroImageKey === imageKey ? 1 : 0,
                     transition: 'opacity 0.22s ease',
                     pointerEvents: 'none',
-                    zIndex: 3,
+                    zIndex: 4,
                   }}
                 />
               </div>
@@ -928,6 +1093,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
             Show all photos
           </button>
         </motion.div>
+        )}
 
         {/* Main Content Grid */}
         <motion.div
@@ -2273,7 +2439,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                         marginBottom: '4px',
                         lineHeight: '28px',
                       }}>
-                        {getFirstName(listing.hosts.name)}
+                        {getHostDisplayName(listing.hosts.name)}
                       </h3>
                       <span style={{
                         fontFamily: '"Figtree", sans-serif',
@@ -2429,99 +2595,101 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr',
                   gap: '24px',
                 }}>
-                  <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                     <h4 style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '16px',
                       fontWeight: 500,
                       color: '#222',
-                      marginBottom: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <Key size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
-                      House rules
-                    </h4>
-                    {(thingsToKnow.house_rules || []).map((rule, idx) => (
-                      <div key={idx} style={{
-                        marginBottom: '2px',
-                      }}>
-                        <span style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '14px',
-                          color: 'var(--ds-text-secondary)',
-                          lineHeight: '20px',
-                        }}>
-                          {typeof rule === 'object' && rule !== null && 'rule' in rule ? rule.rule : String(rule)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <Shield size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
-                      Safety
-                    </h4>
-                    {(thingsToKnow.safety_and_property || []).map((item, idx) => (
-                      <div key={idx} style={{
-                        marginBottom: '2px',
-                      }}>
-                        <span style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '14px',
-                          color: 'var(--ds-text-secondary)',
-                          lineHeight: '20px',
-                        }}>
-                          {item.item}
-                        </span>
-                        {item.note && (
-                          <div style={{
-                            fontFamily: '"Figtree", sans-serif',
-                            fontSize: '12px',
-                            color: 'var(--ds-text-secondary)',
-                            marginTop: '2px',
-                          }}>
-                            {item.note}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div>
-                    <h4 style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      color: '#222',
-                      marginBottom: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <FileText size={18} color="#222" strokeWidth={2} style={{ flexShrink: 0 }} />
-                      Cancellation Policy
-                    </h4>
-                    <p style={{
-                      fontFamily: '"Figtree", sans-serif',
-                      fontSize: '14px',
-                      color: 'var(--ds-text-secondary)',
                       lineHeight: '20px',
                       margin: 0,
+                      marginBottom: '0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: '10px',
                     }}>
-                      {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
-                    </p>
+                      <KeyRound size={24} color="#222" strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                      <span>House rules</span>
+                    </h4>
+                    <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {(thingsToKnow.house_rules || []).map((rule, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            color: 'var(--ds-text-secondary)',
+                            lineHeight: '20px',
+                          }}
+                        >
+                          {typeof rule === 'object' && rule !== null && 'rule' in rule ? rule.rule : String(rule)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      lineHeight: '20px',
+                      margin: 0,
+                      marginBottom: '0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: '10px',
+                    }}>
+                      <ShieldAlert size={24} color="#222" strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                      <span>Safety</span>
+                    </h4>
+                    <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {(thingsToKnow.safety_and_property || []).map((item, idx) => (
+                        <span
+                          key={idx}
+                          style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            color: 'var(--ds-text-secondary)',
+                            lineHeight: '20px',
+                          }}
+                        >
+                          {item.note ? `${item.item}, ${item.note}` : item.item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <h4 style={{
+                      fontFamily: '"Figtree", sans-serif',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: '#222',
+                      lineHeight: '20px',
+                      margin: 0,
+                      marginBottom: '0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: '10px',
+                    }}>
+                      <FileText size={24} color="#222" strokeWidth={1.8} style={{ flexShrink: 0 }} />
+                      <span>Cancellation Policy</span>
+                    </h4>
+                    <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '14px',
+                        color: 'var(--ds-text-secondary)',
+                        lineHeight: '20px',
+                      }}>
+                        {thingsToKnow.cancellation_highlight || listing.cancellation_policy || 'Free cancellation available'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

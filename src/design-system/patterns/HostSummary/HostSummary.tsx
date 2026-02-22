@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar } from '../../foundations/Avatar';
 import { Text } from '../../foundations/Text';
+import { getHostDisplayName } from '../../../lib/host-display-name';
 
 export interface HostSummaryProps {
   hostName: string;
@@ -8,29 +9,6 @@ export interface HostSummaryProps {
   badges?: string;
   className?: string;
   style?: React.CSSProperties;
-}
-
-/**
- * Extracts the first name(s) from a full name.
- * Handles couple names (e.g., "Hans & Sophie Hoffmann" -> "Hans & Sophie")
- * and single names (e.g., "Neytiri te Tskaha Mo'at'ite" -> "Neytiri")
- */
-function getFirstName(fullName: string): string {
-  if (!fullName) return '';
-  
-  // If name contains "&", extract first names before the last name
-  if (fullName.includes(' & ')) {
-    const parts = fullName.split(' & ');
-    const firstParts = parts.map(part => {
-      const words = part.trim().split(/\s+/);
-      return words[0]; // Get first word of each part
-    });
-    return firstParts.join(' & ');
-  }
-  
-  // For single names, return the first word
-  const words = fullName.trim().split(/\s+/);
-  return words[0] || fullName;
 }
 
 /**
@@ -43,7 +21,7 @@ export function HostSummary({
   className,
   style,
 }: HostSummaryProps) {
-  const firstName = getFirstName(hostName);
+  const firstName = getHostDisplayName(hostName);
   
   return (
     <div

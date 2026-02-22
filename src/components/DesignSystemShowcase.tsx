@@ -140,7 +140,7 @@ export function DesignSystemShowcase() {
         <div style={sectionStyle}>
           <Text variant="label" color="secondary" style={{ marginBottom: 8 }}>Header</Text>
           <Header
-            brandName="warpbnb"
+            brandName="WarpBnB"
             navItems={SAMPLE_NAV_ITEMS}
             activeNavLabel="Time Travel"
             onNavClick={() => {}}

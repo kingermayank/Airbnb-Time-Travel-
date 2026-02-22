@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { Share, Heart, ChevronLeft } from 'lucide-react';
+import { SpotlightOverlay } from '@/components/ui/image-reveal';
+import { useDeviceType } from '../hooks/use-mobile';
 import './PhotoViewer.css';
 
 interface PhotoViewerProps {
@@ -9,6 +12,7 @@ interface PhotoViewerProps {
   onClose: () => void;
   onShareClick?: () => void;
   layoutId?: string; // Deprecated: kept for backward compatibility, no longer used
+  enableSpotlight?: boolean;
 }
 
 // Slower, gentler ease-out so motion feels fluid and not abrupt
@@ -18,23 +22,36 @@ const CAROUSEL_TRANSITION = {
   ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
 };
 
-export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layoutId }: PhotoViewerProps) {
+export function PhotoViewer({
+  images,
+  initialIndex,
+  onClose,
+  onShareClick,
+  layoutId,
+  enableSpotlight = false,
+}: PhotoViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLiked, setIsLiked] = useState(false);
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [isSaveHovered, setIsSaveHovered] = useState(false);
   const [navDuration, setNavDuration] = useState(CAROUSEL_TRANSITION.duration);
   const [navDirection, setNavDirection] = useState<1 | -1>(1);
+  const [viewerGlare, setViewerGlare] = useState({ x: 50, y: 50, active: false });
   const shouldReduceMotion = useReducedMotion();
+  const { isMobile } = useDeviceType();
   const mainImageFrameRef = useRef<HTMLDivElement>(null);
   const lastNavAtRef = useRef(0);
   const navResetTimerRef = useRef<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
 
   const n = images.length;
   const prevIndex = n > 1 ? (currentIndex - 1 + n) % n : 0;
   const nextIndex = n > 1 ? (currentIndex + 1) % n : 0;
   const hasMultiple = n > 1;
   const effectiveRightIndex = n === 2 ? null : nextIndex;
+  const supportsHover =
+    typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+  const enableViewerGlare = supportsHover && !shouldReduceMotion && !enableSpotlight;
   const slotTransition = shouldReduceMotion
     ? { duration: 0 }
     : { ...CAROUSEL_TRANSITION, duration: navDuration };
@@ -84,6 +101,23 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
   }, [n, tuneNavigationMomentum]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = e.touches[0]?.clientX ?? null;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultiple || touchStartXRef.current == null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
+    const deltaX = endX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(deltaX) < 44) return;
+    if (deltaX > 0) {
+      handlePrevious();
+    } else {
+      handleNext();
+    }
+  }, [handleNext, handlePrevious, hasMultiple]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -121,7 +155,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
     }
   };
 
-  if (images.length === 0) return null;
+  if (images.length === 0 || typeof document === 'undefined') return null;
 
   const backdropVariants = {
     hidden: { opacity: 0 },
@@ -135,7 +169,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
     },
   };
 
-  return (
+  const viewer = (
     <AnimatePresence>
       <motion.div
         initial="hidden"
@@ -170,8 +204,8 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
             top: 0,
             left: 0,
             right: 0,
-            height: '80px',
-            padding: '0 24px',
+            height: isMobile ? '64px' : '80px',
+            padding: isMobile ? '0 16px' : '0 24px',
             zIndex: 10000,
             pointerEvents: 'none',
           }}
@@ -192,7 +226,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
               alignItems: 'center',
               justifyContent: 'center',
               position: 'absolute',
-              left: 24,
+              left: isMobile ? 16 : 24,
               top: '50%',
               transform: 'translateY(-50%)',
               pointerEvents: 'auto',
@@ -216,7 +250,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
               top: '50%',
               transform: 'translate(-50%, -50%)',
               color: 'white',
-              fontSize: '14px',
+              fontSize: isMobile ? '13px' : '14px',
               fontFamily: '"Figtree", sans-serif',
               fontWeight: 500,
               pointerEvents: 'none',
@@ -228,10 +262,10 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
           <div
             style={{
               display: 'flex',
-              gap: '24px',
+              gap: isMobile ? '10px' : '24px',
               alignItems: 'center',
               position: 'absolute',
-              right: 24,
+              right: isMobile ? 16 : 24,
               top: '50%',
               transform: 'translateY(-50%)',
               pointerEvents: 'auto',
@@ -252,7 +286,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
               }}
             >
               <Share size={18} strokeWidth={1.5} />
-              <span>Share</span>
+              {!isMobile && <span>Share</span>}
             </button>
 
             <button
@@ -277,7 +311,7 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
                 stroke={isLiked ? '#FF385C' : 'white'}
                 style={{ transition: 'fill 0.28s ease, stroke 0.28s ease' }}
               />
-              <span>{isLiked ? 'Saved' : 'Save'}</span>
+              {!isMobile && <span>{isLiked ? 'Saved' : 'Save'}</span>}
             </button>
           </div>
         </div>
@@ -291,110 +325,132 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
               height: '100%',
               display: 'flex',
               alignItems: 'center',
-              padding: '80px 0 60px',
+              padding: isMobile ? '64px 0 86px' : '80px 0 60px',
               boxSizing: 'border-box',
               zIndex: 9999,
               overflow: 'hidden',
-              maxHeight: '85vh',
+              maxHeight: isMobile ? '100dvh' : '85vh',
             }}
           >
             {/* Left strip */}
-            <div
-              style={{
-                flex: '0 0 8%',
-                height: '68%',
-                minHeight: 120,
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: '0 16px 16px 0',
-                background: 'transparent',
-              }}
-            >
-              {hasMultiple && (
-                <>
-                  <motion.div
-                    layout
-                    layoutId={`photo-viewer-image-${prevIndex}`}
-                    transition={slotTransition}
-                    initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '0 16px 16px 0',
-                      overflow: 'hidden',
-                      transformOrigin: 'center',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    <img
-                      src={images[prevIndex]}
-                      alt=""
-                      aria-hidden
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'right center',
-                        filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
-                        transform: 'scale(1.03)',
-                      }}
-                    />
+            {!isMobile && (
+              <div
+                style={{
+                  flex: '0 0 8%',
+                  height: '68%',
+                  minHeight: 120,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: '0 16px 16px 0',
+                  background: 'transparent',
+                }}
+              >
+                {hasMultiple && (
+                  <>
                     <motion.div
-                      key={`left-overlay-${prevIndex}`}
-                      initial={shouldReduceMotion ? false : { opacity: navDirection === 1 ? 0.18 : 1 }}
+                      layout
+                      layoutId={`photo-viewer-image-${prevIndex}`}
                       transition={slotTransition}
-                      animate={{ opacity: 1 }}
+                      initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'rgba(0, 0, 0, 0.28)',
-                        pointerEvents: 'none',
+                        borderRadius: '0 16px 16px 0',
+                        overflow: 'hidden',
+                        transformOrigin: 'center',
+                        boxShadow: 'none',
                       }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
-                        mixBlendMode: 'screen',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                  </motion.div>
-                </>
-              )}
-            </div>
+                    >
+                      <img
+                        src={images[prevIndex]}
+                        alt=""
+                        aria-hidden
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'right center',
+                          filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
+                          transform: 'scale(1.03)',
+                        }}
+                      />
+                      <motion.div
+                        key={`left-overlay-${prevIndex}`}
+                        initial={shouldReduceMotion ? false : { opacity: navDirection === 1 ? 0.18 : 1 }}
+                        transition={slotTransition}
+                        animate={{ opacity: 1 }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0, 0, 0, 0.28)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                          mixBlendMode: 'screen',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </motion.div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Center slot */}
             <div
               style={{
-                flex: '1 1 84%',
+                flex: isMobile ? '1 1 100%' : '1 1 84%',
                 minWidth: 0,
                 alignSelf: 'center',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0 64px',
+                padding: isMobile ? '0 16px' : '0 64px',
                 position: 'relative',
                 height: '100%',
               }}
             >
               <div
                 ref={mainImageFrameRef}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onMouseMove={(e) => {
+                  if (!enableViewerGlare) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const relativeX = e.clientX - rect.left;
+                  const relativeY = e.clientY - rect.top;
+                  const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+                  const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
+                  setViewerGlare({ x: percentX, y: percentY, active: true });
+                }}
+                onMouseEnter={() => {
+                  if (!enableViewerGlare) return;
+                  setViewerGlare((prev) => ({ ...prev, active: true }));
+                }}
+                onMouseLeave={() => {
+                  if (!enableViewerGlare) return;
+                  setViewerGlare((prev) => ({ ...prev, active: false }));
+                }}
                 style={{
                   position: 'relative',
                   width: '100%',
-                  maxWidth: '100%',
-                  aspectRatio: '16 / 9',
+                  maxWidth: isMobile ? '100%' : '100%',
+                  aspectRatio: isMobile ? '4 / 5' : '16 / 9',
+                  maxHeight: isMobile ? 'calc(100dvh - 190px)' : undefined,
                   overflow: 'hidden',
                   borderRadius: 16,
                   background: 'transparent',
@@ -423,12 +479,31 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
                     src={images[currentIndex]}
                     alt={`Photo ${currentIndex + 1} of ${images.length}`}
                     style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                  }}
-                />
+                      width: '100%',
+                      height: '100%',
+                      objectFit: isMobile ? 'contain' : 'cover',
+                      objectPosition: 'center',
+                    }}
+                  />
+                  <SpotlightOverlay enabled={enableSpotlight} />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: enableViewerGlare && viewerGlare.active ? 0.52 : 0,
+                      transition: 'opacity 0.2s ease',
+                      pointerEvents: 'none',
+                      mixBlendMode: 'screen',
+                      filter: 'blur(4px) saturate(1.05)',
+                      background:
+                        `radial-gradient(circle 44px at ${viewerGlare.x}% ${viewerGlare.y}%, ` +
+                        'hsla(2, 88%, 62%, 0.38) 0%, ' +
+                        'hsla(44, 95%, 62%, 0.34) 28%, ' +
+                        'hsla(190, 92%, 64%, 0.30) 56%, ' +
+                        'hsla(318, 92%, 66%, 0.32) 78%, ' +
+                        'hsla(318, 92%, 66%, 0) 100%)',
+                    }}
+                  />
                   <motion.div
                     key={`center-overlay-${currentIndex}`}
                     initial={shouldReduceMotion ? false : { opacity: 0.38 }}
@@ -446,85 +521,87 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
             </div>
 
             {/* Right strip */}
-            <div
-              style={{
-                flex: '0 0 8%',
-                height: '68%',
-                minHeight: 120,
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: '16px 0 0 16px',
-                background: 'transparent',
-              }}
-            >
-              {hasMultiple && effectiveRightIndex != null && (
-                <>
-                  <motion.div
-                    layout
-                    layoutId={`photo-viewer-image-${effectiveRightIndex}`}
-                    transition={slotTransition}
-                    initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '16px 0 0 16px',
-                      overflow: 'hidden',
-                      transformOrigin: 'center',
-                      boxShadow: 'none',
-                    }}
-                  >
-                    <img
-                      src={images[effectiveRightIndex]}
-                      alt=""
-                      aria-hidden
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'left center',
-                        filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
-                        transform: 'scale(1.03)',
-                      }}
-                    />
+            {!isMobile && (
+              <div
+                style={{
+                  flex: '0 0 8%',
+                  height: '68%',
+                  minHeight: 120,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: '16px 0 0 16px',
+                  background: 'transparent',
+                }}
+              >
+                {hasMultiple && effectiveRightIndex != null && (
+                  <>
                     <motion.div
-                      key={`right-overlay-${effectiveRightIndex}`}
-                      initial={shouldReduceMotion ? false : { opacity: navDirection === -1 ? 0.18 : 1 }}
+                      layout
+                      layoutId={`photo-viewer-image-${effectiveRightIndex}`}
                       transition={slotTransition}
-                      animate={{ opacity: 1 }}
+                      initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'rgba(0, 0, 0, 0.28)',
-                        pointerEvents: 'none',
+                        borderRadius: '16px 0 0 16px',
+                        overflow: 'hidden',
+                        transformOrigin: 'center',
+                        boxShadow: 'none',
                       }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
-                        mixBlendMode: 'screen',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                  </motion.div>
-                </>
-              )}
-            </div>
+                    >
+                      <img
+                        src={images[effectiveRightIndex]}
+                        alt=""
+                        aria-hidden
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'left center',
+                          filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
+                          transform: 'scale(1.03)',
+                        }}
+                      />
+                      <motion.div
+                        key={`right-overlay-${effectiveRightIndex}`}
+                        initial={shouldReduceMotion ? false : { opacity: navDirection === -1 ? 0.18 : 1 }}
+                        transition={slotTransition}
+                        animate={{ opacity: 1 }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0, 0, 0, 0.28)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                          mixBlendMode: 'screen',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </motion.div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </LayoutGroup>
 
         {/* Navigation Arrows - black background, white icon (over side panels) */}
-        {hasMultiple && (
+        {hasMultiple && !isMobile && (
           <>
             <button
               onClick={handlePrevious}
@@ -611,7 +688,63 @@ export function PhotoViewer({ images, initialIndex, onClose, onShareClick, layou
             </button>
           </>
         )}
+        {hasMultiple && isMobile && (
+          <div
+            data-photo-viewer-control="true"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: 20,
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              zIndex: 10000,
+            }}
+          >
+            <button
+              onClick={handlePrevious}
+              aria-label="Previous photo"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(34, 34, 34, 0.72)',
+                border: 'none',
+                color: 'white',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              onClick={handleNext}
+              aria-label="Next photo"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(34, 34, 34, 0.72)',
+                border: 'none',
+                color: 'white',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
+
+  return createPortal(viewer, document.body);
 }

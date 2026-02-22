@@ -17,6 +17,8 @@ interface BookingConfirmationProps {
   sharedLayoutIds?: {
     image?: string;
   };
+  onShareClick?: () => void;
+  onFeedbackClick?: () => void;
 }
 
 export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
@@ -31,13 +33,21 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   onLogoClick,
   topBanner,
   sharedLayoutIds,
+  onShareClick,
+  onFeedbackClick,
 }) => {
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [isFeedbackHovered, setIsFeedbackHovered] = useState(false);
   const [cardTilt, setCardTilt] = useState({ x: 0, y: 0 });
+  const [confirmationImageGlare, setConfirmationImageGlare] = useState({ x: 50, y: 50, active: false });
   const shouldReduceMotion = !!useReducedMotion();
   const { isMobile, isTablet } = useDeviceType();
   const disableTilt = shouldReduceMotion || isMobile || isTablet;
+  const supportsHover =
+    typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+  const enableImageGlare = supportsHover && !shouldReduceMotion;
+  const glareBackground =
+    'radial-gradient(circle 44px at var(--listing-glare-x, 50%) var(--listing-glare-y, 50%), hsla(2, 88%, 62%, 0.38) 0%, hsla(44, 95%, 62%, 0.34) 28%, hsla(190, 92%, 64%, 0.30) 56%, hsla(318, 92%, 66%, 0.32) 78%, hsla(318, 92%, 66%, 0) 100%)';
 
   const maxTiltDeg = 6;
   const handleCardMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -60,7 +70,21 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
     setCardTilt({ x: 0, y: 0 });
   };
 
+  const updateConfirmationImageGlare = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!enableImageGlare) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left;
+    const relativeY = e.clientY - rect.top;
+    const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+    const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
+    setConfirmationImageGlare({ x: percentX, y: percentY, active: true });
+  };
+
   const handleShare = () => {
+    if (onShareClick) {
+      onShareClick();
+      return;
+    }
     if (navigator.share) {
       navigator.share({
         title: 'Booking Confirmation',
@@ -75,7 +99,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   };
 
   const handleFeedback = () => {
-    console.log('Feedback clicked');
+    onFeedbackClick?.();
   };
 
   // Uniform scale so original layout/structure is preserved but fits in viewport (no scroll)
@@ -99,6 +123,26 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         ...style,
       }}
     >
+      <button
+        type="button"
+        onClick={onLogoClick}
+        aria-label="WarpBnB home"
+        style={{
+          position: 'absolute',
+          top: 24,
+          left: 24,
+          zIndex: 2,
+          display: 'inline-flex',
+          alignItems: 'center',
+          border: 'none',
+          background: 'transparent',
+          padding: 4,
+          cursor: onLogoClick ? 'pointer' : 'default',
+        }}
+      >
+        <img src="/images/warp_black_logo.svg" alt="WarpBnB logo" style={{ width: 44, height: 44 }} />
+      </button>
+
       <div
         style={{
           position: 'absolute',
@@ -198,6 +242,9 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           >
             <motion.div
               layoutId={sharedLayoutIds?.image}
+              onMouseEnter={updateConfirmationImageGlare}
+              onMouseMove={updateConfirmationImageGlare}
+              onMouseLeave={() => setConfirmationImageGlare((prev) => ({ ...prev, active: false }))}
               style={{
                 height: px(381),
                 backgroundColor: 'rgba(200, 200, 200, 1)',
@@ -207,8 +254,24 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                 borderRadius: px(18),
                 overflow: 'hidden',
                 width: '100%',
+                position: 'relative',
               }}
-            />
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: glareBackground,
+                  opacity: confirmationImageGlare.active ? 0.5 : 0,
+                  transition: 'opacity 0.2s ease',
+                  pointerEvents: 'none',
+                  mixBlendMode: 'screen',
+                  filter: 'blur(4px) saturate(1.05)',
+                  ['--listing-glare-x' as string]: `${confirmationImageGlare.x}%`,
+                  ['--listing-glare-y' as string]: `${confirmationImageGlare.y}%`,
+                }}
+              />
+            </motion.div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: px(6) }}>
               <h2
                 style={{

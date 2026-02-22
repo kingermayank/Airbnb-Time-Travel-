@@ -4,6 +4,8 @@ import { HelpCircle, Menu } from 'lucide-react';
 import { Button, UserMenu } from '../design-system';
 import { useDeviceType } from '../hooks/use-mobile';
 
+const HOST_ONBOARDING_PATH = '/host/onboarding';
+
 /**
  * Shared header right slot: "Become a host", Help (FAQ), and hamburger menu with UserMenu dropdown.
  * Used by main app, listing detail, confirmation, FAQ, and feedback pages.
@@ -60,7 +62,13 @@ export function HeaderRightSlotWithUserMenu() {
     >
       {showPrimaryActions && (
         <>
-          <Button variant="ghost" size="md" style={{ color: 'var(--ds-navbar-active)' }} onClick={() => navigate('/')}>
+          <Button
+            variant="ghost"
+            size="md"
+            className="ds-header-become-host-btn"
+            style={{ color: 'var(--ds-navbar-active)' }}
+            onClick={() => navigate(HOST_ONBOARDING_PATH)}
+          >
             Become a host
           </Button>
           <button
@@ -102,7 +110,12 @@ export function HeaderRightSlotWithUserMenu() {
             zIndex: 30,
           }}
         >
-          <UserMenu />
+          <UserMenu
+            onBecomeAHostClick={() => {
+              handleClose();
+              navigate(HOST_ONBOARDING_PATH);
+            }}
+          />
         </div>
       )}
     </div>

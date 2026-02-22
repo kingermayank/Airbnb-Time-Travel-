@@ -57,7 +57,7 @@ const defaultWhere: SearchFieldSectionConfig = {
 };
 const defaultEra: SearchFieldSectionConfig = {
   label: 'Era',
-  placeholder: 'Select Timeline',
+  placeholder: 'Select timeline',
   isValueSelected: false,
 };
 const defaultWho: SearchFieldSectionConfig = {

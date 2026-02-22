@@ -73,18 +73,6 @@ export function NotFoundPage() {
           />
         </motion.div>
 
-        {/* Glitchy 404 */}
-        <motion.div
-          className="nf-404"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <span className="nf-404-text" data-text="404">
-            404
-          </span>
-        </motion.div>
-
         <motion.h1
           className="nf-title"
           initial={{ opacity: 0, y: 20 }}
@@ -124,7 +112,7 @@ export function NotFoundPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.8 }}
         >
-          If you believe this is a temporal error, please contact ChronoStays
+          If you believe this is a temporal error, please contact Warpbnb
           support. Do not attempt to fix the timeline yourself.
         </motion.div>
       </div>
