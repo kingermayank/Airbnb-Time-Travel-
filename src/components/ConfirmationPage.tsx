@@ -777,7 +777,8 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                         <video
                           ref={(el) => { vehicleVideoRefs.current[method.id] = el; }}
                           src={method.video}
-                          preload="auto"
+                          poster={method.icon}
+                          preload="metadata"
                           playsInline
                           muted
                           onLoadedMetadata={(e) => {

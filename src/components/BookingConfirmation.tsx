@@ -95,10 +95,11 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
     }
   };
 
-  // Uniform scale so original layout/structure is preserved but fits in viewport (no scroll)
-  const s = 0.72;
+  // Responsive scale so card fits without overlapping logo; smaller on mobile to avoid scroll
+  const s = isMobile ? 0.52 : isTablet ? 0.62 : 0.72;
   const px = (n: number) => `${Math.round(n * s)}px`;
   const buttonRadiusPx = `${Math.round(9 * s) + 4}px`;
+  const topPaddingPx = Math.max(80, Math.round(80 * s));
 
   return (
     <div
@@ -109,7 +110,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         maxHeight: '100vh',
         backgroundColor: 'rgba(243, 239, 236, 1)',
         boxSizing: 'border-box',
-        overflow: 'hidden',
+        overflowX: 'hidden',
+        overflowY: 'auto',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
@@ -179,7 +181,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
 
       {topBanner}
 
-      {/* Main – original padding/gap, scaled */}
+      {/* Main – top padding clears logo; scaled card fits in viewport */}
       <main
         style={{
           flex: 1,
@@ -190,7 +192,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           justifyContent: 'center',
           alignItems: 'center',
           gap: px(112),
-          padding: `${px(80)} ${px(40)}`,
+          padding: `${topPaddingPx}px ${px(40)}`,
           width: '100%',
           maxWidth: px(1512),
           margin: '0 auto',
@@ -409,7 +411,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
         @media (max-width: 1024px) {
           .booking-confirmation main {
             gap: 48px !important;
-            padding: 40px 20px !important;
+            padding: 80px 20px 40px 20px !important;
           }
           .booking-confirmation main section:last-child {
             margin-top: 0 !important;
