@@ -2671,22 +2671,24 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   style={{
                   width: isCompactLayout ? '100%' : '400px',
                   flexShrink: 0,
-                  padding: '24px',
+                  padding: isCompactLayout ? '20px' : '24px',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '24px',
                   boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
                   display: 'flex',
-                  flexDirection: isCompactLayout ? 'column' : 'row',
+                  flexDirection: 'row',
                   alignItems: 'stretch',
                   transform: isCompactLayout || shouldReduceMotion || !supportsHover
                     ? undefined
                     : `perspective(900px) rotateX(${hostCardTilt.x}deg) rotateY(${hostCardTilt.y}deg) translateZ(0)`,
                   willChange: isCompactLayout || shouldReduceMotion || !supportsHover ? undefined : 'transform',
                 }}>
-                    {/* Left: avatar, name, Host — column width sized so 24px card padding gives equal space left/right of avatar */}
+                    {/* Left: avatar, name, Host — 65% on mobile, fixed width on desktop */}
                     <div style={{
-                      width: isCompactLayout ? '100%' : '218px',
+                      width: isCompactLayout ? undefined : '218px',
+                      flex: isCompactLayout ? 0.65 : undefined,
                       flexShrink: 0,
+                      minWidth: 0,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -2742,9 +2744,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       </span>
                     </div>
 
-                    {/* Right: Reviews, Rating, Years hosting (stacked, with dividers) */}
+                    {/* Right: Reviews, Rating, Years hosting (stacked) — 35% on mobile, fixed width on desktop */}
                     <div style={{
-                      width: isCompactLayout ? '100%' : '134px',
+                      width: isCompactLayout ? undefined : '134px',
+                      flex: isCompactLayout ? 0.35 : undefined,
                       flexShrink: 0,
                       minWidth: 0,
                       display: 'flex',
@@ -2755,10 +2758,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        paddingLeft: isCompactLayout ? '0' : '24px',
+                        paddingLeft: isCompactLayout ? '16px' : '24px',
                         paddingRight: '0',
-                        paddingTop: isCompactLayout ? '16px' : '12px',
-                        borderTop: isCompactLayout ? '1px solid #EBEBEB' : 'none',
+                        paddingTop: '12px',
+                        borderTop: 'none',
                       }}>
                         <div style={{
                           paddingBottom: '12px',
