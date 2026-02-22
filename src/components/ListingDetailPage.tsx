@@ -801,9 +801,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               position: 'relative',
               borderRadius: 0,
               overflow: 'hidden',
+              backgroundColor: '#111',
             }}
           >
-            {/* Top overlay: Back (left), Share + Save (right) */}
+            {/* Top overlay: Back (left), Share + Save (right) — safe-area so icons aren't cut off by notch/status bar */}
             <div
               style={{
                 position: 'absolute',
@@ -814,8 +815,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '12px 8px 12px 8px',
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%)',
+                paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+                paddingRight: 8,
+                paddingBottom: 12,
+                paddingLeft: 8,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)',
+                minHeight: 'max(68px, calc(env(safe-area-inset-top, 0px) + 56px))',
                 pointerEvents: 'none',
               }}
             >
@@ -886,13 +891,14 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 </button>
               </div>
             </div>
-            {/* Swipeable carousel: one viewport-width slide per image, images scale to fit (contain) so not zoomed */}
+            {/* Swipeable carousel: one viewport-width slide per image, images fill (cover) */}
             <div
               ref={mobileCarouselRef}
               role="region"
               aria-label="Listing photos"
               style={{
                 overflowX: 'auto',
+                overflowY: 'hidden',
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
                 touchAction: 'pan-x',
@@ -902,6 +908,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 maxWidth: '100vw',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
+                backgroundColor: '#111',
               }}
               className="listing-mobile-photo-carousel"
               onScroll={() => {
