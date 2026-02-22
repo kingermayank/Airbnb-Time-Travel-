@@ -1627,6 +1627,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   {sleepingArrangements.map((arr: any, idx: number) => (
                     <div key={idx} style={{
                       minWidth: '200px',
+                      maxWidth: '320px',
                       padding: '24px',
                       border: '1px solid #EBEBEB',
                       borderRadius: '12px',

@@ -157,6 +157,12 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = !!useReducedMotion();
 
+  // Cancellation deadline: 24 hours from now (user's local time)
+  const cancellationDeadlineLabel = (() => {
+    const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  })();
+
   // Match confirmation page background to listing era when confirmation view is shown
   const confirmationBgColor = listing ? getConfirmationBackgroundColor(listing.title) : 'rgba(243, 239, 236, 1)';
   useEffect(() => {
@@ -1104,7 +1110,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   letterSpacing: '-0.28px',
                   color: 'rgba(0, 0, 0, 1)'
                 }}>
-                  Cancel anytime before Feb 18 for a full refund.
+                  Cancel anytime before {cancellationDeadlineLabel} for a full refund.
                 </div>
               </div>
 

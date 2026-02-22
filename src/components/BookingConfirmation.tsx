@@ -419,6 +419,13 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           }
         }
         @media (max-width: 480px) {
+          .booking-confirmation main {
+            gap: 20px !important;
+            padding: 72px 16px 24px 16px !important;
+          }
+          .booking-confirmation main section:last-child {
+            gap: 20px !important;
+          }
           .booking-confirmation h1 {
             font-size: 32px !important;
             line-height: 38px !important;
