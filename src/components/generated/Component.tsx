@@ -27,7 +27,7 @@ import { ListingCardSkeleton } from '../ListingCardSkeleton';
 import { useIsMobile } from '../../hooks/use-mobile';
 
 // Max width for home content so cards stay narrower on large screens (e.g. 16" Mac) like on 13"
-const HOME_CONTENT_MAX_WIDTH = 1152;
+const HOME_CONTENT_MAX_WIDTH = 960;
 
 // Mock data - fallback until Supabase is populated (prices in Bitcoin)
 // Ordered according to homepage display order
