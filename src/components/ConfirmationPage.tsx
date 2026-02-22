@@ -1400,7 +1400,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   style={{
                     width: '100%',
                     padding: '14px',
-                    background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                    background: 'linear-gradient(90deg, #FF0257 0%, #FF0257 100%)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '9999px',
@@ -1419,7 +1419,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                 <div style={{ width: '100%', marginBottom: 16 }}>
                   <ParticleEffectButton
                     className="confirm-warp-particle-button"
-                    color={particleTweak.particleColor || '#E31C5F'}
+                    color={particleTweak.particleColor || '#FF0257'}
                     hidden={warpButtonHidden}
                     duration={Math.round((particleTweak.wipeDurationS ?? 3) * 1000)}
                     direction="right"
@@ -1456,7 +1456,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       style={{
                         width: '100%',
                         padding: '14px',
-                        background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                        background: 'linear-gradient(90deg, #FF0257 0%, #FF0257 100%)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '9999px',

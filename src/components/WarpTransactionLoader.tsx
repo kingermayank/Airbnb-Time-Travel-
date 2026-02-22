@@ -130,7 +130,7 @@ export function WarpTransactionLoader({
             width: 12,
             height: 12,
             borderRadius: '50%',
-            background: 'linear-gradient(90deg, #E61E4D, #D70466)',
+            background: 'linear-gradient(90deg, #FF0257, #FF0257)',
             transform: 'translate(-50%, -50%)',
             boxShadow: '0 2px 8px rgba(230, 30, 77, 0.4)',
             zIndex: 2,

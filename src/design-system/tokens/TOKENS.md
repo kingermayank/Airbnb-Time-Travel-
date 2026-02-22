@@ -9,7 +9,7 @@ Tokens are defined in `index.css` and used by foundation and pattern components.
 | `--ds-primary` | #222222 | Primary buttons, main text |
 | `--ds-primary-foreground` | #ffffff | Text on primary |
 | `--ds-secondary` | #ebebeb | Secondary buttons, hover |
-| `--ds-accent` | #ff385c | Heart icon, links, focus ring |
+| `--ds-accent` | #FF0257 | Heart icon, links, focus ring |
 | `--ds-surface` | #ffffff | Cards, badges |
 | `--ds-text-primary` | #222222 | Headings, body |
 | `--ds-text-secondary` | #717171 | Supporting text |

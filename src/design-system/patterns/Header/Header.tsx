@@ -224,7 +224,7 @@ export function Header({
           flex: 1,
         }}
       >
-        <img src={logoUrl} alt={brandName} style={{ width: 44, height: 44 }} />
+        <img src={logoUrl} alt={brandName} style={{ width: 48, height: 48 }} />
         {logoTextUrl ? (
           <img
             src={logoTextUrl}

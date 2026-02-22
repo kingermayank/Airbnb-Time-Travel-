@@ -46,15 +46,21 @@ const FAQ_ITEMS: { question: string; answer: ReactNode }[] = [
     question: 'How did you build this?',
     answer: (
       <>
-        A mix of tools, experimentation, and iteration. Figma for planning and UI design; Cursor
-        plus Claude Code for building; multiple AI models (Nano Banana Pro, Flux Schnell, Luma
-        Photon) for image generation; Supabase for backend; and various tools for motion, image
-        refinement, and layout exploration. I am planning to write a full breakdown of the process
-        on my{' '}
+        A mix of design craft and AI-assisted engineering.
+        <br />
+        <br />
+        <ul className="faq-answer-list">
+          <li>Figma for system thinking & layout</li>
+          <li>Cursor + Claude + Codex for frontend, backend logic, and architecture</li>
+          <li>Supabase for database & storage</li>
+          <li>Multiple image AI models for speculative visuals</li>
+        </ul>
+        <br />
+        Full breakdown coming soon on my{' '}
         <a href="https://nextgendesigner.substack.com/" target="_blank" rel="noreferrer" className="faq-help-link">
           newsletter
         </a>
-        . Stay tuned!
+        .
       </>
     ),
   },

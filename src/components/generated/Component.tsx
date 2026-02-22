@@ -937,14 +937,37 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
               minHeight: 400,
-              fontSize: 'var(--ds-text-16)',
-              color: 'var(--ds-text-secondary)',
+              gap: 'var(--ds-spacing-20)',
+              textAlign: 'center',
             }}
           >
-            No listings found. Add listings via the Supabase dashboard.
+            <img
+              src="/images/wood.png"
+              alt=""
+              style={{
+                width: '100%',
+                maxWidth: 107,
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: 12,
+              }}
+            />
+            <p
+              style={{
+                fontFamily: '"Figtree", sans-serif',
+                fontWeight: 400,
+                fontSize: 'var(--ds-text-16)',
+                color: 'var(--ds-text-secondary)',
+                maxWidth: 360,
+                lineHeight: 1.5,
+              }}
+            >
+              This era may be unavailable or outside safe temporal limits. Try expanding your time range.
+            </p>
           </div>
         ) : (
           <CardGrid

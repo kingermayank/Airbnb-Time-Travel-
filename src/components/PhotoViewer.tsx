@@ -305,8 +305,8 @@ export function PhotoViewer({
               <Heart
                 size={18}
                 strokeWidth={1.5}
-                fill={isLiked ? '#FF385C' : 'transparent'}
-                stroke={isLiked ? '#FF385C' : 'white'}
+                fill={isLiked ? '#FF0257' : 'transparent'}
+                stroke={isLiked ? '#FF0257' : 'white'}
                 style={{ transition: 'fill 0.28s ease, stroke 0.28s ease' }}
               />
               {!isMobile && <span>{isLiked ? 'Saved' : 'Save'}</span>}

@@ -1,10 +1,10 @@
 /* Figma 307-4788: brand name – warpbnb, same style as logo (pink/coral, semibold, lowercase) */
 .ds-header-brand-name {
   font-family: var(--ds-font-family);
-  font-size: 20px;
-  font-weight: var(--ds-font-semibold);
+  font-size: 22px;
+  font-weight: 500;
   line-height: 1.2;
-  color: #ff385c;
+  color: var(--ds-accent);
   text-transform: lowercase;
   letter-spacing: -0.01em;
 }

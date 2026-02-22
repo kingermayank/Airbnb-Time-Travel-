@@ -27,10 +27,16 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  border: 2px solid #ff385c;
+  border: 2px solid #FF0257;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.25);
   pointer-events: none;
+}
+
+/* Liked state: force pink fill/stroke so parent color:white does not override on mobile */
+.pv-save-btn.is-liked svg {
+  fill: var(--ds-accent) !important;
+  stroke: var(--ds-accent) !important;
 }
 
 .pv-save-btn.is-liked .pv-save-ripple {

@@ -111,6 +111,7 @@ export function HeaderRightSlotWithUserMenu() {
           }}
         >
           <UserMenu
+            becomeAHostImageSrc="/images/construction.png"
             onBecomeAHostClick={() => {
               handleClose();
               navigate(HOST_ONBOARDING_PATH);

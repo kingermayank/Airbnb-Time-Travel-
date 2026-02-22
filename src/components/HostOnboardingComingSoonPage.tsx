@@ -1,6 +1,6 @@
 import './HostOnboardingComingSoonPage.css';
 
-const HOST_ONBOARDING_IMAGE_SRC = '/images/image-mxg7b0UfPQISIHqmg5ckgLxvhhqNM6%201.png';
+const HOST_ONBOARDING_IMAGE_SRC = '/images/construction.png';
 
 export function HostOnboardingComingSoonPage() {
   return (
@@ -8,7 +8,7 @@ export function HostOnboardingComingSoonPage() {
       <img
         className="host-coming-soon__image"
         src={HOST_ONBOARDING_IMAGE_SRC}
-        alt="Scaffolding illustration"
+        alt="Construction - coming soon"
         loading="lazy"
       />
       <h1 className="host-coming-soon__title">

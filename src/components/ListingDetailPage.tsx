@@ -99,9 +99,9 @@ const FIGMA_NAV_ITEMS = [
 function TemporalGuardianIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" fill="#FF385C"/>
+      <circle cx="12" cy="12" r="10" fill="#FF0257"/>
       <path d="M12 6V12L16 14" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M12 2V4M12 20V22M2 12H4M20 12H22" stroke="#FF385C" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M12 2V4M12 20V22M2 12H4M20 12H22" stroke="#FF0257" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -110,7 +110,7 @@ function TemporalGuardianIcon() {
 function CrossDimensionalIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" fill="#FF385C"/>
+      <circle cx="12" cy="12" r="10" fill="#FF0257"/>
       <circle cx="8" cy="10" r="2" fill="white"/>
       <circle cx="16" cy="10" r="2" fill="white"/>
       <circle cx="12" cy="16" r="2" fill="white"/>
@@ -2436,7 +2436,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 style={{
                   width: '100%',
                   padding: '14px',
-                  background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                  background: 'linear-gradient(90deg, #FF0257 0%, #FF0257 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '9999px',
@@ -2587,7 +2587,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                           padding: '12px 14px',
                           backgroundColor: '#FAFAFA',
                           borderRadius: '10px',
-                          borderLeft: '3px solid #FF385C',
+                          borderLeft: '3px solid #FF0257',
                         }}>
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
@@ -3044,7 +3044,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   border: 'none',
                   borderRadius: 9999,
                   padding: '12px 24px',
-                  background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                  background: 'linear-gradient(90deg, #FF0257 0%, #FF0257 100%)',
                   color: '#fff',
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '15px',

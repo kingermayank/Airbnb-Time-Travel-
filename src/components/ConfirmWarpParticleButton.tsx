@@ -11,7 +11,7 @@ const DEFAULT_PARTICLE_ROWS = 6;
 const DEFAULT_WIPE_DURATION_S = 0.5;
 const DEFAULT_PARTICLE_ANIM_DURATION_S = 0.55;
 const DEFAULT_PARTICLE_MOVE_X = 120;
-const DEFAULT_PARTICLE_COLOR = '#E31C5F';
+const DEFAULT_PARTICLE_COLOR = '#FF0257';
 
 export interface ConfirmWarpParticleTweakConfig {
   particleCols: number;
@@ -123,7 +123,7 @@ export function ConfirmWarpParticleButton({
             style={{
               width: '100%',
               padding: '14px',
-              background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+              background: 'linear-gradient(90deg, #FF0257 0%, #FF0257 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '9999px',
