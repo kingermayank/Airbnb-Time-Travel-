@@ -254,3 +254,12 @@ img.broken-image-fallback {
 .listing-mobile-photo-carousel::-webkit-scrollbar {
   display: none;
 }
+
+/* Confirm and Warp: force full-width (library root and inner wrappers are inline-block) */
+.confirm-warp-particle-button,
+.confirm-warp-particle-button > div,
+.confirm-warp-particle-button > div > div {
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}

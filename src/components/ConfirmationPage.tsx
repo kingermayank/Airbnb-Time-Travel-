@@ -4,7 +4,8 @@ import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
 import { Button, IconButton, Text, Divider } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
-import { WarpTransactionLoader } from './WarpTransactionLoader';
+import ParticleEffectButton from 'react-particle-effect-button';
+import { DEFAULT_PARTICLE_TWEAK } from './ConfirmWarpParticleButton';
 import { getConfirmationBackgroundColor } from '../lib/warp-loading-messages';
 import { playSound } from '../lib/sound-effects';
 import { useDeviceType } from '../hooks/use-mobile';
@@ -150,6 +151,8 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [showWarpLoader, setShowWarpLoader] = useState(false);
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
+  const particleTweak = DEFAULT_PARTICLE_TWEAK;
+  const [warpButtonHidden, setWarpButtonHidden] = useState(false);
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = !!useReducedMotion();
@@ -420,14 +423,34 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     }
   };
 
-  const pageStateVariants = {
+  const easeSmooth = [0.22, 1, 0.36, 1] as const;
+
+  /** Form: slide up on enter; exit with quick fade + slight scale down (portal warp away) */
+  const formPageVariants = {
     hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: shouldReduceMotion ? 0.01 : 0.35, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.35, ease: easeSmooth },
     },
-    exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12, scale: 0.995 },
+    exit: shouldReduceMotion
+      ? { opacity: 0 }
+      : {
+          opacity: 0,
+          scale: 0.96,
+          transition: { duration: 0.3, ease: easeSmooth },
+        },
+  } as const;
+
+  /** Confirmed: enter with scale-up (0.98 → 1) + fade so it feels like it "lands" */
+  const confirmedPageVariants = {
+    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.35, ease: easeSmooth },
+    },
+    exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.995 },
   } as const;
 
   const stagedContainer = {
@@ -463,58 +486,10 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   return (
       <LayoutGroup id={`confirmation-flow-${listing.id}`}>
         <AnimatePresence mode="sync" initial={false}>
-        {viewState === 'warp' && (
-          <motion.div
-            key="warp"
-            variants={pageStateVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            style={{
-              width: '100%',
-              minHeight: '100vh',
-              backgroundColor: confirmationBgColor,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: '"Figtree", sans-serif',
-              padding: '40px 20px',
-              boxSizing: 'border-box',
-            }}
-          >
-            <motion.div
-              variants={stagedItem}
-              initial="hidden"
-              animate="visible"
-              style={{ textAlign: 'center', marginBottom: 40 }}
-            >
-              <div style={{
-                fontSize: 28,
-                fontWeight: 600,
-                color: 'rgba(34, 34, 34, 1)',
-                letterSpacing: '-0.5px',
-                lineHeight: '36px',
-                marginBottom: 8,
-              }}>
-                Initiating temporal transfer
-              </div>
-              <div style={{
-                fontSize: 16,
-                color: 'rgba(113, 113, 113, 1)',
-                lineHeight: '24px',
-              }}>
-                {listing.title}
-              </div>
-            </motion.div>
-            <WarpTransactionLoader listingTitle={listing.title} reducedMotion={shouldReduceMotion} />
-          </motion.div>
-        )}
-
         {viewState === 'confirmed' && (
           <motion.div
             key="confirmed"
-            variants={pageStateVariants}
+            variants={confirmedPageVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -536,7 +511,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
         {viewState === 'form' && (
           <motion.div
             key="form"
-            variants={pageStateVariants}
+            variants={formPageVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -1395,55 +1370,109 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                 </div>
               </div>
 
-              {/* Confirm and Warp Button – matches Reserve button on listing detail */}
-              <button
-                disabled={isBookingSubmitting}
-                onClick={() => {
-                  if (isBookingSubmitting) return;
-
-                  setIsBookingSubmitting(true);
-
-                  // Skip interstitial loader and go straight to confirmation.
-                  playSound('warpWhoosh', 0.3);
-                  setShowWarpLoader(false);
-                  setBookingConfirmed(true);
-
-                  const bookingData = {
-                    listing_id: listing.id,
-                    listing_title: listing.title,
-                    price_usd: pricing.usdTotal,
-                    base_fare_usd: pricing.usdBasePrice,
-                    service_fee_usd: pricing.usdServiceFee,
-                    cleaning_fee_usd: pricing.usdCleaningFee,
-                    occupancy_tax_usd: pricing.usdOccupancyTax,
-                    guest_count: guestCount,
-                  };
-
-                  // Persist booking in the background so UI transition is never blocked.
-                  void createBooking(bookingData).catch((saveError) => {
-                    console.error('Error creating booking:', saveError);
-                    setBookingSaveFailed(true);
-                  });
-
-                  setIsBookingSubmitting(false);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '9999px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
-                  fontFamily: '"Figtree", sans-serif',
-                  marginBottom: '16px',
-                  opacity: isBookingSubmitting ? 0.7 : 1,
-                }}
-              >
-                {isBookingSubmitting ? 'Processing...' : 'Confirm and Warp'}
-              </button>
+              {/* Confirm and Warp Button – Codrops-style particle burst then confirmation */}
+              {shouldReduceMotion ? (
+                <button
+                  type="button"
+                  disabled={isBookingSubmitting}
+                  onClick={() => {
+                    if (isBookingSubmitting) return;
+                    playSound('warpWhoosh', 0.3);
+                    setIsBookingSubmitting(true);
+                    setBookingConfirmed(true);
+                    setShowWarpLoader(false);
+                    setIsBookingSubmitting(false);
+                    const bookingData = {
+                      listing_id: listing.id,
+                      listing_title: listing.title,
+                      price_usd: pricing.usdTotal,
+                      base_fare_usd: pricing.usdBasePrice,
+                      service_fee_usd: pricing.usdServiceFee,
+                      cleaning_fee_usd: pricing.usdCleaningFee,
+                      occupancy_tax_usd: pricing.usdOccupancyTax,
+                      guest_count: guestCount,
+                    };
+                    void createBooking(bookingData).catch((saveError) => {
+                      console.error('Error creating booking:', saveError);
+                      setBookingSaveFailed(true);
+                    });
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
+                    fontFamily: '"Figtree", sans-serif',
+                    opacity: isBookingSubmitting ? 0.7 : 1,
+                    marginBottom: 16,
+                    textAlign: 'center',
+                  }}
+                >
+                  {isBookingSubmitting ? 'Processing...' : 'Confirm and Warp'}
+                </button>
+              ) : (
+                <div style={{ width: '100%', marginBottom: 16 }}>
+                  <ParticleEffectButton
+                    className="confirm-warp-particle-button"
+                    color={particleTweak.particleColor || '#E31C5F'}
+                    hidden={warpButtonHidden}
+                    duration={Math.round((particleTweak.wipeDurationS ?? 3) * 1000)}
+                    direction="right"
+                    type="rectangle"
+                    onComplete={() => {
+                      setBookingConfirmed(true);
+                      setShowWarpLoader(false);
+                      setIsBookingSubmitting(false);
+                      const bookingData = {
+                        listing_id: listing.id,
+                        listing_title: listing.title,
+                        price_usd: pricing.usdTotal,
+                        base_fare_usd: pricing.usdBasePrice,
+                        service_fee_usd: pricing.usdServiceFee,
+                        cleaning_fee_usd: pricing.usdCleaningFee,
+                        occupancy_tax_usd: pricing.usdOccupancyTax,
+                        guest_count: guestCount,
+                      };
+                      void createBooking(bookingData).catch((saveError) => {
+                        console.error('Error creating booking:', saveError);
+                        setBookingSaveFailed(true);
+                      });
+                    }}
+                  >
+                    <button
+                      type="button"
+                      disabled={isBookingSubmitting}
+                      onClick={() => {
+                        if (isBookingSubmitting) return;
+                        playSound('warpWhoosh', 0.3);
+                        setWarpButtonHidden(true);
+                        setIsBookingSubmitting(true);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '9999px',
+                        fontSize: '16px',
+                        fontWeight: 500,
+                        cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
+                        fontFamily: '"Figtree", sans-serif',
+                        opacity: isBookingSubmitting ? 0.7 : 1,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {isBookingSubmitting ? 'Processing...' : 'Confirm and Warp'}
+                    </button>
+                  </ParticleEffectButton>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
