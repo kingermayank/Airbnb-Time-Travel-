@@ -121,6 +121,18 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   if (w) return w;
   if (match(name, ['radio', 'shortwave'], Radio)) return { Icon: Radio, isDedicated: true };
 
+  // ── Highly specific patterns (must come before ANY generic fallbacks) ──
+  // These prevent collisions where generic patterns like "spa", "observation", "royal" etc.
+  // would incorrectly match amenities meant for different icons.
+  if (match(name, ['wardrobe', 'mahogany'], Warehouse)) return { Icon: Warehouse, isDedicated: true }; // Before Bath to avoid "spa" in "spacious"
+  if (match(name, ['hammam', 'en-suite bathroom', 'japanese toilet'], Bath)) return { Icon: Bath, isDedicated: true };
+  if (match(name, ['marine life'], Fish)) return { Icon: Fish, isDedicated: true };
+  if (match(name, ['ikran landing'], Rocket)) return { Icon: Rocket, isDedicated: true };
+  if (match(name, ['gravity jacuzzi', '1/6 gravity', 'floating blob', 'swimming pool', 'turkish bath'], Droplets)) return { Icon: Droplets, isDedicated: true };
+  if (match(name, ['hangar 18', 'hangar views'], Ban)) return { Icon: Ban, isDedicated: true };
+  if (match(name, ['night sky observation'], Moon)) return { Icon: Moon, isDedicated: true };
+  if (match(name, ['desk workspace', 'calligraphy'], PenLine)) return { Icon: PenLine, isDedicated: true };
+
   // ── New specific patterns (must come before generic fallbacks) ──
   if (match(name, ['telescope', 'stargazing', 'terraforming'], Telescope)) return { Icon: Telescope, isDedicated: true };
   if (match(name, ['wine cellar', 'wine'], Wine)) return { Icon: Wine, isDedicated: true };
@@ -185,7 +197,9 @@ export function getAmenityIcon(amenityName: string): AmenityIconResult {
   if (match(name, ['military', 'camp'], Tent)) return { Icon: Tent, isDedicated: true };
   if (match(name, ['covert', 'bookshelf entrance'], DoorClosed)) return { Icon: DoorClosed, isDedicated: true };
   if (match(name, ['training ground', 'swords', 'klingon', 'dawn training'], Swords)) return { Icon: Swords, isDedicated: true };
-  if (match(name, ['canopy', 'royal', 'crown', 'silk & gold', 'persian silk'], Crown)) return { Icon: Crown, isDedicated: true };
+  if (match(name, ['canopy bed', 'canopy', 'silk & gold', 'persian silk', 'crown'], Crown)) return { Icon: Crown, isDedicated: true };
+  // Note: "royal" removed from Crown to avoid collision with "Royal hammam bath spa"
+  // "Royal linen bed" matches Bed, "Royal wine cellar" matches Wine — both handled above
   if (match(name, ['feather', 'pillow'], Feather)) return { Icon: Feather, isDedicated: true };
   if (match(name, ['promenade deck', 'ocean-facing', 'atlantic', 'crossing', 'southampton', 'departure'], Ship)) return { Icon: Ship, isDedicated: true };
   if (match(name, ['retro', 'tv', 'crt television', 'cathode-ray'], Tv)) return { Icon: Tv, isDedicated: true };

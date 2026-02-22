@@ -13,12 +13,37 @@ export interface EraInfo {
  * Time measurement configuration
  */
 export interface TimeMeasurement {
-  type: 'full_moons' | 'harvest_seasons' | 'nile_floods' | 'solar_eclipses' | 
+  type: 'full_moons' | 'harvest_seasons' | 'nile_floods' | 'solar_eclipses' |
         'sandstorms' | 'cherry_blossoms' | 'default';
   label: string;
   conversionRate: number; // per year
   suffix: string; // e.g., "hosting", "welcoming guests", "survived", "experienced"
 }
+
+// ============================================================================
+// HARDCODED HOSTING DURATIONS — Standardized to years with select outliers
+// ============================================================================
+
+const HOSTING_DURATIONS: Record<string, { count: string; label: string }> = {
+  // Original 9 listings
+  "Shah Jahan's Marble Suite, Agra":       { count: '376',    label: 'Years hosting' },
+  'Mars Colony Pod, Olympus Mons':          { count: '5',      label: 'Years hosting' },
+  'Crystal Villa, Atlantis':                { count: '11,600', label: 'Years hosting' },
+  'First-Class Suite, RMS Titanic':         { count: '114',    label: 'Years hosting' },
+  'Resistance Safehouse Loft, Berlin':      { count: '83',     label: 'Years hosting' },
+  'Floating Mountain Bungalow, Pandora':    { count: '8',      label: 'Years hosting' },
+  'Nile Villa, Ancient Egypt':              { count: '4,676',  label: 'Years hosting' },
+  "Alexander's Campaign Tent, Persia":      { count: '2,356',  label: 'Years hosting' },
+  'Manhattan Loft, New York':               { count: '31',     label: 'Years hosting' },
+
+  // Phase 4 listings
+  'Lunar Hilton Penthouse, Moon':           { count: '67',     label: 'Years hosting' },
+  'Federation Ambassador Suite, Earth':     { count: '3',      label: 'Stardates hosting' },  // Outlier: Star Trek uses stardates
+  'Research Platform, Bermuda Triangle':    { count: '???',    label: 'Years hosting (probably)' },  // Outlier: time is broken
+  'Classified Barracks, Area 51':           { count: '[REDACTED]', label: 'Years hosting' },  // Outlier: classified
+  'Cave Dwelling, Lascaux':                 { count: '17,026', label: 'Moons hosting' },  // Outlier: Grok doesn't know what a year is
+  'Neo-Showa Capsule Pod, Parallel Tokyo':  { count: '3',      label: 'Years hosting' },
+};
 
 /**
  * Detects era category from listing date string
@@ -30,14 +55,14 @@ export function detectEraFromDate(date: string | null): EraInfo {
   }
 
   const dateLower = date.toLowerCase().trim();
-  
+
   // Check if BCE
   const isBCE = dateLower.includes('bce') || dateLower.includes('bc');
-  
+
   // Extract year number (handle formats like "c. 9600", "15,000", "1650")
   const yearMatch = date.match(/(\d{1,2}[,\d]*)/);
   let year: number | null = null;
-  
+
   if (yearMatch) {
     const yearStr = yearMatch[1].replace(/,/g, '');
     year = parseInt(yearStr, 10);
@@ -45,7 +70,7 @@ export function detectEraFromDate(date: string | null): EraInfo {
 
   // Determine era category
   let category: EraInfo['category'] = 'unknown';
-  
+
   if (year === null) {
     category = 'unknown';
   } else if (isBCE) {
@@ -76,6 +101,7 @@ export function detectEraFromDate(date: string | null): EraInfo {
 
 /**
  * Determines appropriate time measurement based on era, location, and title
+ * (Legacy — kept for backward compatibility but no longer used by main path)
  */
 export function getTimeMeasurement(
   eraInfo: EraInfo,
@@ -85,167 +111,84 @@ export function getTimeMeasurement(
   const locationLower = (location || '').toLowerCase();
   const titleLower = title.toLowerCase();
 
-  // Location-based mappings (highest priority)
-  
-  // Ancient Egypt / Nile region
-  if (locationLower.includes('egypt') || locationLower.includes('nile') || 
+  if (locationLower.includes('egypt') || locationLower.includes('nile') ||
       titleLower.includes('egypt') || titleLower.includes('nile')) {
-    return {
-      type: 'nile_floods',
-      label: 'Nile flood cycles',
-      conversionRate: 1,
-      suffix: 'hosting'
-    };
+    return { type: 'nile_floods', label: 'Nile flood cycles', conversionRate: 1, suffix: 'hosting' };
   }
 
-  // Japanese / Asian regions
-  if (locationLower.includes('tokyo') || locationLower.includes('japan') || 
+  if (locationLower.includes('tokyo') || locationLower.includes('japan') ||
       locationLower.includes('china') || titleLower.includes('tokyo') ||
       titleLower.includes('japan') || titleLower.includes('cherry')) {
-    return {
-      type: 'cherry_blossoms',
-      label: 'Cherry blossom seasons',
-      conversionRate: 1,
-      suffix: 'welcoming guests'
-    };
+    return { type: 'cherry_blossoms', label: 'Cherry blossom seasons', conversionRate: 1, suffix: 'welcoming guests' };
   }
 
-  // Desert regions
-  if (locationLower.includes('desert') || locationLower.includes('sahara') ||
-      locationLower.includes('arabia') || titleLower.includes('desert')) {
-    return {
-      type: 'sandstorms',
-      label: 'Sandstorms',
-      conversionRate: 25, // Creative: ~25 sandstorms per year
-      suffix: 'experienced'
-    };
-  }
-
-  // Space / Future / Mars / Moon
-  if (eraInfo.category === 'future' || 
-      titleLower.includes('mars') || titleLower.includes('moon') || 
+  if (eraInfo.category === 'future' ||
+      titleLower.includes('mars') || titleLower.includes('moon') ||
       titleLower.includes('space') || titleLower.includes('lunar') ||
       titleLower.includes('star trek') || titleLower.includes('federation')) {
-    return {
-      type: 'solar_eclipses',
-      label: 'Solar eclipses',
-      conversionRate: 2, // Creative: ~2 per year
-      suffix: 'survived'
-    };
+    return { type: 'solar_eclipses', label: 'Solar eclipses', conversionRate: 2, suffix: 'survived' };
   }
 
-  // Era-based mappings
-  
-  // Prehistoric / Stone Age
-  if (eraInfo.category === 'prehistoric' || 
+  if (eraInfo.category === 'prehistoric' ||
       (eraInfo.isBCE && eraInfo.year && eraInfo.year >= 10000) ||
       titleLower.includes('stone age') || titleLower.includes('cave') ||
       titleLower.includes('prehistoric')) {
-    return {
-      type: 'full_moons',
-      label: 'Full moons',
-      conversionRate: 12, // ~12 per year
-      suffix: 'hosting'
-    };
+    return { type: 'full_moons', label: 'Full moons', conversionRate: 12, suffix: 'hosting' };
   }
 
-  // Ancient periods (before 500 CE)
-  if (eraInfo.category === 'ancient' && !eraInfo.isBCE && eraInfo.year && eraInfo.year < 500) {
-    return {
-      type: 'harvest_seasons',
-      label: 'Harvest seasons',
-      conversionRate: 1,
-      suffix: 'welcoming guests'
-    };
-  }
-
-  // Medieval periods (500-1500 CE)
-  if (eraInfo.category === 'medieval' || eraInfo.category === 'renaissance') {
-    return {
-      type: 'harvest_seasons',
-      label: 'Harvest seasons',
-      conversionRate: 1,
-      suffix: 'welcoming guests'
-    };
-  }
-
-  // Modern periods (1500-2100 CE)
-  if (eraInfo.category === 'modern') {
-    return {
-      type: 'harvest_seasons',
-      label: 'Harvest seasons',
-      conversionRate: 1,
-      suffix: 'welcoming guests'
-    };
-  }
-
-  // Default fallback
-  return {
-    type: 'full_moons',
-    label: 'Full moons',
-    conversionRate: 12,
-    suffix: 'hosting'
-  };
+  // Default
+  return { type: 'harvest_seasons', label: 'Harvest seasons', conversionRate: 1, suffix: 'welcoming guests' };
 }
 
 /**
  * Converts years to era-appropriate measurement count
+ * (Legacy — kept for backward compatibility but no longer used by main path)
  */
 export function convertYearsToMeasurement(years: number, measurement: TimeMeasurement): number {
-  // Ensure minimum of 1 year
   const actualYears = Math.max(1, years);
-  
-  // Calculate count based on conversion rate
   const count = Math.round(actualYears * measurement.conversionRate);
-  
-  // Ensure minimum count of 1
   return Math.max(1, count);
 }
 
 /**
- * Formats hosting duration with era-appropriate time measurement
- * Returns an object with the count and the full text
+ * Formats hosting duration using hardcoded per-listing values.
+ * Standardized to "Years hosting" with select themed outliers:
+ * - Federation: "Stardates hosting" (Star Trek)
+ * - Cave Dwelling: "Moons hosting" (Grok doesn't know years)
+ * - Bermuda Triangle: "???" (time is broken)
+ * - Area 51: "[REDACTED]" (classified)
  */
 export function formatEraAppropriateDuration(
   joinDate: string | null,
   listing: ListingDetails
-): { count: number; text: string; fullText: string } {
-  if (!joinDate) {
-    // Default fallback
-    const defaultMeasurement: TimeMeasurement = {
-      type: 'full_moons',
-      label: 'Full moons',
-      conversionRate: 12,
-      suffix: 'hosting'
-    };
+): { count: string; text: string; fullText: string } {
+  // Look up hardcoded duration by listing title
+  const hardcoded = HOSTING_DURATIONS[listing.title];
+
+  if (hardcoded) {
     return {
-      count: 12,
-      text: `${defaultMeasurement.label} ${defaultMeasurement.suffix}`,
-      fullText: `12 ${defaultMeasurement.label} ${defaultMeasurement.suffix}`
+      count: hardcoded.count,
+      text: hardcoded.label,
+      fullText: `${hardcoded.count} ${hardcoded.label}`,
     };
   }
 
-  // Calculate years from join_date
-  const join = new Date(joinDate);
-  const now = new Date();
-  const years = Math.max(1, now.getFullYear() - join.getFullYear());
+  // Fallback for any listing not in the lookup
+  if (joinDate) {
+    const join = new Date(joinDate);
+    const now = new Date();
+    const years = Math.max(1, now.getFullYear() - join.getFullYear());
+    return {
+      count: String(years),
+      text: 'Years hosting',
+      fullText: `${years} Years hosting`,
+    };
+  }
 
-  // Detect era from listing date
-  const eraInfo = detectEraFromDate(listing.date);
-
-  // Get appropriate measurement
-  const measurement = getTimeMeasurement(
-    eraInfo,
-    listing.location_description,
-    listing.title
-  );
-
-  // Convert years to measurement count
-  const count = convertYearsToMeasurement(years, measurement);
-
-  // Format text
-  const text = `${measurement.label} ${measurement.suffix}`;
-  const fullText = `${count} ${text}`;
-
-  return { count, text, fullText };
+  // Ultimate fallback
+  return {
+    count: '1',
+    text: 'Years hosting',
+    fullText: '1 Years hosting',
+  };
 }
