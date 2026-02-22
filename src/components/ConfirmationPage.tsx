@@ -2,7 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
 import type { ListingDetails } from '../types/database';
-import { Button, IconButton, Text, Divider } from '../design-system';
+import { Button, IconButton, Text, Divider, Footer } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
 import ParticleEffectButton from 'react-particle-effect-button';
 import { DEFAULT_PARTICLE_TWEAK } from './ConfirmWarpParticleButton';
@@ -1807,6 +1807,31 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
           </div>
         </div>
       </Modal>
+          <Footer
+            copyrightText="© 2026 Warpbnb Inc."
+            links={[
+              { label: 'Built with vibes' },
+              { label: 'Help', href: '/support' },
+              { label: 'FAQ', href: '/faq' },
+              { label: 'Support', href: '/support' },
+            ]}
+            languageLabel="English (US)"
+            socialLinks={[
+              { platform: 'twitter', href: 'https://x.com/kingermayank', ariaLabel: 'Twitter' },
+              { platform: 'linkedin', href: 'https://www.linkedin.com/in/kingermayank', ariaLabel: 'LinkedIn' },
+              { platform: 'github', href: 'https://github.com/kingermayank', ariaLabel: 'GitHub' },
+            ]}
+            style={{
+              width: '100%',
+              maxWidth: 1280,
+              margin: '0 auto',
+              boxSizing: 'border-box',
+              paddingLeft: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+              paddingRight: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+              paddingTop: 'var(--ds-section-padding-y)',
+              paddingBottom: 'var(--ds-section-padding-y)',
+            }}
+          />
           </motion.div>
         )}
       </AnimatePresence>

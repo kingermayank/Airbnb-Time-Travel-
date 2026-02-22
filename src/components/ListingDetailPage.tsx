@@ -24,7 +24,7 @@ function formatTimelineAccessLabel(label: string): string {
   return `${hyphenated} timeline access`;
 }
 
-import { Header, Button } from '../design-system';
+import { Header, Button, Footer } from '../design-system';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PhotoViewer } from './PhotoViewer';
@@ -3065,6 +3065,31 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         </motion.div>
         </motion.div>
         </div>
+        <Footer
+          copyrightText="© 2026 Warpbnb Inc."
+          links={[
+            { label: 'Built with vibes' },
+            { label: 'Help', href: '/support' },
+            { label: 'FAQ', href: '/faq' },
+            { label: 'Support', href: '/support' },
+          ]}
+          languageLabel="English (US)"
+          socialLinks={[
+            { platform: 'twitter', href: 'https://x.com/kingermayank', ariaLabel: 'Twitter' },
+            { platform: 'linkedin', href: 'https://www.linkedin.com/in/kingermayank', ariaLabel: 'LinkedIn' },
+            { platform: 'github', href: 'https://github.com/kingermayank', ariaLabel: 'GitHub' },
+          ]}
+          style={{
+            width: '100%',
+            maxWidth: 1280,
+            margin: '0 auto',
+            boxSizing: 'border-box',
+            paddingLeft: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+            paddingRight: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',
+            paddingTop: 'var(--ds-section-padding-y)',
+            paddingBottom: 'var(--ds-section-padding-y)',
+          }}
+        />
       </motion.div>
     </>
   );
