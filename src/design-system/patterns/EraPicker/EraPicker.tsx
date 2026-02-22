@@ -91,7 +91,7 @@ export function EraPicker({
                 />
               </div>
               <div className="ds-era-picker__text">
-                <Text variant="h4" weight="semibold" color="primary" as="div">
+                <Text variant="h4" weight="medium" color="primary" as="div" style={{ fontWeight: 500 }}>
                   {item.title}
                 </Text>
                 <Text variant="body" color="secondary" as="div">
@@ -148,9 +148,10 @@ export function EraPicker({
             <div className="ds-era-picker__text">
               <Text
                 variant="h4"
-                weight="semibold"
+                weight="medium"
                 color="primary"
                 as="div"
+                style={{ fontWeight: 500 }}
               >
                 {item.title}
               </Text>

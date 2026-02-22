@@ -92,7 +92,6 @@
   padding-left: calc(var(--ds-spacing-20) - 8px);
   padding-right: calc(var(--ds-spacing-20) - 8px);
   text-indent: 0;
-  margin-left: 4px;
 }
 
 /* Header navigation tabs */

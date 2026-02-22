@@ -88,17 +88,15 @@ export function PhotoViewer({
     }, 280);
   }, [shouldReduceMotion]);
 
-  // Direction model:
-  // - Right arrow: left -> center, center -> right (content flows right)
-  // - Left arrow: right -> center, center -> left (content flows left)
+  // Previous = go to lower index (image 2 -> 1). Next = go to higher index (image 1 -> 2).
   const handlePrevious = useCallback(() => {
     tuneNavigationMomentum(-1);
-    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
   }, [n, tuneNavigationMomentum]);
 
   const handleNext = useCallback(() => {
     tuneNavigationMomentum(1);
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
+    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
   }, [n, tuneNavigationMomentum]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
@@ -252,7 +250,7 @@ export function PhotoViewer({
               color: 'white',
               fontSize: isMobile ? '13px' : '14px',
               fontFamily: '"Figtree", sans-serif',
-              fontWeight: 500,
+              fontWeight: 400,
               pointerEvents: 'none',
             }}
           >
@@ -448,7 +446,7 @@ export function PhotoViewer({
                 style={{
                   position: 'relative',
                   width: '100%',
-                  maxWidth: isMobile ? '100%' : '100%',
+                  maxWidth: isMobile ? 'calc(100vw - 32px)' : '100%',
                   aspectRatio: isMobile ? '4 / 5' : '16 / 9',
                   maxHeight: isMobile ? 'calc(100dvh - 190px)' : undefined,
                   overflow: 'hidden',

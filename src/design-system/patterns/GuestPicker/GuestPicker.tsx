@@ -105,7 +105,7 @@ export function GuestPicker({
           className={`ds-guest-picker__row${index === 0 ? ' ds-guest-picker__row--first' : ''}${index === categories.length - 1 ? ' ds-guest-picker__row--last' : ''}`}
         >
           <div className="ds-guest-picker__text">
-            <Text variant="h4" weight="semibold" color="primary" as="div">
+            <Text variant="h4" weight="medium" color="primary" as="div" style={{ fontWeight: 500 }}>
               {cat.label}
             </Text>
             <Text variant="body" color="secondary" as="div">

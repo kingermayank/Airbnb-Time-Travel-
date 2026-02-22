@@ -157,7 +157,7 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
       title: "Mars Colony Pod, Olympus Mons",
       main_image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
       property_type: "Space Pod",
-      guest_capacity: 4,
+      guest_capacity: 10,
       bedrooms: 2,
       beds: 2,
       baths: 1,

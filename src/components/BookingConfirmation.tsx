@@ -18,7 +18,6 @@ interface BookingConfirmationProps {
     image?: string;
   };
   onShareClick?: () => void;
-  onFeedbackClick?: () => void;
 }
 
 export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
@@ -34,10 +33,8 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   topBanner,
   sharedLayoutIds,
   onShareClick,
-  onFeedbackClick,
 }) => {
   const [isShareHovered, setIsShareHovered] = useState(false);
-  const [isFeedbackHovered, setIsFeedbackHovered] = useState(false);
   const [cardTilt, setCardTilt] = useState({ x: 0, y: 0 });
   const [confirmationImageGlare, setConfirmationImageGlare] = useState({ x: 50, y: 50, active: false });
   const shouldReduceMotion = !!useReducedMotion();
@@ -98,13 +95,10 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
     }
   };
 
-  const handleFeedback = () => {
-    onFeedbackClick?.();
-  };
-
   // Uniform scale so original layout/structure is preserved but fits in viewport (no scroll)
   const s = 0.72;
   const px = (n: number) => `${Math.round(n * s)}px`;
+  const buttonRadiusPx = `${Math.round(9 * s) + 4}px`;
 
   return (
     <div
@@ -278,7 +272,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                   margin: 0,
                   color: 'rgba(34, 34, 34, 1)',
                   fontSize: px(24),
-                  fontWeight: 600,
+                  fontWeight: 500,
                   lineHeight: px(28.8),
                 }}
               >
@@ -345,7 +339,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                 margin: 0,
                 color: 'rgba(0, 0, 0, 1)',
                 fontSize: '43px',
-                fontWeight: 600,
+                fontWeight: 500,
                 lineHeight: 1.125,
                 letterSpacing: '-0.5px',
               }}
@@ -389,7 +383,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                 backgroundColor: isShareHovered ? 'rgba(50, 50, 50, 1)' : 'rgba(30, 30, 30, 1)',
                 border: 'none',
                 boxShadow: '0px 0.75px 1.5px rgba(31, 41, 55, 0.08)',
-                borderRadius: px(9),
+                borderRadius: buttonRadiusPx,
                 transition: 'all 0.2s ease',
                 outline: 'none',
               }}
@@ -399,48 +393,12 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                 style={{
                   color: 'rgba(255, 255, 255, 1)',
                   fontSize: '17px',
-                  fontWeight: 500,
+                  fontWeight: 400,
                   lineHeight: px(24),
                   letterSpacing: '-0.2px',
                 }}
               >
                 Share
-              </span>
-            </button>
-
-            <button
-              onClick={handleFeedback}
-              onMouseEnter={() => setIsFeedbackHovered(true)}
-              onMouseLeave={() => setIsFeedbackHovered(false)}
-              style={{
-                cursor: 'pointer',
-                flex: '0 0 auto',
-                height: px(54),
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '25px 39px',
-                backgroundColor: isFeedbackHovered ? 'rgba(245, 245, 245, 1)' : 'rgba(255, 255, 255, 1)',
-                borderColor: 'rgba(0, 0, 0, 1)',
-                borderStyle: 'solid',
-                borderWidth: '1.5px',
-                boxShadow: '0px 0.75px 1.5px rgba(31, 41, 55, 0.08)',
-                borderRadius: px(9),
-                transition: 'all 0.2s ease',
-                outline: 'none',
-              }}
-              aria-label="Give feedback"
-            >
-              <span
-                style={{
-                  color: 'rgba(34, 34, 34, 1)',
-                  fontSize: '17px',
-                  fontWeight: 500,
-                  lineHeight: px(24),
-                  letterSpacing: '-0.2px',
-                }}
-              >
-                Give Feedback
               </span>
             </button>
           </div>

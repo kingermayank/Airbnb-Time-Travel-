@@ -290,7 +290,7 @@ export function ListingCard({
         />
         {isGuestFavorite && (
           <div style={badgeWrapperStyle}>
-            <Badge>Frequently revisited</Badge>
+            <Badge fontWeight={500}>Frequently revisited</Badge>
           </div>
         )}
         <button
@@ -323,6 +323,7 @@ export function ListingCard({
           weight="medium"
           color="primary"
           style={{
+            fontWeight: 500,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',

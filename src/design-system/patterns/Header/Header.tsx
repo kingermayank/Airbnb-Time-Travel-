@@ -354,15 +354,16 @@ export function Header({
                   )}
                   <Text
                     variant="body"
-                    weight={isActive ? 'medium' : 'regular'}
+                    weight="medium"
                     color={isActive ? 'primary' : 'secondary'}
-                    style={
-                      isDisabled
+                    style={{
+                      fontWeight: 500,
+                      ...(isDisabled
                         ? { color: 'var(--ds-text-muted)' }
                         : isActive
                           ? { color: 'var(--ds-navbar-active)' }
-                          : { color: 'var(--ds-text-nav-inactive)' }
-                    }
+                          : { color: 'var(--ds-text-nav-inactive)' }),
+                    }}
                   >
                     {item.label}
                   </Text>

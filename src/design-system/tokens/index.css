@@ -105,9 +105,9 @@
 
   /* Font weights */
   --ds-font-regular: 400;
-  --ds-font-medium: 500;
+  --ds-font-medium: 400;
   --ds-font-semibold: 600;
-  --ds-font-bold: 700;
+  --ds-font-bold: 600;
 
   /* ---- Radii ---- */
   --ds-radius-sm: 4px;

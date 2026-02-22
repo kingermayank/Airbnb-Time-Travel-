@@ -173,7 +173,7 @@ export function Carousel({
       <button
         type="button"
         onClick={onShowAllClick}
-        className="absolute bottom-4 right-4 z-10 rounded-lg border border-[#DDDDDD] bg-white/95 px-3.5 py-2 text-sm font-medium text-[#222] shadow-md transition hover:bg-white"
+        className="absolute bottom-4 right-4 z-10 rounded-lg border border-[#DDDDDD] bg-white/95 px-3.5 py-2 text-sm font-normal text-[#222] shadow-md transition hover:bg-white"
       >
         Show all photos
       </button>

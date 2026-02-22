@@ -60,7 +60,7 @@ const contentStyle: React.CSSProperties = {
 
 const titleStyle: React.CSSProperties = {
   fontFamily: 'var(--ds-font-family)',
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: 18,
   lineHeight: 1.33,
   letterSpacing: '-0.01em',

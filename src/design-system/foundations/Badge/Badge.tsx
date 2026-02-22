@@ -5,9 +5,13 @@ export interface BadgeProps {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  /** Font weight for the badge label (e.g. 500). */
+  fontWeight?: number;
+  /** Font weight preset (used when fontWeight is not set). */
+  weight?: 'regular' | 'medium' | 'semibold' | 'bold';
 }
 
-export function Badge({ children, className, style }: BadgeProps) {
+export function Badge({ children, className, style, fontWeight, weight = 'medium' }: BadgeProps) {
   const combinedStyle: React.CSSProperties = {
     display: 'inline-flex',
     flexDirection: 'row',
@@ -22,7 +26,12 @@ export function Badge({ children, className, style }: BadgeProps) {
   };
   return (
     <span className={className} style={combinedStyle}>
-      <Text variant="caption" color="primary">
+      <Text
+        variant="caption"
+        color="primary"
+        weight={weight}
+        style={fontWeight != null ? { fontWeight } : undefined}
+      >
         {children}
       </Text>
     </span>

@@ -313,7 +313,7 @@ export function SearchField({
             onMouseLeave={() => setHoveredSection(null)}
             aria-expanded={isActive('where')}
           >
-            <Text variant="label" color="primary">
+            <Text variant="label" color="primary" style={{ fontWeight: 500 }}>
               {where.label}
             </Text>
             <Text
@@ -340,7 +340,7 @@ export function SearchField({
             onMouseLeave={() => setHoveredSection(null)}
             aria-expanded={isActive('era')}
           >
-            <Text variant="label" color="primary">
+            <Text variant="label" color="primary" style={{ fontWeight: 500 }}>
               {era.label}
             </Text>
             <Text
@@ -372,7 +372,7 @@ export function SearchField({
               onClick={onWhoClick}
               aria-expanded={isActive('who')}
             >
-              <Text variant="label" color="primary">
+              <Text variant="label" color="primary" style={{ fontWeight: 500 }}>
                 {who.label}
               </Text>
               <Text
@@ -389,7 +389,7 @@ export function SearchField({
               onClick={onSearch}
               aria-label="Search"
             >
-              <Search size={18} strokeWidth={2} />
+              <Search size={18} strokeWidth={3} />
             </button>
           </div>
         </div>

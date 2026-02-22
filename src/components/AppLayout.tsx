@@ -4,6 +4,7 @@ import { Header } from '../design-system';
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
 import { DistortTransitionOutlet } from './DistortTransitionOutlet';
+import { useHideHeader } from '../contexts/HideHeaderContext';
 
 const APP_NAV_ITEMS = [
   { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
@@ -14,6 +15,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/';
+  const hideHeader = useHideHeader();
   const [showHomeScrollDivider, setShowHomeScrollDivider] = useState(false);
 
   useEffect(() => {
@@ -47,7 +49,8 @@ export function AppLayout() {
         backgroundColor: 'var(--ds-background)',
       }}
     >
-      <Header
+      {!hideHeader && (
+        <Header
           brandName="WarpBnB"
           navItems={APP_NAV_ITEMS}
           activeNavLabel="Time Travel"
@@ -58,7 +61,8 @@ export function AppLayout() {
           rightSlot={<HeaderRightSlotWithUserMenu />}
           showDivider={!isHome}
           showDividerOnScroll={isHome && showHomeScrollDivider}
-      />
+        />
+      )}
 
       <main
         style={{

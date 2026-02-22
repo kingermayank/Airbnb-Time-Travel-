@@ -67,7 +67,7 @@ const LISTING_DATA = {
   title: "Neo-Showa Capsule Pod in Parallel Tokyo 2087",
   main_image: null, // Will be updated after upload
   property_type: 'Retro-Future Capsule',
-  guest_capacity: 2,
+  guest_capacity: 10,
   bedrooms: 1,
   beds: 1,
   baths: 1,

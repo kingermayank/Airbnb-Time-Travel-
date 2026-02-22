@@ -66,7 +66,7 @@ export function HeaderRightSlotWithUserMenu() {
             variant="ghost"
             size="md"
             className="ds-header-become-host-btn"
-            style={{ color: 'var(--ds-navbar-active)' }}
+            style={{ color: 'var(--ds-navbar-active)', fontWeight: 500 }}
             onClick={() => navigate(HOST_ONBOARDING_PATH)}
           >
             Become a host

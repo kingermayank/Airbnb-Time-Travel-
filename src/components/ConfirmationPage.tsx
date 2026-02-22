@@ -11,6 +11,7 @@ import { useDeviceType } from '../hooks/use-mobile';
 import { Modal } from './Modal';
 import { ChevronLeft, Minus, Plus, X, Link2, Mail, MessageCircle, Linkedin, Twitter, Code2 } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
+import { useSetHideHeader } from '../contexts/HideHeaderContext';
 
 // Teleportation method options – video only from public/images/vehicles/ (paused on first frame by default; play once at 2x on select)
 const TELEPORTATION_METHODS = [
@@ -322,6 +323,12 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
+  const setHideHeader = useSetHideHeader();
+  useEffect(() => {
+    setHideHeader(!showWarpLoader && bookingConfirmed);
+    return () => setHideHeader(false);
+  }, [showWarpLoader, bookingConfirmed, setHideHeader]);
+
   if (isLoading) {
     return (
       <div style={{
@@ -352,7 +359,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
         <div style={{
           fontSize: '18px',
           fontFamily: 'var(--ds-font-family)',
-          fontWeight: 500,
+          fontWeight: 400,
           color: 'rgba(34, 34, 34, 1)',
           marginBottom: '12px'
         }}>
@@ -454,8 +461,8 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   } as const;
 
   return (
-    <LayoutGroup id={`confirmation-flow-${listing.id}`}>
-      <AnimatePresence mode="sync" initial={false}>
+      <LayoutGroup id={`confirmation-flow-${listing.id}`}>
+        <AnimatePresence mode="sync" initial={false}>
         {viewState === 'warp' && (
           <motion.div
             key="warp"
@@ -521,7 +528,6 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
               imageUrl={listing.main_image}
               onLogoClick={() => navigate('/')}
               onShareClick={() => setShowShareModal(true)}
-              onFeedbackClick={() => navigate('/support')}
               style={{ backgroundColor: confirmationBgColor }}
             />
           </motion.div>
@@ -1161,6 +1167,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1228,6 +1235,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1237,6 +1245,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1255,6 +1264,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1264,6 +1274,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1282,6 +1293,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1291,6 +1303,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   <div style={{
                     fontFamily: 'var(--ds-font-family)',
                     fontSize: '14px',
+                    fontWeight: 500,
                     lineHeight: '20px',
                     letterSpacing: '-0.28px',
                     color: 'rgba(0, 0, 0, 1)'
@@ -1318,6 +1331,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       <div style={{
                         fontFamily: 'var(--ds-font-family)',
                         fontSize: '14px',
+                        fontWeight: 500,
                         lineHeight: '20px',
                         letterSpacing: '-0.28px',
                         color: 'rgba(0, 0, 0, 1)'
@@ -1327,6 +1341,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       <div style={{
                         fontFamily: 'var(--ds-font-family)',
                         fontSize: '14px',
+                        fontWeight: 500,
                         lineHeight: '20px',
                         letterSpacing: '-0.28px',
                         color: 'rgba(0, 0, 0, 1)'
@@ -1420,7 +1435,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   border: 'none',
                   borderRadius: '9999px',
                   fontSize: '16px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: isBookingSubmitting ? 'not-allowed' : 'pointer',
                   fontFamily: '"Figtree", sans-serif',
                   marginBottom: '16px',
@@ -1434,7 +1449,340 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
         </motion.div>
       </motion.div>
 
-      {/* Share Modal */}
+      {/* Guests Selection Modal */}
+      <Modal
+        isOpen={showGuestModal}
+        onClose={() => setShowGuestModal(false)}
+      >
+        <div style={{
+          padding: 'var(--ds-spacing-24)',
+          width: '500px',
+          maxWidth: 'calc(100vw - 48px)',
+          maxHeight: '85vh',
+          overflow: 'auto',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 'var(--ds-spacing-24)',
+          }}>
+            <Text variant="h1" weight="medium">
+              Change guests
+            </Text>
+            <button
+              onClick={() => setShowGuestModal(false)}
+              aria-label="Close guest modal"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                cursor: 'pointer',
+                color: 'var(--ds-text-primary)',
+                lineHeight: 0,
+              }}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingBottom: 'var(--ds-spacing-20)',
+          }}>
+            <div>
+              <Text as="div" variant="h3" weight="medium" style={{ marginBottom: 4 }}>
+                Adults
+              </Text>
+              <Text as="div" variant="body" color="secondary">
+                Age 13+
+              </Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <IconButton
+                onClick={() => updateTempAdults(-1)}
+                ariaLabel="Decrease adults"
+                disabled={tempAdultsCount <= 1}
+                icon={<Minus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+              <Text
+                as="div"
+                variant="h3"
+                weight="medium"
+                style={{ minWidth: 24, textAlign: 'center' }}
+              >
+                {tempAdultsCount}
+              </Text>
+              <IconButton
+                onClick={() => updateTempAdults(1)}
+                ariaLabel="Increase adults"
+                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
+                icon={<Plus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+            </div>
+          </div>
+
+          <Divider orientation="horizontal" style={{ marginBottom: 'var(--ds-spacing-20)' }} />
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingBottom: 'var(--ds-spacing-24)',
+          }}>
+            <div>
+              <Text as="div" variant="h3" weight="medium" style={{ marginBottom: 4 }}>
+                Children
+              </Text>
+              <Text as="div" variant="body" color="secondary">
+                Ages 2-12
+              </Text>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <IconButton
+                onClick={() => updateTempChildren(-1)}
+                ariaLabel="Decrease children"
+                disabled={tempChildrenCount <= 0}
+                icon={<Minus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+              <Text
+                as="div"
+                variant="h3"
+                weight="medium"
+                style={{ minWidth: 24, textAlign: 'center' }}
+              >
+                {tempChildrenCount}
+              </Text>
+              <IconButton
+                onClick={() => updateTempChildren(1)}
+                ariaLabel="Increase children"
+                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
+                icon={<Plus size={18} strokeWidth={2.25} />}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '1px solid var(--ds-border-light)',
+                  backgroundColor: 'var(--ds-surface)',
+                }}
+              />
+            </div>
+          </div>
+
+          <Divider orientation="horizontal" />
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 'var(--ds-spacing-20)',
+          }}>
+            <Button
+              onClick={() => setShowGuestModal(false)}
+              variant="ghost"
+              size="lg"
+              style={{
+                paddingLeft: 0,
+                paddingRight: 0,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGuestsDone}
+              variant="primary"
+              size="lg"
+            >
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Payment Method Selection Modal */}
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+      >
+        <div style={{
+          padding: '24px',
+          width: '520px',
+          maxWidth: 'calc(100vw - 48px)',
+          maxHeight: '85vh',
+          overflow: 'auto',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '24px',
+          }}>
+            <Text as="div" variant="h1" weight="medium">
+              Payment method
+            </Text>
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              aria-label="Close payment modal"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+                cursor: 'pointer',
+                color: 'var(--ds-text-primary)',
+                lineHeight: 0,
+              }}
+            >
+              <X size={24} strokeWidth={2} />
+            </button>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            marginBottom: '16px'
+          }}>
+            {/* Show all payment methods with the first one as selected by default */}
+            {PAYMENT_METHODS.map((method, index) => {
+              const isSelected = tempSelectedPayment.id === method.id;
+              const isFirst = index === 0;
+
+              return (
+                <div key={method.id}>
+                  {!isFirst && index === 1 && (
+                    <div style={{
+                      fontFamily: 'var(--ds-font-family)',
+                      fontWeight: 400,
+                      fontSize: '16px',
+                      lineHeight: '24px',
+                      letterSpacing: '-0.32px',
+                      color: 'rgba(0, 0, 0, 1)',
+                      marginBottom: '16px'
+                    }}>
+                      Or pay with
+                    </div>
+                  )}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '0',
+                    cursor: 'pointer'
+                  }} onClick={() => setTempSelectedPayment(method)}>
+                    <div style={{
+                      display: 'flex',
+                      flex: '1 0 0',
+                      gap: '12px',
+                      alignItems: 'center'
+                    }}>
+                      <img src={method.icon} alt={method.name} style={{
+                        width: '32px',
+                        height: '32px',
+                        objectFit: 'contain',
+                        flexShrink: 0
+                      }} />
+                      <div style={{
+                        fontFamily: 'var(--ds-font-family)',
+                        fontSize: '16px',
+                        lineHeight: '24px',
+                        letterSpacing: '-0.32px',
+                        color: 'rgba(34, 34, 34, 1)'
+                      }}>
+                        {method.address}
+                      </div>
+                    </div>
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      border: '2px solid rgba(34, 34, 34, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      backgroundColor: isSelected ? 'transparent' : 'white'
+                    }}>
+                      {isSelected && (
+                        <div style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(34, 34, 34, 1)'
+                        }} />
+                      )}
+                    </div>
+                  </div>
+                  <div style={{
+                    height: '1px',
+                    width: '100%',
+                    backgroundColor: 'rgba(229, 231, 235, 1)',
+                    marginTop: '16px'
+                  }} />
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '16px'
+          }}>
+            <button
+              onClick={handlePaymentMethodDone}
+              style={{
+                backgroundColor: 'rgba(34, 34, 34, 1)',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--ds-font-family)',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                letterSpacing: '-0.32px',
+                color: 'white',
+                width: '96px',
+                textAlign: 'center'
+              }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </Modal>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Modal - outside viewState so it opens from Securing arrival window too */}
       <Modal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
@@ -1474,7 +1822,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
               style={{
                 fontFamily: '"Figtree", sans-serif',
                 fontSize: '28px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#222',
                 margin: 0,
                 lineHeight: 1.25,
@@ -1529,7 +1877,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                 style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '18px',
-                  fontWeight: 500,
+                  fontWeight: 400,
                   color: '#222',
                   lineHeight: '24px',
                   marginBottom: '4px',
@@ -1643,7 +1991,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       background: '#22c55e',
                       color: '#fff',
                       fontSize: '14px',
-                      fontWeight: 700,
+                      fontWeight: 500,
                     }}
                   >
                     ✓
@@ -1655,339 +2003,6 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
           </AnimatePresence>
         </motion.div>
       </Modal>
-
-      {/* Guests Selection Modal */}
-      <Modal
-        isOpen={showGuestModal}
-        onClose={() => setShowGuestModal(false)}
-      >
-        <div style={{
-          padding: 'var(--ds-spacing-24)',
-          width: '500px',
-          maxWidth: 'calc(100vw - 48px)',
-          maxHeight: '85vh',
-          overflow: 'auto',
-          boxSizing: 'border-box',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 'var(--ds-spacing-24)',
-          }}>
-            <Text variant="h1" weight="semibold">
-              Change guests
-            </Text>
-            <button
-              onClick={() => setShowGuestModal(false)}
-              aria-label="Close guest modal"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                margin: 0,
-                cursor: 'pointer',
-                color: 'var(--ds-text-primary)',
-                lineHeight: 0,
-              }}
-            >
-              <X size={24} strokeWidth={2} />
-            </button>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingBottom: 'var(--ds-spacing-20)',
-          }}>
-            <div>
-              <Text as="div" variant="h3" weight="semibold" style={{ marginBottom: 4 }}>
-                Adults
-              </Text>
-              <Text as="div" variant="body" color="secondary">
-                Age 13+
-              </Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <IconButton
-                onClick={() => updateTempAdults(-1)}
-                ariaLabel="Decrease adults"
-                disabled={tempAdultsCount <= 1}
-                icon={<Minus size={18} strokeWidth={2.25} />}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: '1px solid var(--ds-border-light)',
-                  backgroundColor: 'var(--ds-surface)',
-                }}
-              />
-              <Text
-                as="div"
-                variant="h3"
-                weight="medium"
-                style={{ minWidth: 24, textAlign: 'center' }}
-              >
-                {tempAdultsCount}
-              </Text>
-              <IconButton
-                onClick={() => updateTempAdults(1)}
-                ariaLabel="Increase adults"
-                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
-                icon={<Plus size={18} strokeWidth={2.25} />}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: '1px solid var(--ds-border-light)',
-                  backgroundColor: 'var(--ds-surface)',
-                }}
-              />
-            </div>
-          </div>
-
-          <Divider orientation="horizontal" style={{ marginBottom: 'var(--ds-spacing-20)' }} />
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingBottom: 'var(--ds-spacing-24)',
-          }}>
-            <div>
-              <Text as="div" variant="h3" weight="semibold" style={{ marginBottom: 4 }}>
-                Children
-              </Text>
-              <Text as="div" variant="body" color="secondary">
-                Ages 2-12
-              </Text>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <IconButton
-                onClick={() => updateTempChildren(-1)}
-                ariaLabel="Decrease children"
-                disabled={tempChildrenCount <= 0}
-                icon={<Minus size={18} strokeWidth={2.25} />}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: '1px solid var(--ds-border-light)',
-                  backgroundColor: 'var(--ds-surface)',
-                }}
-              />
-              <Text
-                as="div"
-                variant="h3"
-                weight="medium"
-                style={{ minWidth: 24, textAlign: 'center' }}
-              >
-                {tempChildrenCount}
-              </Text>
-              <IconButton
-                onClick={() => updateTempChildren(1)}
-                ariaLabel="Increase children"
-                disabled={tempAdultsCount + tempChildrenCount >= guestCapacity}
-                icon={<Plus size={18} strokeWidth={2.25} />}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  border: '1px solid var(--ds-border-light)',
-                  backgroundColor: 'var(--ds-surface)',
-                }}
-              />
-            </div>
-          </div>
-
-          <Divider orientation="horizontal" />
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginTop: 'var(--ds-spacing-20)',
-          }}>
-            <Button
-              onClick={() => setShowGuestModal(false)}
-              variant="ghost"
-              size="lg"
-              style={{
-                paddingLeft: 0,
-                paddingRight: 0,
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleGuestsDone}
-              variant="primary"
-              size="lg"
-            >
-              Save
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Payment Method Selection Modal */}
-      <Modal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-      >
-        <div style={{
-          padding: '24px',
-          width: '520px',
-          maxWidth: 'calc(100vw - 48px)',
-          maxHeight: '85vh',
-          overflow: 'auto',
-          boxSizing: 'border-box',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '16px',
-          }}>
-            <Text as="div" variant="h1" weight="semibold">
-              Payment method
-            </Text>
-            <button
-              onClick={() => setShowPaymentModal(false)}
-              aria-label="Close payment modal"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                margin: 0,
-                cursor: 'pointer',
-                color: 'var(--ds-text-primary)',
-                lineHeight: 0,
-              }}
-            >
-              <X size={24} strokeWidth={2} />
-            </button>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            marginBottom: '16px'
-          }}>
-            {/* Show all payment methods with the first one as selected by default */}
-            {PAYMENT_METHODS.map((method, index) => {
-              const isSelected = tempSelectedPayment.id === method.id;
-              const isFirst = index === 0;
-
-              return (
-                <div key={method.id}>
-                  {!isFirst && index === 1 && (
-                    <div style={{
-                      fontFamily: 'var(--ds-font-family)',
-                      fontWeight: 500,
-                      fontSize: '16px',
-                      lineHeight: '24px',
-                      letterSpacing: '-0.32px',
-                      color: 'rgba(0, 0, 0, 1)',
-                      marginBottom: '16px'
-                    }}>
-                      Or pay with
-                    </div>
-                  )}
-                  <div style={{
-                    display: 'flex',
-                    gap: '16px',
-                    alignItems: 'center',
-                    padding: '0',
-                    cursor: 'pointer'
-                  }} onClick={() => setTempSelectedPayment(method)}>
-                    <div style={{
-                      display: 'flex',
-                      flex: '1 0 0',
-                      gap: '12px',
-                      alignItems: 'center'
-                    }}>
-                      <img src={method.icon} alt={method.name} style={{
-                        width: '32px',
-                        height: '32px',
-                        objectFit: 'contain',
-                        flexShrink: 0
-                      }} />
-                      <div style={{
-                        fontFamily: 'var(--ds-font-family)',
-                        fontSize: '16px',
-                        lineHeight: '24px',
-                        letterSpacing: '-0.32px',
-                        color: 'rgba(34, 34, 34, 1)'
-                      }}>
-                        {method.address}
-                      </div>
-                    </div>
-                    <div style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      border: '2px solid rgba(34, 34, 34, 1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      backgroundColor: isSelected ? 'transparent' : 'white'
-                    }}>
-                      {isSelected && (
-                        <div style={{
-                          width: '14px',
-                          height: '14px',
-                          borderRadius: '50%',
-                          backgroundColor: 'rgba(34, 34, 34, 1)'
-                        }} />
-                      )}
-                    </div>
-                  </div>
-                  <div style={{
-                    height: '1px',
-                    width: '100%',
-                    backgroundColor: 'rgba(229, 231, 235, 1)',
-                    marginTop: '16px'
-                  }} />
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginTop: '16px'
-          }}>
-            <button
-              onClick={handlePaymentMethodDone}
-              style={{
-                backgroundColor: 'rgba(34, 34, 34, 1)',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--ds-font-family)',
-                fontWeight: 500,
-                fontSize: '16px',
-                lineHeight: '24px',
-                letterSpacing: '-0.32px',
-                color: 'white',
-                width: '96px',
-                textAlign: 'center'
-              }}
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </Modal>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </LayoutGroup>
+      </LayoutGroup>
   );
 }

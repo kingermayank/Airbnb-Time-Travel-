@@ -136,7 +136,7 @@
   font-family: var(--ds-font-family);
   font-size: var(--ds-text-14);
   line-height: var(--ds-leading-18);
-  font-weight: var(--ds-font-medium);
+  font-weight: 500;
   letter-spacing: var(--ds-letter-spacing);
   color: var(--ds-text-primary);
   margin: 0 0 var(--ds-spacing-2) 0;

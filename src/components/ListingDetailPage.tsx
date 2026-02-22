@@ -9,15 +9,20 @@ import type {
   ThingsToKnow,
 } from '../types/database';
 
-// Duration options for teleportation
-const DURATION_OPTIONS = [
+// Time window options for teleportation
+const DURATION_OPTIONS: { value: number; label: string; multiplier: number; disabled?: boolean }[] = [
+  { value: 2, label: '2 hours', multiplier: 0.5 },
   { value: 4, label: '4 hours', multiplier: 1 },
-  { value: 6, label: '6 hours', multiplier: 1.4 },
-  { value: 12, label: '12 hours', multiplier: 2.5 },
-  { value: 24, label: '24 hours', multiplier: 4 },
-  { value: 48, label: '2 days', multiplier: 7 },
+  { value: 24, label: '1 day', multiplier: 4 },
   { value: 72, label: '3 days', multiplier: 9 },
+  { value: -1, label: 'Extended timeline axis (not available)', multiplier: 0, disabled: true },
 ];
+
+function formatTimelineAccessLabel(label: string): string {
+  if (label.includes('not available')) return label;
+  const hyphenated = label.replace(/\s+/, '-').replace(/s$/, '');
+  return `${hyphenated} timeline access`;
+}
 
 import { Header, Button } from '../design-system';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/Header/header-nav-assets';
@@ -77,6 +82,7 @@ import {
   DoorOpen,
   Bed,
   ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -163,9 +169,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState(DURATION_OPTIONS[0]);
-  const [guestCount, setGuestCount] = useState(1);
+  const [adultCount, setAdultCount] = useState(1);
+  const [childrenCount, setChildrenCount] = useState(0);
+  const totalGuests = adultCount + childrenCount;
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [showDurationDropdown, setShowDurationDropdown] = useState(false);
+  const [hoveredDurationValue, setHoveredDurationValue] = useState<number | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
@@ -194,6 +203,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const durationDropdownRef = useRef<HTMLDivElement>(null);
   const bookingCardRef = useRef<HTMLDivElement>(null);
   const appliedInitialGuestCountRef = useRef(false);
+  const mobileCarouselRef = useRef<HTMLDivElement>(null);
+  const mobileCarouselScrollTimeoutRef = useRef<number | null>(null);
+  const isProgrammaticScrollRef = useRef(false);
+  const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = useReducedMotion();
@@ -225,7 +238,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
       const initial = (location.state as { guestCount: number }).guestCount;
       const cap = listing.guest_capacity ?? 10;
       const val = Math.min(cap, Math.max(1, initial));
-      setGuestCount(val);
+      setAdultCount(val);
+      setChildrenCount(0);
       appliedInitialGuestCountRef.current = true;
     }
   }, [listing, location.state]);
@@ -262,6 +276,33 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   useEffect(() => {
     setVisibleReviewCount(6);
   }, [id]);
+
+  // Reset mobile carousel to first image when listing changes
+  useEffect(() => {
+    setMobileCarouselIndex(0);
+  }, [id, listing?.id]);
+
+  // Scroll mobile carousel when index changes (e.g. after tapping chevrons)
+  useEffect(() => {
+    if (!isMobile || !mobileCarouselRef.current) return;
+    const el = mobileCarouselRef.current;
+    const w = el.offsetWidth;
+    if (w <= 0) return;
+    isProgrammaticScrollRef.current = true;
+    el.scrollTo({ left: mobileCarouselIndex * w, behavior: 'smooth' });
+    const t = window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [mobileCarouselIndex, isMobile]);
+
+  useEffect(() => {
+    return () => {
+      if (mobileCarouselScrollTimeoutRef.current != null) {
+        window.clearTimeout(mobileCarouselScrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -314,7 +355,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   };
 
   const handleReserve = () => {
-    if (!listing || guestCount < 1) return;
+    if (!listing || totalGuests < 1) return;
 
     const baseFare = listing.price_per_night * selectedDuration.multiplier;
     const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
@@ -327,7 +368,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         listing, // full listing so confirm page can render immediately without refetch
         booking: {
           duration: selectedDuration.label,
-          guests: guestCount,
+          guests: totalGuests,
           baseFare,
           serviceFee,
           cleaningFee,
@@ -358,17 +399,32 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  const changeGuestCount = useCallback((delta: number) => {
-    const minGuests = 1;
-    const maxGuests = listing?.guest_capacity || 10;
-    const nextCount = guestCount + delta;
-    if (nextCount < minGuests || nextCount > maxGuests) {
+  const maxGuests = listing?.guest_capacity || 10;
+
+  const changeAdultCount = useCallback((delta: number) => {
+    const next = adultCount + delta;
+    if (next < 1) {
       setGuestLimitNudgeTick((prev) => prev + 1);
       return;
     }
-    setGuestCount(nextCount);
+    const capped = Math.min(next, maxGuests - childrenCount);
+    if (capped !== next && delta > 0) {
+      setGuestLimitNudgeTick((prev) => prev + 1);
+    }
+    setAdultCount(capped);
     setGuestCountPulseTick((prev) => prev + 1);
-  }, [guestCount, listing]);
+  }, [adultCount, childrenCount, maxGuests]);
+
+  const changeChildrenCount = useCallback((delta: number) => {
+    const next = childrenCount + delta;
+    if (next < 0) return;
+    if (adultCount + next > maxGuests) {
+      setGuestLimitNudgeTick((prev) => prev + 1);
+      return;
+    }
+    setChildrenCount(next);
+    setGuestCountPulseTick((prev) => prev + 1);
+  }, [adultCount, childrenCount, maxGuests]);
 
   // Filter out any images that duplicate the main image so we don't
   // show the cover photo twice in the hero grid or gallery.
@@ -381,6 +437,23 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const allImages = listing
     ? [listing.main_image, ...galleryImages.map((img) => img.image_url)]
     : [];
+
+  // Sync mobile carousel index from scroll position when user finishes swiping (scrollend)
+  useEffect(() => {
+    const el = mobileCarouselRef.current;
+    if (!isMobile || !el || allImages.length === 0) return;
+    const handleScrollEnd = () => {
+      if (isProgrammaticScrollRef.current) return;
+      const w = el.offsetWidth;
+      if (w <= 0) return;
+      const index = Math.round(el.scrollLeft / w);
+      const clamped = Math.min(Math.max(0, index), allImages.length - 1);
+      setMobileCarouselIndex(clamped);
+    };
+    el.addEventListener('scrollend', handleScrollEnd);
+    return () => el.removeEventListener('scrollend', handleScrollEnd);
+  }, [isMobile, allImages.length]);
+
   const reviewCount = listing?.reviews.length ?? 0;
   const hasMoreReviews = reviewCount > visibleReviewCount;
   const reviewsToRender = listing?.reviews.slice(0, visibleReviewCount) ?? [];
@@ -601,7 +674,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           style={{
             flex: 1,
             padding: isMobile
-              ? '24px 16px 120px 16px'
+              ? '0 16px 120px 16px'
               : isTablet
                 ? '28px 20px 64px 20px'
                 : '32px 24px 64px 24px',
@@ -614,7 +687,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           initial="hidden"
           animate="visible"
         >
-        {/* Title with Share and Save buttons */}
+        {/* Title with Share and Save buttons (hidden on mobile; carousel has its own overlay) */}
+        {!isMobile && (
         <motion.div
           variants={sectionItemVariants}
           style={{
@@ -628,10 +702,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         >
           <h1 style={{
             fontFamily: '"Figtree", sans-serif',
-            fontSize: isMobile ? '26px' : isTablet ? '28px' : '30px',
+            fontSize: isTablet ? '28px' : '30px',
             fontWeight: 500,
             color: '#000000',
-            lineHeight: isMobile ? '32px' : isTablet ? '36px' : '40px',
+            lineHeight: isTablet ? '36px' : '40px',
             letterSpacing: '-0.6px',
             margin: 0,
             flex: 1,
@@ -713,6 +787,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
             </button>
           </div>
         </motion.div>
+        )}
 
         {/* Mobile: swipeable photo carousel with top bar (Back, Share, Save) */}
         {isMobile && listing && allImages.length > 0 && (
@@ -811,44 +886,147 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 </button>
               </div>
             </div>
-            {/* Swipeable carousel */}
+            {/* Swipeable carousel: one viewport-width slide per image, images scale to fit (contain) so not zoomed */}
             <div
+              ref={mobileCarouselRef}
               role="region"
               aria-label="Listing photos"
               style={{
                 overflowX: 'auto',
                 scrollSnapType: 'x mandatory',
                 WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-x',
                 display: 'flex',
                 height: 320,
+                width: '100%',
+                maxWidth: '100vw',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
               }}
               className="listing-mobile-photo-carousel"
+              onScroll={() => {
+                if (mobileCarouselScrollTimeoutRef.current != null) {
+                  window.clearTimeout(mobileCarouselScrollTimeoutRef.current);
+                }
+                mobileCarouselScrollTimeoutRef.current = window.setTimeout(() => {
+                  mobileCarouselScrollTimeoutRef.current = null;
+                  if (isProgrammaticScrollRef.current) return;
+                  const el = mobileCarouselRef.current;
+                  if (!el) return;
+                  const w = el.offsetWidth;
+                  if (w <= 0) return;
+                  const index = Math.round(el.scrollLeft / w);
+                  const clamped = Math.min(Math.max(0, index), allImages.length - 1);
+                  setMobileCarouselIndex(clamped);
+                }, 200);
+              }}
             >
               {allImages.map((url, idx) => (
                 <div
                   key={idx}
                   style={{
+                    width: '100%',
                     minWidth: '100%',
+                    maxWidth: '100%',
                     scrollSnapAlign: 'start',
                     flexShrink: 0,
                     position: 'relative',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.06)',
                   }}
                 >
                   <img
                     src={url}
                     alt={idx === 0 ? listing.title : `${listing.title} photo ${idx + 1}`}
                     style={{
-                      width: '100%',
+                      width: 'auto',
                       height: '100%',
-                      objectFit: 'cover',
+                      maxWidth: '100%',
+                      objectFit: 'contain',
                       display: 'block',
                       verticalAlign: 'middle',
                     }}
                   />
                 </div>
               ))}
+            </div>
+            {/* Left/right chevrons to navigate photos */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Previous photo"
+                  onClick={() => setMobileCarouselIndex((prev) => Math.max(0, prev - 1))}
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 40,
+                    height: 40,
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#222',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  <ChevronLeft size={24} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next photo"
+                  onClick={() => setMobileCarouselIndex((prev) => Math.min(allImages.length - 1, prev + 1))}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 40,
+                    height: 40,
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    background: 'rgba(255,255,255,0.9)',
+                    color: '#222',
+                    cursor: 'pointer',
+                    borderRadius: '50%',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  }}
+                >
+                  <ChevronRight size={24} strokeWidth={2} />
+                </button>
+              </>
+            )}
+            {/* Photo counter: e.g. "1 / 6" (above the white rounded bar) */}
+            <div
+              aria-live="polite"
+              aria-label={`Photo ${mobileCarouselIndex + 1} of ${allImages.length}`}
+              style={{
+                position: 'absolute',
+                bottom: 56,
+                right: 12,
+                zIndex: 5,
+                padding: '6px 10px',
+                borderRadius: 8,
+                background: 'rgba(0,0,0,0.5)',
+                color: '#fff',
+                fontFamily: '"Figtree", sans-serif',
+                fontSize: 13,
+                fontWeight: 400,
+              }}
+            >
+              {mobileCarouselIndex + 1} / {allImages.length}
             </div>
           </motion.div>
         )}
@@ -1095,6 +1273,25 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         </motion.div>
         )}
 
+        {/* Mobile only: white bar with rounded top corners, overlapping bottom of image */}
+        {isMobile && (
+          <div
+            style={{
+              height: 48,
+              marginTop: -48,
+              marginLeft: -16,
+              marginRight: -16,
+              width: 'calc(100% + 32px)',
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              flexShrink: 0,
+              position: 'relative',
+              zIndex: 3,
+            }}
+          />
+        )}
+
         {/* Main Content Grid */}
         <motion.div
           variants={sectionItemVariants}
@@ -1116,7 +1313,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               <h2 style={{
                 fontFamily: '"Figtree", sans-serif',
                 fontSize: '22px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#222',
                 marginBottom: '4px',
               }}>
@@ -1140,7 +1337,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   <span style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '16px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                   }}>
                     {listing.overall_rating.toFixed(1)}
@@ -1199,7 +1396,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       justifyContent: 'center',
                       color: 'white',
                       fontSize: '20px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                     }}>
                       {listing.hosts.name.charAt(0)}
                     </div>
@@ -1209,7 +1406,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   <div style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '16px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                     marginBottom: '2px',
                   }}>
@@ -1374,7 +1571,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '28px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                     margin: 0,
                     lineHeight: 1.25,
@@ -1411,7 +1608,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <h3 style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '22px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#222',
                   marginBottom: '24px',
                 }}>
@@ -1460,7 +1657,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <h3 style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '22px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#222',
                   marginBottom: '24px',
                 }}>
@@ -1571,7 +1768,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '28px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                     margin: 0,
                     lineHeight: 1.25,
@@ -1676,7 +1873,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '28px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: '#222',
                       margin: 0,
                       lineHeight: 1.25,
@@ -1733,7 +1930,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '18px',
-                        fontWeight: 500,
+                        fontWeight: 400,
                         color: '#222',
                         lineHeight: '24px',
                         marginBottom: '4px',
@@ -1850,7 +2047,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                         >
                           <Check size={14} color="#FFFFFF" strokeWidth={3} />
                         </span>
-                        <span style={{ fontSize: '14px', fontWeight: 500, lineHeight: 1.1 }}>
+                        <span style={{ fontSize: '14px', fontWeight: 400, lineHeight: 1.1 }}>
                           {shareFeedback}
                         </span>
                       </motion.div>
@@ -1895,7 +2092,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <span style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '22px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#222',
                 }}>
                   ₿{btcBase}
@@ -1905,11 +2102,11 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   fontSize: '16px',
                   color: '#222',
                 }}>
-                  {' '}/ {selectedDuration.label}
+                  {' '}/ {formatTimelineAccessLabel(selectedDuration.label)}
                 </span>
               </div>
 
-              {/* Duration Selector */}
+              {/* Time window selector — same pattern as Guest Selector */}
               <div ref={durationDropdownRef} style={{ marginBottom: '16px', position: 'relative' }}>
                 <div
                   onClick={() => setShowDurationDropdown(!showDurationDropdown)}
@@ -1923,21 +2120,24 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     alignItems: 'center',
                     transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
                     boxShadow: showDurationDropdown ? '0 0 0 3px rgba(34,34,34,0.08)' : 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                 >
                   <div>
                     <div style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '10px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: '#222',
                       textTransform: 'uppercase',
                     }}>
-                      Duration
+                      Time window
                     </div>
                     <div style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '14px',
+                      fontWeight: 500,
                       color: '#222',
                     }}>
                       {selectedDuration.label}
@@ -1963,36 +2163,51 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
                     transition={dropdownTransition}
                     style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    backgroundColor: 'white',
-                    border: '1px solid #DDDDDD',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    zIndex: 10,
-                    marginTop: '4px',
-                  }}>
-                    {DURATION_OPTIONS.map((option) => (
-                      <div
-                        key={option.value}
-                        onClick={() => {
-                          setSelectedDuration(option);
-                          setShowDurationDropdown(false);
-                        }}
-                        style={{
-                          padding: '12px 16px',
-                          cursor: 'pointer',
-                          backgroundColor: selectedDuration.value === option.value ? '#F7F7F7' : 'white',
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '14px',
-                          color: '#222',
-                        }}
-                      >
-                        {option.label}
-                      </div>
-                    ))}
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      backgroundColor: 'white',
+                      border: '1px solid #DDDDDD',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      zIndex: 10,
+                      marginTop: '4px',
+                      padding: '6px 0',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                    }}
+                    onMouseLeave={() => setHoveredDurationValue(null)}
+                  >
+                    {DURATION_OPTIONS.map((option) => {
+                      const isDisabled = option.disabled === true;
+                      const isSelected = !isDisabled && selectedDuration.value === option.value;
+                      const isHovered = !isDisabled && hoveredDurationValue === option.value;
+                      return (
+                        <div
+                          key={option.value}
+                          onClick={() => {
+                            if (isDisabled) return;
+                            setSelectedDuration(option);
+                            setShowDurationDropdown(false);
+                          }}
+                          onMouseEnter={() => !isDisabled && setHoveredDurationValue(option.value)}
+                          style={{
+                            padding: '12px 16px',
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            backgroundColor: isHovered ? '#E5E5E5' : isSelected ? '#F7F7F7' : 'white',
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: isDisabled ? '#717171' : '#222',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                          }}
+                        >
+                          {option.label}
+                        </div>
+                      );
+                    })}
                   </motion.div>
                 )}
                 </AnimatePresence>
@@ -2012,13 +2227,15 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     alignItems: 'center',
                     transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
                     boxShadow: showGuestDropdown ? '0 0 0 3px rgba(34,34,34,0.08)' : 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                 >
                   <div>
                     <div style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '10px',
-                      fontWeight: 600,
+                      fontWeight: 500,
                       color: '#222',
                       textTransform: 'uppercase',
                     }}>
@@ -2027,9 +2244,10 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     <div style={{
                       fontFamily: '"Figtree", sans-serif',
                       fontSize: '14px',
+                      fontWeight: 500,
                       color: '#222',
                     }}>
-                      {guestCount} guest{guestCount !== 1 ? 's' : ''}
+                      {totalGuests} guest{totalGuests !== 1 ? 's' : ''}
                     </div>
                   </div>
                   <motion.svg
@@ -2068,62 +2286,130 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     zIndex: 10,
                     marginTop: '4px',
-                    padding: '16px',
+                    padding: '12px 0',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
                   }}>
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      padding: '10px 16px',
                     }}>
                       <span style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '14px',
+                        fontWeight: 500,
                         color: '#222',
                       }}>
-                        Guests
+                        Adults
                       </span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); changeGuestCount(-1); }}
-                          aria-disabled={guestCount <= 1}
+                          onClick={(e) => { e.stopPropagation(); changeAdultCount(-1); }}
+                          aria-disabled={adultCount <= 1}
                           style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             border: '1px solid #B0B0B0',
                             background: 'white',
-                            cursor: guestCount <= 1 ? 'not-allowed' : 'pointer',
-                            opacity: guestCount <= 1 ? 0.5 : 1,
+                            cursor: adultCount <= 1 ? 'not-allowed' : 'pointer',
+                            opacity: adultCount <= 1 ? 0.5 : 1,
                           }}
                         >
                           -
                         </button>
                         <motion.span
-                          key={`guest-count-${guestCountPulseTick}`}
+                          key={`adult-count-${guestCountPulseTick}`}
                           animate={shouldReduceMotion ? undefined : { scale: [1, 1.14, 1] }}
                           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
                           style={{
-                          fontFamily: '"Figtree", sans-serif',
-                          fontSize: '16px',
-                          color: '#222',
-                          minWidth: '20px',
-                          textAlign: 'center',
-                        }}>
-                          {guestCount}
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '16px',
+                            color: '#222',
+                            minWidth: '20px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {adultCount}
                         </motion.span>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); changeGuestCount(1); }}
-                          aria-disabled={guestCount >= (listing.guest_capacity || 10)}
+                          onClick={(e) => { e.stopPropagation(); changeAdultCount(1); }}
+                          aria-disabled={adultCount + childrenCount >= maxGuests}
                           style={{
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
                             border: '1px solid #B0B0B0',
                             background: 'white',
-                            cursor: guestCount >= (listing.guest_capacity || 10) ? 'not-allowed' : 'pointer',
-                            opacity: guestCount >= (listing.guest_capacity || 10) ? 0.5 : 1,
+                            cursor: adultCount + childrenCount >= maxGuests ? 'not-allowed' : 'pointer',
+                            opacity: adultCount + childrenCount >= maxGuests ? 0.5 : 1,
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 16px',
+                    }}>
+                      <span style={{
+                        fontFamily: '"Figtree", sans-serif',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: '#222',
+                      }}>
+                        Children
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); changeChildrenCount(-1); }}
+                          aria-disabled={childrenCount <= 0}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            border: '1px solid #B0B0B0',
+                            background: 'white',
+                            cursor: childrenCount <= 0 ? 'not-allowed' : 'pointer',
+                            opacity: childrenCount <= 0 ? 0.5 : 1,
+                          }}
+                        >
+                          -
+                        </button>
+                        <motion.span
+                          key={`children-count-${guestCountPulseTick}`}
+                          animate={shouldReduceMotion ? undefined : { scale: [1, 1.14, 1] }}
+                          transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2 }}
+                          style={{
+                            fontFamily: '"Figtree", sans-serif',
+                            fontSize: '16px',
+                            color: '#222',
+                            minWidth: '20px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {childrenCount}
+                        </motion.span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); changeChildrenCount(1); }}
+                          aria-disabled={adultCount + childrenCount >= maxGuests}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            border: '1px solid #B0B0B0',
+                            background: 'white',
+                            cursor: adultCount + childrenCount >= maxGuests ? 'not-allowed' : 'pointer',
+                            opacity: adultCount + childrenCount >= maxGuests ? 0.5 : 1,
                           }}
                         >
                           +
@@ -2138,7 +2424,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               {/* Reserve Button */}
               <motion.button
                 onClick={handleReserve}
-                disabled={isBooking || guestCount < 1}
+                disabled={isBooking || totalGuests < 1}
                 whileHover={isBooking ? undefined : { scale: 1.01, filter: 'brightness(1.03)' }}
                 whileTap={isBooking ? undefined : { scale: 0.98 }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.14 }}
@@ -2150,7 +2436,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   border: 'none',
                   borderRadius: '9999px',
                   fontSize: '16px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: isBooking ? 'not-allowed' : 'pointer',
                   fontFamily: '"Figtree", sans-serif',
                   marginBottom: '16px',
@@ -2168,7 +2454,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 textAlign: 'center',
                 margin: 0,
               }}>
-                You won't be charged yet
+                Your return portal activates automatically
               </p>
             </motion.div>
           </div>
@@ -2195,7 +2481,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   <span style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '22px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                   }}>
                     {listing.overall_rating?.toFixed(2)} · {listing.reviews.length} reviews
@@ -2251,7 +2537,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                               backgroundColor: '#222',
                               color: 'white',
                               fontSize: '20px',
-                              fontWeight: 600,
+                              fontWeight: 500,
                             }}>
                               {review.reviewer_name.charAt(0)}
                             </div>
@@ -2301,7 +2587,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '12px',
-                            fontWeight: 500,
+                            fontWeight: 400,
                             color: '#717171',
                             marginBottom: '6px',
                           }}>
@@ -2347,7 +2633,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <h2 style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '22px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#222',
                   marginBottom: '24px',
                 }}>
@@ -2425,7 +2711,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                             justifyContent: 'center',
                             color: 'white',
                             fontSize: '32px',
-                            fontWeight: 600,
+                            fontWeight: 500,
                           }}>
                             {listing.hosts.name.charAt(0)}
                           </div>
@@ -2434,7 +2720,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       <h3 style={{
                         fontFamily: '"Figtree", sans-serif',
                         fontSize: '22px',
-                        fontWeight: 600,
+                        fontWeight: 500,
                         color: '#222',
                         marginBottom: '4px',
                         lineHeight: '28px',
@@ -2475,7 +2761,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '18px',
-                            fontWeight: 600,
+                            fontWeight: 500,
                             color: '#222',
                           }}>
                             {listing.hosts.total_reviews ?? 0}
@@ -2497,7 +2783,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                           <div style={{
                             fontFamily: '"Figtree", sans-serif',
                             fontSize: '18px',
-                            fontWeight: 600,
+                            fontWeight: 500,
                             color: '#222',
                             display: 'flex',
                             alignItems: 'center',
@@ -2527,7 +2813,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                                 <div style={{
                                   fontFamily: '"Figtree", sans-serif',
                                   fontSize: '18px',
-                                  fontWeight: 600,
+                                  fontWeight: 500,
                                   color: '#222',
                                 }}>
                                   {duration.count}
@@ -2584,7 +2870,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <h3 style={{
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '22px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: '#222',
                   marginBottom: '24px',
                 }}>
@@ -2727,12 +3013,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   style={{
                     fontFamily: '"Figtree", sans-serif',
                     fontSize: '16px',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: '#222',
                   }}
                 >
                   ₿{btcBase}
-                  <span style={{ fontWeight: 400 }}> / {selectedDuration.label}</span>
+                  <span style={{ fontWeight: 400 }}> / {formatTimelineAccessLabel(selectedDuration.label)}</span>
                 </div>
                 <div
                   style={{
@@ -2741,23 +3027,23 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     color: '#717171',
                   }}
                 >
-                  {guestCount} guest{guestCount !== 1 ? 's' : ''} · You won't be charged yet
+                  {totalGuests} guest{totalGuests !== 1 ? 's' : ''} · Your return portal activates automatically
                 </div>
               </div>
               <motion.button
                 onClick={handleReserve}
-                disabled={isBooking || guestCount < 1}
+                disabled={isBooking || totalGuests < 1}
                 whileTap={isBooking ? undefined : { scale: 0.98 }}
                 transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.12 }}
                 style={{
                   border: 'none',
                   borderRadius: 9999,
-                  padding: '12px 20px',
+                  padding: '12px 24px',
                   background: 'linear-gradient(90deg, #E61E4D 0%, #E31C5F 50%, #D70466 100%)',
                   color: '#fff',
                   fontFamily: '"Figtree", sans-serif',
                   fontSize: '15px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: isBooking ? 'not-allowed' : 'pointer',
                   opacity: isBooking ? 0.7 : 1,
                   whiteSpace: 'nowrap',

@@ -11,6 +11,7 @@ import { SupportPage } from './components/SupportPage';
 import { NotFoundPage } from './components/NotFoundPage';
 import { HostOnboardingComingSoonPage } from './components/HostOnboardingComingSoonPage';
 import { AppLayout } from './components/AppLayout';
+import { HideHeaderProvider } from './contexts/HideHeaderContext';
 
 const theme: Theme = 'light';
 // only use 'centered' container for standalone components, never for full page apps or websites.
@@ -33,18 +34,20 @@ function App() {
   }, []);
 
   const routes = (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={generatedComponent} />
-        <Route path="/listing/:id" element={<ListingDetailPage hideHeader />} />
-        <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
-        <Route path="/faq" element={<FaqPage hideHeader />} />
-        <Route path="/feedback" element={<FeedbackPage hideHeader />} />
-        <Route path="/support" element={<SupportPage hideHeader />} />
-        <Route path="/host/onboarding" element={<HostOnboardingComingSoonPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <HideHeaderProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={generatedComponent} />
+          <Route path="/listing/:id" element={<ListingDetailPage hideHeader />} />
+          <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
+          <Route path="/faq" element={<FaqPage hideHeader />} />
+          <Route path="/feedback" element={<FeedbackPage hideHeader />} />
+          <Route path="/support" element={<SupportPage hideHeader />} />
+          <Route path="/host/onboarding" element={<HostOnboardingComingSoonPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </HideHeaderProvider>
   );
 
   if (container === 'centered') {
