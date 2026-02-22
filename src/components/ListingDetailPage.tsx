@@ -935,17 +935,15 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(0,0,0,0.06)',
                   }}
                 >
                   <img
                     src={url}
                     alt={idx === 0 ? listing.title : `${listing.title} photo ${idx + 1}`}
                     style={{
-                      width: 'auto',
+                      width: '100%',
                       height: '100%',
-                      maxWidth: '100%',
-                      objectFit: 'contain',
+                      objectFit: 'cover',
                       display: 'block',
                       verticalAlign: 'middle',
                     }}
