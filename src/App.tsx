@@ -11,6 +11,7 @@ import { SupportPage } from './components/SupportPage';
 import { NotFoundPage } from './components/NotFoundPage';
 import { HostOnboardingComingSoonPage } from './components/HostOnboardingComingSoonPage';
 import { AppLayout } from './components/AppLayout';
+import { ScrollToTop } from './components/ScrollToTop';
 import { HideHeaderProvider } from './contexts/HideHeaderContext';
 
 const theme: Theme = 'light';
@@ -35,6 +36,7 @@ function App() {
 
   const routes = (
     <HideHeaderProvider>
+      <ScrollToTop />
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={generatedComponent} />
