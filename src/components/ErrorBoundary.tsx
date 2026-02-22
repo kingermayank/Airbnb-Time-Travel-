@@ -57,7 +57,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             Something went wrong
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--ds-text-secondary, #717171)', marginBottom: 24 }}>
-            {this.state.error.message}
+            {import.meta.env.DEV ? this.state.error.message : 'Please try again or refresh the page.'}
           </p>
           <button
             type="button"

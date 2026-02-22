@@ -21,14 +21,16 @@ export interface FetchListingsOptions {
  * Fetch all listings with host information for card display.
  * Optional theme/era filter; applied only when provided (e.g. when user clicks Search).
  */
+const isDev = import.meta.env.DEV;
+
 export async function fetchListings(options?: FetchListingsOptions): Promise<ListingCard[]> {
   if (!isSupabaseConfigured()) {
-    console.warn('⚠️ fetchListings: Supabase not configured');
+    if (isDev) console.warn('⚠️ fetchListings: Supabase not configured');
     // Return empty array instead of throwing - let component handle fallback
     return [];
   }
-  
-  console.log('🔄 fetchListings: Querying Supabase for listings...', options ?? {});
+
+  if (isDev) console.log('🔄 fetchListings: Querying Supabase for listings...', options ?? {});
   let query = supabase
     .from('listings')
     .select(`
@@ -64,7 +66,7 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
     throw error;
   }
 
-  console.log(`✅ fetchListings: Received ${data?.length || 0} listings from Supabase`);
+  if (isDev) console.log(`✅ fetchListings: Received ${data?.length || 0} listings from Supabase`);
 
   // Exclude removed listings so they never show even if re-inserted
   const EXCLUDED_LISTING_IDS = new Set([
@@ -141,8 +143,8 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
     return priorityA - priorityB;
   });
   
-  console.log('📋 fetchListings: Transformed listings:', sorted.map(l => ({ id: l.id, title: l.title })));
-  
+  if (isDev) console.log('📋 fetchListings: Transformed listings:', sorted.map(l => ({ id: l.id, title: l.title })));
+
   return sorted;
 }
 
@@ -262,15 +264,15 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
   if (listingId && listingId.startsWith('mock-')) {
     const mockData = getMockListingDetails(listingId);
     if (mockData) {
-      console.log('✅ Returning mock data for listing:', listingId);
+      if (isDev) console.log('✅ Returning mock data for listing:', listingId);
       return mockData;
     }
-    console.warn('⚠️ Mock listing ID provided but no mock data found:', listingId);
+    if (isDev) console.warn('⚠️ Mock listing ID provided but no mock data found:', listingId);
   }
 
   // If Supabase is not configured, try mock data as fallback for any ID
   if (!isSupabaseConfigured()) {
-    console.log('ℹ️ Supabase not configured, trying mock data for:', listingId);
+    if (isDev) console.log('ℹ️ Supabase not configured, trying mock data for:', listingId);
     const mockData = getMockListingDetails(listingId);
     if (mockData) {
       return mockData;
@@ -280,7 +282,7 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
 
   try {
     // Only try Supabase if it's configured AND it's not a mock ID
-    console.log('🔍 Fetching listing details for ID:', listingId);
+    if (isDev) console.log('🔍 Fetching listing details for ID:', listingId);
     
     // Fetch listing with host - explicitly include all fields from populate-full-listing-content.sql
     const { data: listingData, error: listingError } = await supabase
@@ -306,15 +308,17 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
     }
 
     if (!listingData) {
-      console.warn('⚠️ No listing data returned for ID:', listingId);
+      if (isDev) console.warn('⚠️ No listing data returned for ID:', listingId);
       return null;
     }
 
-    console.log('✅ Listing data fetched successfully:', listingData.title);
-    console.log('🔍 Host data structure:', {
-      hostsType: Array.isArray(listingData.hosts) ? 'array' : typeof listingData.hosts,
-      hostsValue: listingData.hosts
-    });
+    if (isDev) {
+      console.log('✅ Listing data fetched successfully:', listingData.title);
+      console.log('🔍 Host data structure:', {
+        hostsType: Array.isArray(listingData.hosts) ? 'array' : typeof listingData.hosts,
+        hostsValue: listingData.hosts
+      });
+    }
 
     // Handle hosts - Supabase might return it as an array or object
     // For foreign key relationships, it should be a single object, but let's be safe
@@ -387,13 +391,15 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       reviews: uniqueReviews,
     };
 
-    console.log('✅ Listing details assembled successfully:', {
-      title: result.title,
-      host: result.hosts?.name || 'No host',
-      imagesCount: result.listing_images.length,
-      amenitiesCount: result.amenities.length,
-      reviewsCount: result.reviews.length
-    });
+    if (isDev) {
+      console.log('✅ Listing details assembled successfully:', {
+        title: result.title,
+        host: result.hosts?.name || 'No host',
+        imagesCount: result.listing_images.length,
+        amenitiesCount: result.amenities.length,
+        reviewsCount: result.reviews.length
+      });
+    }
 
     return result;
   } catch (error) {
@@ -482,7 +488,7 @@ export async function createBooking(bookingData: {
   guest_count: number;
 }): Promise<Booking | null> {
   if (!isSupabaseConfigured()) {
-    console.warn('⚠️ createBooking: Supabase not configured');
+    if (isDev) console.warn('⚠️ createBooking: Supabase not configured');
     return null;
   }
 
@@ -508,7 +514,7 @@ export async function createBooking(bookingData: {
       throw error;
     }
 
-    console.log('✅ Booking created successfully:', data.id);
+    if (isDev) console.log('✅ Booking created successfully:', data.id);
     return data as Booking;
   } catch (error) {
     console.error('❌ Exception creating booking:', error);

@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
+import { computeBookingPricing } from '../lib/booking-pricing';
 import { formatEraAppropriateDuration } from '../lib/era-time-measurements';
 import { getHostDisplayName } from '../lib/host-display-name';
 import type {
@@ -357,23 +358,18 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const handleReserve = () => {
     if (!listing || totalGuests < 1) return;
 
-    const baseFare = listing.price_per_night * selectedDuration.multiplier;
-    const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
-    const cleaningFee = listing.cleaning_fee || 50;
-    const occupancyTax = baseFare * (listing.occupancy_tax_percent || 8) / 100;
-    const totalPrice = baseFare + serviceFee + cleaningFee + occupancyTax;
-
     navigate(`/listing/${listing.id}/confirm`, {
       state: {
         listing, // full listing so confirm page can render immediately without refetch
         booking: {
           duration: selectedDuration.label,
+          durationMultiplier: selectedDuration.multiplier,
           guests: totalGuests,
-          baseFare,
-          serviceFee,
-          cleaningFee,
-          occupancyTax,
-          totalPrice,
+          baseFareUsd: pricing.baseFareUsd,
+          serviceFeeUsd: pricing.serviceFeeUsd,
+          cleaningFeeUsd: pricing.cleaningFeeUsd,
+          occupancyTaxUsd: pricing.occupancyTaxUsd,
+          totalUsd: pricing.totalUsd,
         },
       },
     });
@@ -581,17 +577,14 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     ? JSON.parse(listing.sleeping_arrangements)
     : listing.sleeping_arrangements;
 
-  // Calculate prices
-  const baseFare = listing.price_per_night * selectedDuration.multiplier;
-  const serviceFee = baseFare * (listing.service_fee_percent || 12) / 100;
-  const cleaningFee = listing.cleaning_fee || 50;
-  const occupancyTax = baseFare * (listing.occupancy_tax_percent || 8) / 100;
-  const totalPrice = baseFare + serviceFee + cleaningFee + occupancyTax;
-
-  // Convert to Bitcoin for display
-  const btcRate = 0.000012;
-  const btcTotal = (totalPrice * btcRate).toFixed(6);
-  const btcBase = (baseFare * btcRate).toFixed(6);
+  // Shared pricing (same as confirmation page)
+  const pricing = computeBookingPricing({
+    listing,
+    durationMultiplier: selectedDuration.multiplier,
+    insuranceSelected: false,
+  });
+  const btcBase = pricing.baseBtc;
+  const btcTotal = pricing.totalBtc;
   const shareUrl = getShareUrl();
   const shareTitle = listing.title;
   const enableArea51Spotlight = /classified barracks, area 51|area 51 classified barracks/i.test(listing.title);

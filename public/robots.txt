@@ -2,5 +2,5 @@
 User-agent: *
 Allow: /
 
-# Sitemap (add your production URL when you have a sitemap)
-# Sitemap: https://your-production-url.com/sitemap.xml
+# Sitemap (update domain if different from warpbnb.com)
+Sitemap: https://warpbnb.com/sitemap.xml

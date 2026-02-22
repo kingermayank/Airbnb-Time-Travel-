@@ -26,9 +26,6 @@ import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
 import { useIsMobile } from '../../hooks/use-mobile';
 
-// Max width for home content so cards stay narrower on large screens (e.g. 16" Mac) like on 13"
-const HOME_CONTENT_MAX_WIDTH = 960;
-
 // Mock data - fallback until Supabase is populated (prices in Bitcoin)
 // Ordered according to homepage display order
 const MOCK_LISTINGS: ListingCardType[] = [
@@ -882,7 +879,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
           padding: isMobile
             ? 'var(--ds-spacing-24) var(--ds-spacing-16)'
             : 'var(--ds-spacing-40) var(--ds-spacing-80)',
-          maxWidth: HOME_CONTENT_MAX_WIDTH,
+          maxWidth: 1280,
           margin: '0 auto',
           width: '100%',
           boxSizing: 'border-box',
@@ -1007,7 +1004,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
         ]}
         style={{
           width: '100%',
-          maxWidth: HOME_CONTENT_MAX_WIDTH,
+          maxWidth: 1280,
           margin: '0 auto',
           boxSizing: 'border-box',
           paddingLeft: isMobile ? 'var(--ds-spacing-16)' : 'var(--ds-spacing-80)',

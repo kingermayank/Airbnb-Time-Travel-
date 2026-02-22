@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
+import { computeBookingPricing } from '../lib/booking-pricing';
 import type { ListingDetails } from '../types/database';
 import { Button, IconButton, Text, Divider, Footer } from '../design-system';
 import { BookingConfirmation } from './BookingConfirmation';
@@ -124,6 +125,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   const [insuranceCheckboxHovered, setInsuranceCheckboxHovered] = useState(false);
   const [adultsCount, setAdultsCount] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
+  const [durationMultiplier, setDurationMultiplier] = useState<number>(1);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [tempAdultsCount, setTempAdultsCount] = useState(1);
   const [tempChildrenCount, setTempChildrenCount] = useState(0);
@@ -202,7 +204,10 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     }
 
     const routeState = (location as {
-      state?: { listing?: ListingDetails; booking?: { guests?: number } };
+      state?: {
+        listing?: ListingDetails;
+        booking?: { guests?: number; durationMultiplier?: number };
+      };
     }).state;
     const bookingGuests = routeState?.booking?.guests;
     if (typeof bookingGuests === 'number' && bookingGuests >= 1) {
@@ -210,6 +215,10 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
       setChildrenCount(0);
       setTempAdultsCount(bookingGuests);
       setTempChildrenCount(0);
+    }
+    const bookingDurationMultiplier = routeState?.booking?.durationMultiplier;
+    if (typeof bookingDurationMultiplier === 'number' && bookingDurationMultiplier >= 0) {
+      setDurationMultiplier(bookingDurationMultiplier);
     }
 
     const stateListing = routeState?.listing;
@@ -221,53 +230,6 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
 
     fetchListingForConfirm();
   }, [id, (location as { state?: unknown }).state, fetchListingForConfirm]);
-
-  // Calculate pricing breakdown - convert to Bitcoin for display
-  const calculatePricing = () => {
-    if (!listing) return null;
-
-    const pricePerNight = listing.price_per_night || 0;
-    const nights = 1;
-    const basePrice = pricePerNight * nights;
-    
-    const weeklyDiscount = listing.weekly_discount_percent 
-      ? basePrice * (listing.weekly_discount_percent / 100)
-      : 0;
-    
-    const subtotal = basePrice - weeklyDiscount;
-    const cleaningFee = listing.cleaning_fee || 0;
-    const serviceFee = listing.service_fee_percent
-      ? subtotal * (listing.service_fee_percent / 100)
-      : 0;
-    const occupancyTax = listing.occupancy_tax_percent
-      ? subtotal * (listing.occupancy_tax_percent / 100)
-      : 0;
-    
-    // Vehicle class fee (from design: 200₿)
-    const vehicleClassFee = 200;
-    
-    // Base fare (from design: 2160₿) - using base price converted
-    const baseFare = Math.round(subtotal);
-    
-    const total = baseFare + vehicleClassFee + serviceFee;
-    const insuranceFee = insuranceSelected ? 40 : 0;
-    const finalTotal = total + insuranceFee;
-
-    return {
-      baseFare,
-      vehicleClassFee,
-      serviceFee,
-      insuranceFee,
-      total: finalTotal,
-      // Keep USD values for backend
-      usdBasePrice: basePrice,
-      usdSubtotal: subtotal,
-      usdCleaningFee: cleaningFee,
-      usdServiceFee: serviceFee,
-      usdOccupancyTax: occupancyTax,
-      usdTotal: subtotal + cleaningFee + serviceFee + occupancyTax
-    };
-  };
 
   const handlePaymentMethodChange = () => {
     setTempSelectedPayment(selectedPaymentMethod);
@@ -386,11 +348,15 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     );
   }
 
-  const pricing = calculatePricing();
-  if (!pricing) return null;
+  // Shared pricing (same as listing detail page) – only computed once we have listing
+  const pricing = computeBookingPricing({
+    listing,
+    durationMultiplier,
+    insuranceSelected,
+  });
 
   const viewState = showWarpLoader ? 'warp' : bookingConfirmed ? 'confirmed' : 'form';
-  const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.total.toLocaleString()} total`;
+  const confirmationTotal = `${selectedPaymentMethod.symbol}${pricing.totalBtc} total`;
   const eraOrDate = listing.date || '1734 CE';
   const shareUrl = getShareUrl();
   const shareTitle = listing.title;
@@ -1234,36 +1200,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   }}>
                     <AnimatedSwapText
                       shouldReduceMotion={shouldReduceMotion}
-                      value={`${pricing.baseFare}${selectedPaymentMethod.symbol}`}
-                    />
-                  </div>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--ds-font-family)',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    lineHeight: '20px',
-                    letterSpacing: '-0.28px',
-                    color: 'rgba(0, 0, 0, 1)'
-                  }}>
-                    Vehicle Class
-                  </div>
-                  <div style={{
-                    fontFamily: 'var(--ds-font-family)',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    lineHeight: '20px',
-                    letterSpacing: '-0.28px',
-                    color: 'rgba(0, 0, 0, 1)'
-                  }}>
-                    <AnimatedSwapText
-                      shouldReduceMotion={shouldReduceMotion}
-                      value={`${pricing.vehicleClassFee}${selectedPaymentMethod.symbol}`}
+                      value={`${selectedPaymentMethod.symbol}${pricing.baseBtc}`}
                     />
                   </div>
                 </div>
@@ -1292,7 +1229,65 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                   }}>
                     <AnimatedSwapText
                       shouldReduceMotion={shouldReduceMotion}
-                      value={`${pricing.serviceFee}${selectedPaymentMethod.symbol}`}
+                      value={`${selectedPaymentMethod.symbol}${pricing.serviceBtc}`}
+                    />
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--ds-font-family)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px',
+                    letterSpacing: '-0.28px',
+                    color: 'rgba(0, 0, 0, 1)'
+                  }}>
+                    Cleaning Fee
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--ds-font-family)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px',
+                    letterSpacing: '-0.28px',
+                    color: 'rgba(0, 0, 0, 1)'
+                  }}>
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={`${selectedPaymentMethod.symbol}${pricing.cleaningBtc}`}
+                    />
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{
+                    fontFamily: 'var(--ds-font-family)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px',
+                    letterSpacing: '-0.28px',
+                    color: 'rgba(0, 0, 0, 1)'
+                  }}>
+                    Occupancy Tax
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--ds-font-family)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    lineHeight: '20px',
+                    letterSpacing: '-0.28px',
+                    color: 'rgba(0, 0, 0, 1)'
+                  }}>
+                    <AnimatedSwapText
+                      shouldReduceMotion={shouldReduceMotion}
+                      value={`${selectedPaymentMethod.symbol}${pricing.occupancyTaxBtc}`}
                     />
                   </div>
                 </div>
@@ -1330,7 +1325,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       }}>
                         <AnimatedSwapText
                           shouldReduceMotion={shouldReduceMotion}
-                          value={`${pricing.insuranceFee}${selectedPaymentMethod.symbol}`}
+                          value={`${selectedPaymentMethod.symbol}${pricing.insuranceBtc}`}
                         />
                       </div>
                     </motion.div>
@@ -1372,7 +1367,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                 }}>
                   <AnimatedSwapText
                     shouldReduceMotion={shouldReduceMotion}
-                    value={`${pricing.total.toLocaleString()}${selectedPaymentMethod.symbol}`}
+                    value={`${selectedPaymentMethod.symbol}${pricing.totalBtc}`}
                   />
                 </div>
               </div>
@@ -1392,11 +1387,11 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                     const bookingData = {
                       listing_id: listing.id,
                       listing_title: listing.title,
-                      price_usd: pricing.usdTotal,
-                      base_fare_usd: pricing.usdBasePrice,
-                      service_fee_usd: pricing.usdServiceFee,
-                      cleaning_fee_usd: pricing.usdCleaningFee,
-                      occupancy_tax_usd: pricing.usdOccupancyTax,
+                      price_usd: pricing.totalUsd,
+                      base_fare_usd: pricing.baseFareUsd,
+                      service_fee_usd: pricing.serviceFeeUsd,
+                      cleaning_fee_usd: pricing.cleaningFeeUsd,
+                      occupancy_tax_usd: pricing.occupancyTaxUsd,
                       guest_count: guestCount,
                     };
                     void createBooking(bookingData).catch((saveError) => {
@@ -1438,11 +1433,11 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       const bookingData = {
                         listing_id: listing.id,
                         listing_title: listing.title,
-                        price_usd: pricing.usdTotal,
-                        base_fare_usd: pricing.usdBasePrice,
-                        service_fee_usd: pricing.usdServiceFee,
-                        cleaning_fee_usd: pricing.usdCleaningFee,
-                        occupancy_tax_usd: pricing.usdOccupancyTax,
+                        price_usd: pricing.totalUsd,
+                        base_fare_usd: pricing.baseFareUsd,
+                        service_fee_usd: pricing.serviceFeeUsd,
+                        cleaning_fee_usd: pricing.cleaningFeeUsd,
+                        occupancy_tax_usd: pricing.occupancyTaxUsd,
                         guest_count: guestCount,
                       };
                       void createBooking(bookingData).catch((saveError) => {
