@@ -1301,7 +1301,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         }}
         >
           {/* Left Column - Details */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             {/* Property Info */}
             <div style={{
               paddingBottom: '24px',
