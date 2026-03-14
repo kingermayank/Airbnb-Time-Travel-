@@ -475,6 +475,32 @@ export async function fetchListingReviews(listingId: string): Promise<Review[]> 
 }
 
 /**
+ * Get the number of confirmed bookings for a listing (for queue position on confirmation page).
+ */
+export async function getBookingCountForListing(listingId: string): Promise<number> {
+  if (!isSupabaseConfigured()) {
+    if (isDev) console.warn('⚠️ getBookingCountForListing: Supabase not configured');
+    return 0;
+  }
+
+  try {
+    const { count, error } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('listing_id', listingId);
+
+    if (error) {
+      console.error('❌ Error fetching booking count:', error);
+      return 0;
+    }
+    return typeof count === 'number' ? count : 0;
+  } catch (err) {
+    console.error('❌ Exception in getBookingCountForListing:', err);
+    return 0;
+  }
+}
+
+/**
  * Create a new booking
  */
 export async function createBooking(bookingData: {

@@ -18,6 +18,8 @@ interface BookingConfirmationProps {
     image?: string;
   };
   onShareClick?: () => void;
+  /** Queue position for this listing (e.g. "You're number 747 on the waiting list") — shown in title area when > 0 */
+  queuePosition?: number | null;
 }
 
 export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
@@ -33,6 +35,7 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   topBanner,
   sharedLayoutIds,
   onShareClick,
+  queuePosition = null,
 }) => {
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [cardTilt, setCardTilt] = useState({ x: 0, y: 0 });
@@ -348,6 +351,19 @@ export const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
             >
               Securing arrival window
             </h1>
+            <p
+              style={{
+                margin: 0,
+                color: 'rgba(30, 28, 24, 1)',
+                fontSize: '18px',
+                fontWeight: 500,
+                lineHeight: 1.2,
+              }}
+            >
+              {queuePosition != null && queuePosition > 0
+                ? `You're number ${queuePosition} on the waiting list.`
+                : 'You\'re on the waiting list.'}
+            </p>
             <p
               style={{
                 margin: 0,

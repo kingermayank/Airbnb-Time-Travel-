@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchListingDetails, createBooking } from '../lib/supabase-queries';
+import { fetchListingDetails, createBooking, getBookingCountForListing } from '../lib/supabase-queries';
 import { computeBookingPricing } from '../lib/booking-pricing';
 import type { ListingDetails } from '../types/database';
 import { Button, IconButton, Text, Divider, Footer } from '../design-system';
@@ -155,6 +155,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   const [bookingSaveFailed, setBookingSaveFailed] = useState(false);
   const particleTweak = DEFAULT_PARTICLE_TWEAK;
   const [warpButtonHidden, setWarpButtonHidden] = useState(false);
+  const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = !!useReducedMotion();
@@ -475,6 +476,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
               imageUrl={listing.main_image}
               onLogoClick={() => navigate('/')}
               onShareClick={() => setShowShareModal(true)}
+              queuePosition={queuePosition}
               style={{ backgroundColor: confirmationBgColor }}
             />
           </motion.div>
@@ -1377,13 +1379,10 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                 <button
                   type="button"
                   disabled={isBookingSubmitting}
-                  onClick={() => {
+                  onClick={async () => {
                     if (isBookingSubmitting) return;
                     playSound('warpWhoosh', 0.3);
                     setIsBookingSubmitting(true);
-                    setBookingConfirmed(true);
-                    setShowWarpLoader(false);
-                    setIsBookingSubmitting(false);
                     const bookingData = {
                       listing_id: listing.id,
                       listing_title: listing.title,
@@ -1394,10 +1393,18 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                       occupancy_tax_usd: pricing.occupancyTaxUsd,
                       guest_count: guestCount,
                     };
-                    void createBooking(bookingData).catch((saveError) => {
+                    try {
+                      await createBooking(bookingData);
+                      const count = await getBookingCountForListing(listing.id);
+                      setQueuePosition(count);
+                    } catch (saveError) {
                       console.error('Error creating booking:', saveError);
                       setBookingSaveFailed(true);
-                    });
+                    } finally {
+                      setBookingConfirmed(true);
+                      setShowWarpLoader(false);
+                      setIsBookingSubmitting(false);
+                    }
                   }}
                   style={{
                     width: '100%',
@@ -1426,10 +1433,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                     duration={Math.round((particleTweak.wipeDurationS ?? 3) * 1000)}
                     direction="right"
                     type="rectangle"
-                    onComplete={() => {
-                      setBookingConfirmed(true);
-                      setShowWarpLoader(false);
-                      setIsBookingSubmitting(false);
+                    onComplete={async () => {
                       const bookingData = {
                         listing_id: listing.id,
                         listing_title: listing.title,
@@ -1440,10 +1444,18 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
                         occupancy_tax_usd: pricing.occupancyTaxUsd,
                         guest_count: guestCount,
                       };
-                      void createBooking(bookingData).catch((saveError) => {
+                      try {
+                        await createBooking(bookingData);
+                        const count = await getBookingCountForListing(listing.id);
+                        setQueuePosition(count);
+                      } catch (saveError) {
                         console.error('Error creating booking:', saveError);
                         setBookingSaveFailed(true);
-                      });
+                      } finally {
+                        setBookingConfirmed(true);
+                        setShowWarpLoader(false);
+                        setIsBookingSubmitting(false);
+                      }
                     }}
                   >
                     <button

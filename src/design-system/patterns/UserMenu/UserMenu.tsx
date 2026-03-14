@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, CircleHelp, LifeBuoy, Circle, type LucideIcon } from 'lucide-react';
+import { MessageSquare, CircleHelp, LifeBuoy, Circle, Video, type LucideIcon } from 'lucide-react';
 import userPng from './user.png';
 import './UserMenu.css';
 
 /** Icon key for menu items. Use semantic icons per icon-design skill. */
-export type UserMenuItemIcon = 'messageSquare' | 'circleHelp' | 'lifeBuoy' | 'circle';
+export type UserMenuItemIcon = 'messageSquare' | 'circleHelp' | 'lifeBuoy' | 'video' | 'circle';
 
 export interface UserMenuItem {
   label: string;
@@ -20,6 +20,7 @@ const MENU_ICON_MAP: Record<UserMenuItemIcon, LucideIcon> = {
   messageSquare: MessageSquare,
   circleHelp: CircleHelp,
   lifeBuoy: LifeBuoy,
+  video: Video,
   circle: Circle,
 };
 
@@ -45,6 +46,7 @@ export interface UserMenuProps {
 const DEFAULT_MENU_ITEMS: UserMenuItem[] = [
   { label: 'Share & support', icon: 'lifeBuoy', to: '/support' },
   { label: 'Frequently asked questions', icon: 'circleHelp', to: '/faq' },
+  { label: 'Teaser video', icon: 'video', to: '/teaser-video' },
 ];
 
 /**

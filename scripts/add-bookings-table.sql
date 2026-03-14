@@ -1,9 +1,4 @@
--- Migration: Add bookings table for storing booking confirmations
--- This table stores listing details and pricing information for confirmed bookings
-
--- ============================================
--- TABLE: bookings
--- ============================================
+SELECT 1;
 CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
@@ -29,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 -- ============================================
 -- TRIGGER: Update updated_at timestamp
 -- ============================================
+DROP TRIGGER IF EXISTS update_bookings_updated_at ON bookings;
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -37,10 +33,12 @@ CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
 -- ============================================
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access on bookings" ON bookings;
 -- Allow public read access (SELECT) for bookings
 CREATE POLICY "Allow public read access on bookings" ON bookings
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow public write access on bookings" ON bookings;
 -- Allow public write access (INSERT, UPDATE, DELETE) for bookings
 CREATE POLICY "Allow public write access on bookings" ON bookings
   FOR ALL USING (true);
