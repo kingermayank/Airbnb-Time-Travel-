@@ -3,21 +3,25 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+const isDev = import.meta.env.DEV;
+
 // Helper to check if Supabase is configured
 export function isSupabaseConfigured(): boolean {
   const configured = !!(supabaseUrl && supabaseAnonKey && supabaseUrl.trim() !== '' && supabaseAnonKey.trim() !== '');
-  if (!configured) {
-    console.warn('⚠️ Supabase not configured:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseAnonKey,
-      urlValue: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'missing',
-      keyValue: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'missing'
-    });
-  } else {
-    console.log('✅ Supabase configured:', {
-      url: supabaseUrl?.substring(0, 30) + '...',
-      keyPresent: !!supabaseAnonKey
-    });
+  if (isDev) {
+    if (!configured) {
+      console.warn('⚠️ Supabase not configured:', {
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseAnonKey,
+        urlValue: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'missing',
+        keyValue: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'missing'
+      });
+    } else {
+      console.log('✅ Supabase configured:', {
+        url: supabaseUrl?.substring(0, 30) + '...',
+        keyPresent: !!supabaseAnonKey
+      });
+    }
   }
   return configured;
 }
@@ -33,7 +37,7 @@ try {
     supabaseInstance = createClient('https://placeholder.supabase.co', 'placeholder-key');
   }
 } catch (error) {
-  console.warn('Failed to initialize Supabase client:', error);
+  if (isDev) console.warn('Failed to initialize Supabase client:', error);
   // Create a dummy client as fallback
   supabaseInstance = createClient('https://placeholder.supabase.co', 'placeholder-key');
 }

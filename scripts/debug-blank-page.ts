@@ -17,10 +17,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const PHASE4_LISTING_IDS = [
-  'a1b2c3d4-e5f6-7890-abcd-111111111111',
-  'a1b2c3d4-e5f6-7890-abcd-222222222222',
   'a1b2c3d4-e5f6-7890-abcd-333333333333',
-  'a1b2c3d4-e5f6-7890-abcd-444444444444',
   'a1b2c3d4-e5f6-7890-abcd-555555555555',
   'a1b2c3d4-e5f6-7890-abcd-666666666666',
   'a1b2c3d4-e5f6-7890-abcd-777777777777',
@@ -47,12 +44,6 @@ Listing ID: ${id}`);
     }
 
     console.log(`  Title: ${listing.title}`);
-    if (id === 'a1b2c3d4-e5f6-7890-abcd-111111111111') {
-      console.log(`  Full JSON for listing ${id}:`);
-      // Fetch reviews separately to match fetchListingDetails logic
-      const { data: reviews } = await supabase.from('reviews').select('*').eq('listing_id', id);
-      console.log(JSON.stringify({ ...listing, reviews }, null, 2));
-    }
     console.log(`  Host: ${listing.hosts?.name || 'NULL'}`);
     if (listing.hosts) {
       console.log(`  Host house_rules_quirks type: ${typeof listing.hosts.house_rules_quirks} (Array? ${Array.isArray(listing.hosts.house_rules_quirks)})`);

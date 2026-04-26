@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
 @import './design-system/tokens/index.css';
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 @plugin "tailwindcss-animate";
 
@@ -62,6 +63,9 @@ body {
 }
 
 :root {
+  --clr-bg: #020617;
+  --clr-text: #fff;
+  --clr-primary: #fff;
   --radius: 0.625rem;
   --background: oklch(1.0000 0.0000 0);
   --foreground: oklch(0.145 0 0);
@@ -155,6 +159,21 @@ body {
     padding: 0;
     overscroll-behavior-x: none;
   }
+  /* Global button scale-down effect for better responsiveness */
+  button:not(:disabled) {
+    transition: transform 0.1s ease;
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:not(:disabled) {
+      transition: none;
+    }
+    button:active:not(:disabled) {
+      transform: none;
+    }
+  }
 }
 
 /* Broken Image Fallback Styles */
@@ -173,12 +192,27 @@ img.broken-image-fallback {
   border-color: #374151;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  img.broken-image-fallback {
+    animation: none;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
@@ -214,4 +248,18 @@ img.broken-image-fallback {
   --spacing-112: 112px;
   --spacing-128: 128px;
 
+}
+
+/* Hide scrollbar on mobile listing photo carousel (swipeable) */
+.listing-mobile-photo-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Confirm and Warp: force full-width (library root and inner wrappers are inline-block) */
+.confirm-warp-particle-button,
+.confirm-warp-particle-button > div,
+.confirm-warp-particle-button > div > div {
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }

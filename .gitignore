@@ -24,3 +24,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Listing images - stored in Supabase, not in git
+images/listing_images/

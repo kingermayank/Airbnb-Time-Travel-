@@ -29,24 +29,9 @@ const MODEL = "black-forest-labs/flux-schnell";
 
 const LISTING_DATA = [
   {
-    id: 'a1b2c3d4-e5f6-7890-abcd-111111111111',
-    name: 'Miami Underwater 2089',
-    base_prompt: 'Ultra-hyper-realistic Airbnb photography of a luxury underwater apartment in submerged Miami, 2089. Professional architectural photography, wide angle, natural lighting through water, cinematic, detailed textures. High-end interior design with bioluminescent accents. Schools of tropical fish visible through floor-to-ceiling reinforced glass walls. Submerged Art Deco architecture.',
-  },
-  {
-    id: 'a1b2c3d4-e5f6-7890-abcd-222222222222',
-    name: 'Amazon Biodome 2203',
-    base_prompt: 'Ultra-hyper-realistic Airbnb photography of a sustainable luxury cabin inside a massive Amazon rainforest biodome, 2203. Lush tropical vegetation, high-tech glass dome structure, warm humid atmosphere, professional architectural photography. Natural jungle sunlight filtering through leaves. Modern eco-minimalist furniture.',
-  },
-  {
     id: 'a1b2c3d4-e5f6-7890-abcd-333333333333',
     name: 'Lunar Hilton Penthouse',
     base_prompt: 'Ultra-hyper-realistic Airbnb photography of a luxury penthouse suite on the Moon, 2156. Sleek futuristic interior, large observation window with a stunning view of the Earth in the black starry sky. Professional architectural photography, soft ambient lighting, high-end materials like brushed aluminum and white leather. 1/6 gravity aesthetic.',
-  },
-  {
-    id: 'a1b2c3d4-e5f6-7890-abcd-444444444444',
-    name: 'Floating City Apartment',
-    base_prompt: 'Ultra-hyper-realistic Airbnb photography of a modern apartment in a floating city on the Pacific Ocean, 2178. Sleek maritime-inspired interior, large windows showing the city of platforms and boats, turquoise ocean water, professional architectural photography. Bright natural sunlight, breezy feel, high-tech modular furniture.',
   },
   {
     id: 'a1b2c3d4-e5f6-7890-abcd-555555555555',
@@ -80,10 +65,7 @@ const IMAGE_TYPES = [
 ];
 
 const HOST_DATA = [
-  { id: 'b1c2d3e4-f5a6-7890-bcde-111111111111', name: 'Captain Rosa Delgado', prompt: 'Professional headshot portrait of a confident Latina woman in her 50s, former real estate agent turned submarine captain, weathered but warm face, wearing a nautical captain\'s jacket, underwater habitat background, realistic photograph.' },
-  { id: 'b1c2d3e4-f5a6-7890-bcde-222222222222', name: 'GAIA-12', prompt: 'Artistic representation of an AI conservation system, glowing green holographic female face emerging from a tree trunk, bioluminescent particles, rainforest background, ethereal lighting, digital art.' },
   { id: 'b1c2d3e4-f5a6-7890-bcde-333333333333', name: 'Charlotte Hilton-Musk VIII', prompt: 'Professional headshot portrait of an extremely wealthy young woman in her 30s, platinum blonde hair, designer space-age outfit, moon surface visible through window, luxury lunar hotel setting, realistic photograph.' },
-  { id: 'b1c2d3e4-f5a6-7890-bcde-444444444444', name: 'Kai Nakamura-Chen', prompt: 'Professional headshot portrait of a friendly mixed-race Asian man in his 40s, wearing a practical waterproof jacket, warm smile, floating city and ocean background, natural lighting, realistic photograph.' },
   { id: 'b1c2d3e4-f5a6-7890-bcde-555555555555', name: 'Admiral Chen\'s Hologram', prompt: 'Professional headshot portrait of a distinguished Asian man in his 60s as a blue shimmering hologram, wearing Starfleet admiral uniform, starship interior background, soft lighting, digital art.' },
   { id: 'b1c2d3e4-f5a6-7890-bcde-666666666666', name: '[Signal Lost]', prompt: 'Mysterious corrupted vintage photograph, human silhouette standing on research platform at sea, heavy static and image fragmentation, eerie green glow, intentionally corrupted image effect.' },
   { id: 'b1c2d3e4-f5a6-7890-bcde-777777777777', name: '[REDACTED]', prompt: 'Deliberately obscured portrait photograph, figure in dark suit with face blacked out by censorship bar, Area 51 desert background, 1962 grainy black and white photograph style.' },

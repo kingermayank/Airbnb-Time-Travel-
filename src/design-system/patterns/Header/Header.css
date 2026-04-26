@@ -1,10 +1,10 @@
 /* Figma 307-4788: brand name – warpbnb, same style as logo (pink/coral, semibold, lowercase) */
 .ds-header-brand-name {
   font-family: var(--ds-font-family);
-  font-size: 20px;
-  font-weight: var(--ds-font-semibold);
+  font-size: 22px;
+  font-weight: 500;
   line-height: 1.2;
-  color: #ff385c;
+  color: var(--ds-accent);
   text-transform: lowercase;
   letter-spacing: -0.01em;
 }
@@ -12,6 +12,7 @@
 
 /* Coming soon pill – Figma: radial gradient #354668 → #657E9B, corner radius 16 16 16 6 */
 .ds-header-coming-soon-badge {
+  --ds-coming-soon-scale: 1;
   position: absolute;
   background: radial-gradient(circle, #354668 50%, #657E9B 100%);
   color: #ffffff;
@@ -24,6 +25,28 @@
   white-space: nowrap;
   text-transform: uppercase;
   box-shadow: var(--ds-header-coming-soon-glow);
+  opacity: 0.45;
+  transform: scale(var(--ds-coming-soon-scale));
+  transition: opacity 0.32s cubic-bezier(0.33, 1, 0.68, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ds-header-coming-soon-badge--jiggle {
+  animation: ds-header-coming-soon-jiggle 280ms ease-in-out;
+}
+.ds-header-coming-soon-badge--expanded {
+  --ds-coming-soon-scale: 1.1;
+}
+@keyframes ds-header-coming-soon-jiggle {
+  0% { transform: translateX(0) scale(var(--ds-coming-soon-scale)); }
+  20% { transform: translateX(-2px) rotate(-2deg) scale(var(--ds-coming-soon-scale)); }
+  40% { transform: translateX(2px) rotate(2deg) scale(var(--ds-coming-soon-scale)); }
+  60% { transform: translateX(-1px) rotate(-1deg) scale(var(--ds-coming-soon-scale)); }
+  80% { transform: translateX(1px) rotate(1deg) scale(var(--ds-coming-soon-scale)); }
+  100% { transform: translateX(0) rotate(0deg) scale(var(--ds-coming-soon-scale)); }
+}
+@media (hover: hover) {
+  .ds-header-nav-tab[aria-disabled='true']:hover .ds-header-coming-soon-badge {
+    opacity: 1;
+  }
 }
 
 /* Position: on top of the label, 10px to the left */
@@ -33,10 +56,12 @@
   margin-bottom: 4px;
 }
 
-/* Right-side icon buttons: filled grey, no border (Figma 307-4788) */
+/* Right-side icon buttons: filled grey, no border (Figma 307-4788). Min 44px tap target (a11y). */
 .ds-header-right-icon-btn {
-  width: 40px;
-  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -45,8 +70,39 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
 }
-.ds-header-right-icon-btn:hover {
-  background: #ebebeb;
+@media (hover: hover) {
+  .ds-header-right-icon-btn:hover {
+    background: #ebebeb;
+  }
+}
+.ds-header-right-icon-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .ds-header-become-host-btn.ds-button--ghost:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 999px var(--ds-surface-icon-button);
+    color: var(--ds-navbar-active);
+  }
+}
+
+.ds-header-become-host-btn.ds-button--ghost {
+  padding-left: calc(var(--ds-spacing-20) - 8px);
+  padding-right: calc(var(--ds-spacing-20) - 8px);
+  text-indent: 0;
+}
+
+/* Header navigation tabs */
+.ds-header-nav-tab {
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+.ds-header-nav-tab:active {
+  transform: none !important;
+}
+
+/* Divider below header (variant: showDivider), e.g. Listing Details page */
+.ds-header-divider {
+  flex-shrink: 0;
 }

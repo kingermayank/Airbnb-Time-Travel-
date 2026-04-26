@@ -1,0 +1,83 @@
+/* ---- EraPicker ---- */
+
+.ds-era-picker {
+  width: 420px;
+  background: var(--ds-surface);
+  border-radius: var(--ds-radius-xl);
+  padding: var(--ds-spacing-16) var(--ds-spacing-8);
+  box-shadow: var(--ds-shadow-card);
+}
+
+/* ---- Row (clickable) ---- */
+
+.ds-era-picker__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-16);
+  padding: var(--ds-spacing-8) var(--ds-spacing-16);
+  margin: var(--ds-spacing-4) 0;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 14px;
+  transition: background var(--ds-motion-duration-sm) var(--ds-motion-ease-out);
+}
+
+.ds-era-picker__row:hover {
+  background: #F4F4F4;
+}
+
+.ds-era-picker__row:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: -2px;
+}
+
+.ds-era-picker__row--selected {
+  background: #F4F4F4;
+}
+
+/* ---- Image ---- */
+
+.ds-era-picker__image-wrapper {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.ds-era-picker__image {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--ds-radius-md);
+  object-fit: cover;
+}
+
+/* ---- Text block ---- */
+
+.ds-era-picker__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-2);
+}
+
+.ds-era-picker__clear-indicator {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ds-radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ds-text-secondary);
+  background: var(--ds-surface-icon-button);
+  flex-shrink: 0;
+}
+
+/* ---- Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-era-picker__row {
+    transition: none;
+  }
+}

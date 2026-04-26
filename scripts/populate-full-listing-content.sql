@@ -196,7 +196,7 @@ ON CONFLICT (id) DO UPDATE SET
 UPDATE listings SET
   host_id = 'host-shah-jahan',
   property_type = 'Entire palace suite',
-  guest_capacity = 4,
+  guest_capacity = 10,
   bedrooms = 2,
   beds = 2,
   baths = 2,
@@ -228,7 +228,7 @@ WHERE id = 'bdf429ac-9274-44e1-9986-b43dcffe87e9';
 UPDATE listings SET
   host_id = 'host-elon-musk',
   property_type = 'Entire habitat pod',
-  guest_capacity = 2,
+  guest_capacity = 10,
   bedrooms = 1,
   beds = 2,
   baths = 1,
@@ -260,8 +260,8 @@ WHERE id = '10b2efa4-819b-4a10-99a0-1f5dc580b080';
 -- The Lost Atlantean Crystal Villa
 UPDATE listings SET
   host_id = 'host-poseidon',
-  property_type = 'Entire underwater villa',
-  guest_capacity = 6,
+  property_type = 'Entire Atlantean crystal villa',
+  guest_capacity = 10,
   bedrooms = 3,
   beds = 4,
   baths = 2,
@@ -296,7 +296,7 @@ WHERE id = 'cf84c7ff-aea0-49f3-ad12-3bc09a52326b';
 UPDATE listings SET
   host_id = 'host-captain-smith',
   property_type = 'First-class suite',
-  guest_capacity = 2,
+  guest_capacity = 10,
   bedrooms = 1,
   beds = 1,
   baths = 1,
@@ -329,7 +329,7 @@ WHERE id = '0580d737-156f-49ea-abcb-621797f493cf';
 UPDATE listings SET
   host_id = 'host-resistance',
   property_type = 'Private loft',
-  guest_capacity = 3,
+  guest_capacity = 10,
   bedrooms = 1,
   beds = 3,
   baths = 1,
@@ -364,7 +364,7 @@ WHERE id = '903e8b2c-dc8d-4d37-98f4-b98d1b250ae5';
 UPDATE listings SET
   host_id = 'host-neytiri',
   property_type = 'Entire floating bungalow',
-  guest_capacity = 4,
+  guest_capacity = 10,
   bedrooms = 2,
   beds = 3,
   baths = 1,
@@ -398,7 +398,7 @@ WHERE id = '41f8401a-e8a8-42fa-9809-10604c91d274';
 UPDATE listings SET
   host_id = 'host-imhotep',
   property_type = 'Entire riverside villa',
-  guest_capacity = 6,
+  guest_capacity = 10,
   bedrooms = 3,
   beds = 4,
   baths = 2,
@@ -435,7 +435,7 @@ WHERE id = '32bb68c5-f89a-4a83-a8f3-90b712482575';
 UPDATE listings SET
   host_id = 'host-alexander',
   property_type = 'Royal campaign tent',
-  guest_capacity = 4,
+  guest_capacity = 10,
   bedrooms = 2,
   beds = 3,
   baths = 1,
@@ -471,7 +471,7 @@ WHERE id = '385e8c54-9458-4fc4-8482-4b2efe7efc2b';
 UPDATE listings SET
   host_id = 'host-90s-artist',
   property_type = 'Entire loft',
-  guest_capacity = 4,
+  guest_capacity = 10,
   bedrooms = 1,
   beds = 2,
   baths = 1,

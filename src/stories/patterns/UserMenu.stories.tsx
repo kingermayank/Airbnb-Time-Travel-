@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { MemoryRouter } from 'react-router-dom';
 import { UserMenu } from '@/design-system/patterns';
 import type { UserMenuItem } from '@/design-system/patterns';
 
@@ -16,15 +17,17 @@ const meta = {
     docs: {
       description: {
         component:
-          'Account dropdown with menu items (circle icon + label), optional "Become a host" CTA with title/description and image placeholder, and Log out. Image asset for the CTA is left blank by default; you can pass `becomeAHostImageSrc` or add an image later.',
+          'Account dropdown with menu items (circle icon + label), optional "Become a host" CTA with title/description and image placeholder, and Log out. Image asset for the CTA is left blank by default; you can pass `becomeAHostImageSrc` or add an image later. Menu items can have `to` for navigation (uses React Router Link).',
       },
     },
   },
   decorators: [
     (Story) => (
-      <div style={{ padding: 24 }}>
-        <Story />
-      </div>
+      <MemoryRouter>
+        <div style={{ padding: 24 }}>
+          <Story />
+        </div>
+      </MemoryRouter>
     ),
   ],
   argTypes: {
@@ -42,23 +45,22 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const defaultItems: UserMenuItem[] = [
-  { label: 'Wishlists' },
-  { label: 'What is this?' },
-  { label: 'How did I build this?' },
-  { label: 'Share' },
+  { label: 'Help center', icon: 'lifeBuoy' },
+  { label: 'Frequently asked questions', icon: 'circleHelp', to: '/faq' },
+  { label: 'Give feedback', icon: 'messageSquare', to: '/feedback' },
 ];
 
 export const Default: Story = {
   args: {
     menuItems: defaultItems,
     becomeAHostTitle: 'Become a host',
-    becomeAHostDescription: "Start hosting and earn extra income if you're okay.",
+    becomeAHostDescription: "Start hosting. Only if you're okay with guests from other timelines.",
     logOutLabel: 'Log out',
   },
   parameters: {
     docs: {
       description: {
-        story: 'Default menu with Figma copy. Image placeholder is blank for you to add an asset.',
+        story: 'Default menu: Help center, Frequently asked questions (links to /faq), Give feedback (links to /feedback) with semantic icons; Become a host CTA; Log out.',
       },
     },
   },
@@ -66,12 +68,12 @@ export const Default: Story = {
 
 export const WithCallbacks: Story = {
   args: {
-    menuItems: defaultItems.map((item, i) => ({
+    menuItems: defaultItems.map((item) => ({
       ...item,
       onClick: () => console.log(`Clicked: ${item.label}`),
     })),
     becomeAHostTitle: 'Become a host',
-    becomeAHostDescription: "Start hosting and earn extra income if you're okay.",
+    becomeAHostDescription: "Start hosting. Only if you're okay with guests from other timelines.",
     onBecomeAHostClick: () => console.log('Become a host clicked'),
     onLogOutClick: () => console.log('Log out clicked'),
     logOutLabel: 'Log out',
@@ -88,9 +90,9 @@ export const WithCallbacks: Story = {
 export const CustomMenuItems: Story = {
   args: {
     menuItems: [
-      { label: 'Trips' },
-      { label: 'Wishlists' },
-      { label: 'Account' },
+      { label: 'Trips', icon: 'circle' },
+      { label: 'Wishlists', icon: 'circle' },
+      { label: 'Account', icon: 'circle' },
     ],
     becomeAHostTitle: 'Become a host',
     becomeAHostDescription: 'Share your space and earn.',

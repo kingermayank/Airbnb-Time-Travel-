@@ -1,15 +1,68 @@
+/* Heart button: scale down on active */
+.ds-listing-card-heart-btn {
+  position: relative;
+  transition: transform var(--ds-motion-duration-sm) var(--ds-motion-ease);
+}
+.ds-listing-card-heart-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ds-listing-card-heart-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--ds-accent);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.25);
+  pointer-events: none;
+}
+
+.ds-listing-card-image-shell {
+  will-change: transform, opacity;
+}
+
+.ds-listing-card-specular-highlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+  opacity: var(--ds-listing-highlight-opacity, 0);
+  will-change: opacity;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle var(--ds-listing-highlight-size, 40px) at var(--ds-listing-highlight-x, 50%) var(--ds-listing-highlight-y, 50%),
+    hsla(2, 88%, 62%, 0.38) 0%,
+    hsla(44, 95%, 62%, 0.34) 28%,
+    hsla(190, 92%, 64%, 0.30) 56%,
+    hsla(318, 92%, 66%, 0.32) 78%,
+    hsla(318, 92%, 66%, 0) 100%
+  );
+  filter: blur(4px) saturate(1.05);
+}
+
+
 /* Heart icon: scale on hover (110%), applied to the icon so the graphic grows while hovering the button */
 .ds-listing-card-heart-icon {
-  transition: transform 0.2s ease;
+  transition: transform var(--ds-motion-duration-md) var(--ds-motion-ease);
   display: inline-flex;
 }
-.ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
-  transform: scale(1.10);
+@media (hover: hover) {
+  .ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
+    transform: scale(1.10);
+  }
 }
 
 /* Micro-interaction: gentle pop when heart is liked (runs on click, not on hover) */
 .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-icon {
   animation: ds-heart-liked-pop 0.4s ease;
+}
+
+.ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-ripple {
+  animation: ds-heart-liked-ripple 0.45s ease-out;
 }
 
 @keyframes ds-heart-liked-pop {
@@ -27,7 +80,44 @@
   }
 }
 
+@keyframes ds-heart-liked-ripple {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.1);
+  }
+}
+
 /* Smooth fill/stroke transition when toggling liked (applied to Heart via wrapper) */
 .ds-listing-card-heart-icon svg {
-  transition: fill 0.28s ease, stroke 0.28s ease;
+  transition: fill var(--ds-motion-duration-md) var(--ds-motion-ease), stroke var(--ds-motion-duration-md) var(--ds-motion-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-listing-card-heart-btn,
+  .ds-listing-card-heart-icon,
+  .ds-listing-card-heart-icon svg,
+  .ds-listing-card-image-shell,
+  .ds-listing-card-specular-highlight,
+  .ds-listing-card {
+    transition: none;
+  }
+  .ds-listing-card-heart-btn:active:not(:disabled) {
+    transform: none;
+  }
+  .ds-listing-card-heart-btn:hover .ds-listing-card-heart-icon {
+    transform: none;
+  }
+  .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-icon {
+    animation: none;
+  }
+  .ds-listing-card-heart-btn.is-liked .ds-listing-card-heart-ripple {
+    animation: none;
+  }
+  .ds-listing-card-specular-highlight {
+    opacity: 0 !important;
+  }
 }

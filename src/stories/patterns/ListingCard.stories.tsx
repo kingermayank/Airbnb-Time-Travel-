@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ListingCard } from '@/design-system/patterns';
 
 /**
- * Listing card: image, title (up to 2 lines), sub line = era · ★ rating, heart, optional Guest favorite chip.
+ * Listing card: image, title (up to 2 lines), sub line = era · ★ rating, heart, optional Frequently revisited chip.
  */
 const meta = {
   title: 'Patterns/ListingCard',
@@ -13,7 +13,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Structure: image, title (no year in title), sub line with era/time (e.g. 306 BC) and ★ rating. Heart toggles red. Optional Guest favorite chip. Variants: default, two-line title, guest favorite, heart saved.',
+          'Structure: image, title (no year in title), sub line with era/time (e.g. 306 BC) and ★ rating. Heart toggles red. Optional Frequently revisited chip. Variants: default, two-line title, frequently revisited, heart saved.',
       },
     },
   },
@@ -54,7 +54,7 @@ export const TwoLineTitle: Story = {
   args: {
     id: 'card-two-line',
     image: 'https://placehold.co/320x248',
-    title: "Alexander the Great's Campaign Tent — Macedon to the Indus",
+    title: "Alexander's Campaign Tent, Persia",
     year: '306 BC',
     price: '$600 / hour',
     rating: '4.88',

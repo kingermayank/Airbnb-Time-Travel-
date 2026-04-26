@@ -15,6 +15,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: 'Guest favorite',
+    children: 'Frequently revisited',
   },
 };

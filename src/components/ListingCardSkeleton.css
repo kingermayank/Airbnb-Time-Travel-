@@ -1,43 +1,52 @@
+/* Match exact ListingCard structure and dimensions */
 .listing-card-skeleton {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--ds-spacing-12); /* 12px gap between image and content */
   width: 100%;
+  cursor: pointer;
 }
 
+/* Match imageContainerStyle: height: 248px, borderRadius: var(--ds-radius-lg), width: 100% */
 .skeleton-image {
   height: 248px;
-  border-radius: 12px;
+  width: 100%;
+  border-radius: var(--ds-radius-lg); /* 12px */
+  background-color: #e5e7eb; /* bg-gray-200 */
   background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* Match infoStyle: gap: var(--ds-spacing-4), paddingLeft: var(--ds-spacing-4) */
 .skeleton-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-left: 4px;
+  gap: var(--ds-spacing-4); /* 4px gap between title and price row */
+  padding-left: var(--ds-spacing-4); /* 4px left padding */
 }
 
-.skeleton-line {
-  height: 18px;
-  border-radius: 4px;
+/* Match title: variant="body" with weight="medium", WebkitLineClamp: 2
+   fontSize: 14px, lineHeight: 18px, so 2 lines = 36px height */
+.skeleton-title {
+  height: 36px; /* 2 lines × 18px line height */
+  width: 80%;
+  border-radius: var(--ds-radius-sm); /* 4px */
+  background-color: #e5e7eb; /* bg-gray-200 */
   background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-.skeleton-line-1 {
-  width: 80%;
-}
-
-.skeleton-line-2 {
+/* Match price row: variant="bodySmall", fontSize: 12px, lineHeight: 16px */
+.skeleton-price-row {
+  height: 16px; /* bodySmall line height */
   width: 60%;
-}
-
-.skeleton-line-3 {
-  width: 40%;
+  border-radius: var(--ds-radius-sm); /* 4px */
+  background-color: #e5e7eb; /* bg-gray-200 */
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes shimmer {

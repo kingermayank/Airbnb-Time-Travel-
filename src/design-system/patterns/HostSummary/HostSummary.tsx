@@ -1,6 +1,7 @@
 import React from 'react';
 import { Avatar } from '../../foundations/Avatar';
 import { Text } from '../../foundations/Text';
+import { getHostDisplayName } from '../../../lib/host-display-name';
 
 export interface HostSummaryProps {
   hostName: string;
@@ -20,6 +21,8 @@ export function HostSummary({
   className,
   style,
 }: HostSummaryProps) {
+  const firstName = getHostDisplayName(hostName);
+  
   return (
     <div
       className={className}
@@ -33,7 +36,7 @@ export function HostSummary({
       <Avatar src={hostAvatarUrl ?? null} alt={hostName} size="lg" />
       <div>
         <Text variant="body" color="primary" as="div">
-          Hosted by <Text variant="body" weight="semibold" color="primary" as="span">{hostName}</Text>
+          Hosted by <Text variant="body" weight="semibold" color="primary" as="span">{firstName}</Text>
         </Text>
         {badges && (
           <Text variant="body" color="secondary" as="div" style={{ marginTop: 'var(--ds-spacing-4)' }}>

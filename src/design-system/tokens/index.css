@@ -10,10 +10,10 @@
   --ds-primary-foreground: #ffffff;
   --ds-secondary: #ebebeb;
   --ds-secondary-hover: #ebebeb;
-  --ds-accent: #ff385c;
-  --ds-accent-hover: #e31c5f;
-  /* Reserve button gradient (Figma pricing card 283-2976): pink to reddish-pink */
-  --ds-button-reserve-gradient: linear-gradient(90deg, #ff385c 0%, #e31c5f 100%);
+  --ds-accent: #FF0257;
+  --ds-accent-hover: #FF0257;
+  /* Reserve button gradient: brand pink */
+  --ds-button-reserve-gradient: linear-gradient(90deg, #FF0257 0%, #FF0257 100%);
   --ds-surface: #ffffff;
   --ds-surface-elevated: #ffffff;
   --ds-background: #ffffff;
@@ -105,9 +105,9 @@
 
   /* Font weights */
   --ds-font-regular: 400;
-  --ds-font-medium: 500;
+  --ds-font-medium: 400;
   --ds-font-semibold: 600;
-  --ds-font-bold: 700;
+  --ds-font-bold: 600;
 
   /* ---- Radii ---- */
   --ds-radius-sm: 4px;
@@ -119,6 +119,13 @@
   --ds-radius-booking-card: 12px;
   --ds-booking-card-padding: 24px;
 
+  /* ---- Motion (Emil: ease-out for enter/exit, 150–250ms UI, 200–300ms modals) ---- */
+  --ds-motion-duration-sm: 150ms;
+  --ds-motion-duration-md: 200ms;
+  --ds-motion-duration-modal: 200ms;
+  --ds-motion-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ds-motion-ease: ease;
+
   /* ---- Shadows ---- */
   --ds-shadow-badge: 0px 3px 4px rgba(0, 0, 0, 0.16);
   --ds-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -126,7 +133,7 @@
   --ds-shadow-booking-card: 0 6px 16px rgba(0, 0, 0, 0.12);
   /* User menu / dropdown (Figma 283-4167): soft diffused elevation */
   --ds-shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.1);
-  --ds-shadow-focus: 0 0 0 3px rgba(255, 56, 92, 0.2);
+  --ds-shadow-focus: 0 0 0 3px rgba(255, 2, 87, 0.2);
 
   /* Listing card: Guest favorite pill position (1px less top than standard spacing-12) */
   --ds-listing-card-badge-inset-top: 11px;

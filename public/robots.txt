@@ -1,0 +1,6 @@
+# Warpbnb — allow crawlers
+User-agent: *
+Allow: /
+
+# Sitemap (update domain if different from warpbnb.com)
+Sitemap: https://warpbnb.com/sitemap.xml

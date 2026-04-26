@@ -1,22 +1,37 @@
 .ds-button {
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow var(--ds-motion-duration-md) var(--ds-motion-ease), transform var(--ds-motion-duration-sm) var(--ds-motion-ease);
 }
 
 .ds-button--ghost {
   border-radius: 20px;
 }
 
-.ds-button--primary:hover:not(:disabled),
-.ds-button--secondary:hover:not(:disabled),
-.ds-button--ghost:hover:not(:disabled) {
-  box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
+@media (hover: hover) {
+  .ds-button--primary:hover:not(:disabled),
+  .ds-button--secondary:hover:not(:disabled),
+  .ds-button--ghost:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 999px var(--ds-overlay-hover);
+  }
 }
 
 .ds-button--ghost:active:not(:disabled) {
   box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.12);
+  transform: scale(0.97);
 }
 
 .ds-button--primary:active:not(:disabled),
 .ds-button--secondary:active:not(:disabled) {
   box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.12);
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-button {
+    transition: none;
+  }
+  .ds-button--ghost:active:not(:disabled),
+  .ds-button--primary:active:not(:disabled),
+  .ds-button--secondary:active:not(:disabled) {
+    transform: none;
+  }
 }

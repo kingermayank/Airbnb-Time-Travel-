@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { hasDedicatedAmenityIcon } from './amenity-icons';
 import type {
   Listing,
   ListingWithHost,
@@ -11,30 +12,48 @@ import type {
   Booking,
 } from '../types/database';
 
+export interface FetchListingsOptions {
+  theme?: string;
+  era?: string;
+}
+
 /**
- * Fetch all listings with host information for card display
+ * Fetch all listings with host information for card display.
+ * Optional theme/era filter; applied only when provided (e.g. when user clicks Search).
  */
-export async function fetchListings(): Promise<ListingCard[]> {
+const isDev = import.meta.env.DEV;
+
+export async function fetchListings(options?: FetchListingsOptions): Promise<ListingCard[]> {
   if (!isSupabaseConfigured()) {
-    console.warn('⚠️ fetchListings: Supabase not configured');
+    if (isDev) console.warn('⚠️ fetchListings: Supabase not configured');
     // Return empty array instead of throwing - let component handle fallback
     return [];
   }
-  
-  console.log('🔄 fetchListings: Querying Supabase for listings...');
-  const { data, error } = await supabase
+
+  if (isDev) console.log('🔄 fetchListings: Querying Supabase for listings...', options ?? {});
+  let query = supabase
     .from('listings')
     .select(`
       id,
       title,
       main_image,
-      price_display,
-      price_per_night,
+      thumbnail_image,
       overall_rating,
       date,
-      is_guest_favorite
+      is_guest_favorite,
+      theme,
+      era
     `)
     .order('created_at', { ascending: false });
+
+  if (options?.theme) {
+    query = query.eq('theme', options.theme);
+  }
+  if (options?.era) {
+    query = query.eq('era', options.era);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('❌ Error fetching listings from Supabase:', error);
@@ -47,22 +66,86 @@ export async function fetchListings(): Promise<ListingCard[]> {
     throw error;
   }
 
-  console.log(`✅ fetchListings: Received ${data?.length || 0} listings from Supabase`);
-  
-  // Transform to ListingCard format
-  const transformed = (data || []).map((listing) => ({
+  if (isDev) console.log(`✅ fetchListings: Received ${data?.length || 0} listings from Supabase`);
+
+  // Exclude removed listings so they never show even if re-inserted
+  const EXCLUDED_LISTING_IDS = new Set([
+    'a1b2c3d4-e5f6-7890-abcd-111111111111', // The Last Beachfront Property — Miami, 2089
+    'a1b2c3d4-e5f6-7890-abcd-222222222222', // Amazon Rainforest Biodome — Brazil, 2203
+    'a1b2c3d4-e5f6-7890-abcd-444444444444', // Floating City Apartment — Neo-Pacific, 2178
+  ]);
+  const filtered = (data || []).filter((listing) => !EXCLUDED_LISTING_IDS.has(listing.id));
+
+  // Only these specific listings should show the "frequently revisited" pill
+  const FREQUENTLY_REVISITED_LISTINGS = [
+    'Mars Colony Pod', // Mars Colony Pod, Olympus Mons
+    'Crystal Villa', // Crystal Villa, Atlantis
+    'Floating Mountain Bungalow', // Floating Mountain Bungalow, Pandora
+    'Lunar Hilton Penthouse', // Lunar Hilton Penthouse, Moon
+    'Neo-Showa Capsule Pod', // Neo-Showa Capsule Pod, Parallel Tokyo
+  ];
+
+  // Helper function to check if a listing should show the frequently revisited badge
+  const shouldShowFrequentlyRevisited = (title: string): boolean => {
+    return FREQUENTLY_REVISITED_LISTINGS.some(keyword => 
+      title.includes(keyword)
+    );
+  };
+
+  // Transform to ListingCard format (no price on homepage)
+  const transformed = filtered.map((listing) => ({
     id: listing.id,
     title: listing.title,
-    image: listing.main_image,
-    price: listing.price_display || `$${listing.price_per_night}/night`,
+    image: listing.thumbnail_image || listing.main_image, // Use thumbnail for homepage, fallback to main_image
     rating: listing.overall_rating ? listing.overall_rating.toString() : undefined,
     date: listing.date || undefined,
-    isGuestFavorite: listing.is_guest_favorite || false,
+    // Only show frequently revisited pill for specific listings, regardless of database value
+    isGuestFavorite: shouldShowFrequentlyRevisited(listing.title),
+    theme: listing.theme ?? undefined,
+    era: listing.era ?? undefined,
   }));
+
+  // Custom sort order for homepage display
+  const SORT_ORDER_KEYWORDS = [
+    'Crystal Villa', // 1. Crystal Villa, Atlantis
+    'Manhattan', // 2. Manhattan Loft, New York
+    'Alexander', // 3. Alexander's Campaign Tent, Persia
+    'Shah Jahan', // 4. Shah Jahan's Marble Suite, Agra
+    'Mars Colony Pod', // 5. Mars Colony Pod, Olympus Mons
+    'First-Class Suite', // 6. First-Class Suite, RMS Titanic
+    'Floating Mountain', // 7. Floating Mountain Bungalow, Pandora
+    'Nile Villa', // 8. Nile Villa, Ancient Egypt
+    'Lunar Hilton', // 9. Lunar Hilton Penthouse, Moon
+    'Neo-Showa', // 10. Neo-Showa Capsule Pod, Parallel Tokyo
+    'Area 51', // 11. Classified Barracks, Area 51
+    'Bermuda Triangle', // 12. Research Platform, Bermuda Triangle
+    'Federation', // 13. Federation Ambassador Suite, Earth
+    'Cave', // 14. Cave Dwelling, Lascaux
+    'Resistance Safehouse', // 15. Resistance Safehouse Loft, Berlin
+  ];
+
+  // Helper function to get sort priority (lower number = appears first)
+  const getSortPriority = (title: string): number => {
+    const lowerTitle = title.toLowerCase();
+    for (let i = 0; i < SORT_ORDER_KEYWORDS.length; i++) {
+      if (lowerTitle.includes(SORT_ORDER_KEYWORDS[i].toLowerCase())) {
+        return i;
+      }
+    }
+    // If no match, put at the end
+    return SORT_ORDER_KEYWORDS.length;
+  };
+
+  // Sort listings according to custom order
+  const sorted = transformed.sort((a, b) => {
+    const priorityA = getSortPriority(a.title);
+    const priorityB = getSortPriority(b.title);
+    return priorityA - priorityB;
+  });
   
-  console.log('📋 fetchListings: Transformed listings:', transformed.map(l => ({ id: l.id, title: l.title })));
-  
-  return transformed;
+  if (isDev) console.log('📋 fetchListings: Transformed listings:', sorted.map(l => ({ id: l.id, title: l.title })));
+
+  return sorted;
 }
 
 /**
@@ -73,10 +156,10 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
     'mock-2': {
       id: 'mock-2',
       host_id: 'mock-host-1',
-      title: "SpaceX Mars Colony Pod at Olympus Mons",
+      title: "Mars Colony Pod, Olympus Mons",
       main_image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
       property_type: "Space Pod",
-      guest_capacity: 4,
+      guest_capacity: 10,
       bedrooms: 2,
       beds: 2,
       baths: 1,
@@ -87,8 +170,8 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
       is_guest_favorite: false,
       date: null,
       location_description: "Olympus Mons, Mars",
-      short_description: "Experience life on the Red Planet in this state-of-the-art SpaceX colony pod",
-      full_description: "Welcome to the future of space travel! This cutting-edge SpaceX Mars Colony Pod offers an unparalleled experience on the Red Planet. Located at the base of Olympus Mons, the solar system's largest volcano, you'll enjoy breathtaking views of the Martian landscape.\n\nFeatures include:\n- Fully pressurized living quarters\n- Life support systems\n- Panoramic dome views\n- Zero-gravity sleeping pods\n- Mars rover access\n- Communication array for Earth contact\n\nPerfect for space enthusiasts, scientists, or anyone looking for the ultimate adventure. Book your stay and become one of the first humans to experience life on Mars!",
+      short_description: "Experience life on the Red Planet in this state-of-the-art Mars colony pod",
+      full_description: "Welcome to the future of space travel! This cutting-edge Mars Colony Pod offers an unparalleled experience on the Red Planet. Located at the base of Olympus Mons, the solar system's largest volcano, you'll enjoy breathtaking views of the Martian landscape.\n\nFeatures include:\n- Fully pressurized living quarters\n- Life support systems\n- Panoramic dome views\n- Zero-gravity sleeping pods\n- Mars rover access\n- Communication array for Earth contact\n\nPerfect for space enthusiasts, scientists, or anyone looking for the ultimate adventure. Book your stay and become one of the first humans to experience life on Mars!",
       key_features: [
         {
           title: "Life Support Systems",
@@ -181,15 +264,15 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
   if (listingId && listingId.startsWith('mock-')) {
     const mockData = getMockListingDetails(listingId);
     if (mockData) {
-      console.log('✅ Returning mock data for listing:', listingId);
+      if (isDev) console.log('✅ Returning mock data for listing:', listingId);
       return mockData;
     }
-    console.warn('⚠️ Mock listing ID provided but no mock data found:', listingId);
+    if (isDev) console.warn('⚠️ Mock listing ID provided but no mock data found:', listingId);
   }
 
   // If Supabase is not configured, try mock data as fallback for any ID
   if (!isSupabaseConfigured()) {
-    console.log('ℹ️ Supabase not configured, trying mock data for:', listingId);
+    if (isDev) console.log('ℹ️ Supabase not configured, trying mock data for:', listingId);
     const mockData = getMockListingDetails(listingId);
     if (mockData) {
       return mockData;
@@ -199,7 +282,7 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
 
   try {
     // Only try Supabase if it's configured AND it's not a mock ID
-    console.log('🔍 Fetching listing details for ID:', listingId);
+    if (isDev) console.log('🔍 Fetching listing details for ID:', listingId);
     
     // Fetch listing with host - explicitly include all fields from populate-full-listing-content.sql
     const { data: listingData, error: listingError } = await supabase
@@ -225,15 +308,17 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
     }
 
     if (!listingData) {
-      console.warn('⚠️ No listing data returned for ID:', listingId);
+      if (isDev) console.warn('⚠️ No listing data returned for ID:', listingId);
       return null;
     }
 
-    console.log('✅ Listing data fetched successfully:', listingData.title);
-    console.log('🔍 Host data structure:', {
-      hostsType: Array.isArray(listingData.hosts) ? 'array' : typeof listingData.hosts,
-      hostsValue: listingData.hosts
-    });
+    if (isDev) {
+      console.log('✅ Listing data fetched successfully:', listingData.title);
+      console.log('🔍 Host data structure:', {
+        hostsType: Array.isArray(listingData.hosts) ? 'array' : typeof listingData.hosts,
+        hostsValue: listingData.hosts
+      });
+    }
 
     // Handle hosts - Supabase might return it as an array or object
     // For foreign key relationships, it should be a single object, but let's be safe
@@ -281,10 +366,10 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       console.error('Error fetching reviews:', reviewsError);
     }
 
-    // Transform the data
+    // Transform the data — only include amenities that have a dedicated icon
     const amenities = (amenitiesData || [])
       .map((item: any) => item.amenities)
-      .filter((amenity: Amenity | null) => amenity !== null) as Amenity[];
+      .filter((amenity: Amenity | null) => amenity !== null && hasDedicatedAmenityIcon(amenity.name)) as Amenity[];
 
     // Dedupe reviews by listing_id + reviewer_name + review_date + comment (keep first occurrence)
     const seen = new Set<string>();
@@ -306,13 +391,15 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       reviews: uniqueReviews,
     };
 
-    console.log('✅ Listing details assembled successfully:', {
-      title: result.title,
-      host: result.hosts?.name || 'No host',
-      imagesCount: result.listing_images.length,
-      amenitiesCount: result.amenities.length,
-      reviewsCount: result.reviews.length
-    });
+    if (isDev) {
+      console.log('✅ Listing details assembled successfully:', {
+        title: result.title,
+        host: result.hosts?.name || 'No host',
+        imagesCount: result.listing_images.length,
+        amenitiesCount: result.amenities.length,
+        reviewsCount: result.reviews.length
+      });
+    }
 
     return result;
   } catch (error) {
@@ -388,6 +475,32 @@ export async function fetchListingReviews(listingId: string): Promise<Review[]> 
 }
 
 /**
+ * Get the number of confirmed bookings for a listing (for queue position on confirmation page).
+ */
+export async function getBookingCountForListing(listingId: string): Promise<number> {
+  if (!isSupabaseConfigured()) {
+    if (isDev) console.warn('⚠️ getBookingCountForListing: Supabase not configured');
+    return 0;
+  }
+
+  try {
+    const { count, error } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('listing_id', listingId);
+
+    if (error) {
+      console.error('❌ Error fetching booking count:', error);
+      return 0;
+    }
+    return typeof count === 'number' ? count : 0;
+  } catch (err) {
+    console.error('❌ Exception in getBookingCountForListing:', err);
+    return 0;
+  }
+}
+
+/**
  * Create a new booking
  */
 export async function createBooking(bookingData: {
@@ -401,7 +514,7 @@ export async function createBooking(bookingData: {
   guest_count: number;
 }): Promise<Booking | null> {
   if (!isSupabaseConfigured()) {
-    console.warn('⚠️ createBooking: Supabase not configured');
+    if (isDev) console.warn('⚠️ createBooking: Supabase not configured');
     return null;
   }
 
@@ -427,7 +540,7 @@ export async function createBooking(bookingData: {
       throw error;
     }
 
-    console.log('✅ Booking created successfully:', data.id);
+    if (isDev) console.log('✅ Booking created successfully:', data.id);
     return data as Booking;
   } catch (error) {
     console.error('❌ Exception creating booking:', error);

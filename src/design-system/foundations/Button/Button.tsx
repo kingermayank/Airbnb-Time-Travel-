@@ -68,7 +68,7 @@ export function Button({
   const baseRadius = variant === 'ghost' ? '20px' : 'var(--ds-radius-md)';
   const combinedStyle: React.CSSProperties = {
     fontFamily: 'var(--ds-font-family)',
-    fontWeight: 'var(--ds-font-medium)',
+    fontWeight: 500,
     letterSpacing: 'var(--ds-letter-spacing)',
     borderRadius: baseRadius,
     cursor: disabled ? 'not-allowed' : 'pointer',

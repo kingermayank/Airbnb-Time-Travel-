@@ -76,6 +76,10 @@ export interface Listing {
   sleeping_arrangements: SleepingArrangement[] | string | null;
   // "Things to know" section – string when coming directly from Supabase JSON column
   things_to_know?: ThingsToKnow | string | null;
+  /** Theme slug for homepage filtering: grandeur, sci-fi, myth, conflict, classified */
+  theme?: string | null;
+  /** Era slug for homepage filtering: origins, classical, recent-past, future */
+  era?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -135,10 +139,13 @@ export interface ListingCard {
   id: string;
   title: string;
   image: string;
-  price: string;
+  /** Optional; omitted on homepage so price is not shown there */
+  price?: string;
   rating?: string;
   date?: string;
   isGuestFavorite?: boolean;
+  theme?: string | null;
+  era?: string | null;
 }
 
 // Booking type for storing confirmed bookings

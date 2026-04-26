@@ -20,7 +20,7 @@ WHERE id = '8acf9b13-6ade-49cb-9083-fbe483293d12';
 UPDATE listings
 SET
   title = 'Entire royal suite hosted by Shah Jahan',
-  guest_capacity = 2,
+  guest_capacity = 10,
   bedrooms = 1,
   beds = 1,
   baths = 1,
