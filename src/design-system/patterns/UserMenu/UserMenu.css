@@ -158,6 +158,8 @@
   height: 48px;
   border-radius: var(--ds-radius-md);
   align-self: center;
+  object-fit: contain;
+  object-position: center;
 }
 
 .ds-user-menu__cta-image--placeholder {
