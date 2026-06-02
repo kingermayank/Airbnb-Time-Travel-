@@ -107,14 +107,14 @@ const OPEN_FROM_BOTTOM = 0;
 
 const enterTransition = {
   type: 'spring' as const,
-  stiffness: 560,
-  damping: 26,
-  mass: 0.85,
+  stiffness: 760,
+  damping: 32,
+  mass: 0.45,
 };
 
 const exitTransition = {
   type: 'tween' as const,
-  duration: 0.24,
+  duration: 0.12,
   ease: [0.25, 1, 0.5, 1] as const,
 };
 

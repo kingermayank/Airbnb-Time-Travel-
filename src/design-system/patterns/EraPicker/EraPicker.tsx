@@ -8,7 +8,7 @@ const pickerContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.05, delayChildren: 0 },
+    transition: { staggerChildren: 0.025, delayChildren: 0 },
   },
 };
 
@@ -17,7 +17,7 @@ const pickerRowVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring' as const, stiffness: 450, damping: 26 },
+    transition: { type: 'spring' as const, stiffness: 720, damping: 32, mass: 0.45 },
   },
 };
 
