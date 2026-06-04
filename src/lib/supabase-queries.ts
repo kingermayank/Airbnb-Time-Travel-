@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hasDedicatedAmenityIcon } from './amenity-icons';
+import { getListingHoverVideo } from './listing-hover-videos';
 import type {
   Listing,
   ListingWithHost,
@@ -97,6 +98,7 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
     id: listing.id,
     title: listing.title,
     image: listing.thumbnail_image || listing.main_image, // Use thumbnail for homepage, fallback to main_image
+    hoverVideo: getListingHoverVideo(listing.title),
     rating: listing.overall_rating ? listing.overall_rating.toString() : undefined,
     date: listing.date || undefined,
     // Only show frequently revisited pill for specific listings, regardless of database value
@@ -547,4 +549,3 @@ export async function createBooking(bookingData: {
     throw error;
   }
 }
-

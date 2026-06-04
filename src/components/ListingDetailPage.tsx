@@ -1430,7 +1430,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 borderBottom: '1px solid #EBEBEB',
                 marginBottom: '24px',
               }}>
-                {keyFeatures.map((feature: any, idx: number) => (
+                {keyFeatures.map((feature: { title: string; description: string }, idx: number) => (
                   <div key={idx} style={{
                     display: 'flex',
                     gap: '16px',
@@ -1617,7 +1617,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   gap: '16px',
                   overflowX: 'auto',
                 }}>
-                  {sleepingArrangements.map((arr: any, idx: number) => (
+                  {sleepingArrangements.map((arr: { room: string; beds: string }, idx: number) => (
                     <div key={idx} style={{
                       minWidth: '200px',
                       maxWidth: '320px',

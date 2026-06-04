@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Alignment, Fit, Layout, useRive } from '@rive-app/react-webgl2';
 import { Text } from '../../foundations/Text';
 import { useDeviceType } from '../../../hooks/use-mobile';
 import './Header.css';
@@ -18,6 +19,10 @@ export interface NavItem {
 
 export interface HeaderProps {
   logoUrl?: string;
+  /** Optional Rive animation URL for the logo mark. Pass null to use logoUrl. */
+  logoRiveUrl?: string | null;
+  /** State machine(s) to run when logoRiveUrl is used. */
+  logoRiveStateMachines?: string | string[];
   /** Optional wordmark image URL; when omitted, brandName is shown as text. */
   logoTextUrl?: string;
   /** Brand name shown next to logo when logoTextUrl is not provided (e.g. "Warp BNB"). */
@@ -116,8 +121,94 @@ const headerScrollDividerStyle: React.CSSProperties = {
   backgroundColor: 'var(--ds-border-light)',
 };
 
+const logoRiveLayout = new Layout({
+  fit: Fit.Contain,
+  alignment: Alignment.Center,
+});
+
+function HeaderLogoRive({
+  src,
+  stateMachines,
+}: {
+  src: string;
+  stateMachines: string | string[];
+}) {
+  const shellRef = useRef<HTMLSpanElement>(null);
+  const { rive, RiveComponent } = useRive({
+    src,
+    stateMachines,
+    autoplay: true,
+    layout: logoRiveLayout,
+  });
+
+  const dispatchCenteredPointer = () => {
+    const canvas = shellRef.current?.querySelector('canvas');
+    if (!canvas) return false;
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = rect.left + rect.width / 2;
+    const clientY = rect.top + rect.height / 2;
+
+    canvas.dispatchEvent(new PointerEvent('pointermove', {
+      bubbles: true,
+      cancelable: true,
+      clientX,
+      clientY,
+      pointerId: 1,
+      pointerType: 'mouse',
+      isPrimary: true,
+    }));
+    canvas.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true,
+      cancelable: true,
+      clientX,
+      clientY,
+    }));
+
+    return true;
+  };
+
+  useEffect(() => {
+    if (!rive) return undefined;
+
+    let firstFrame = 0;
+    let secondFrame = 0;
+    let fallbackTimeout = 0;
+
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        if (!dispatchCenteredPointer()) {
+          fallbackTimeout = window.setTimeout(dispatchCenteredPointer, 50);
+        }
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      window.cancelAnimationFrame(secondFrame);
+      window.clearTimeout(fallbackTimeout);
+    };
+  }, [rive, src]);
+
+  return (
+    <span
+      ref={shellRef}
+      className="ds-header-logo-rive-shell"
+      onPointerLeave={dispatchCenteredPointer}
+      aria-hidden="true"
+    >
+      <RiveComponent
+        style={{ width: 48, height: 48 }}
+        className="ds-header-logo-rive"
+      />
+    </span>
+  );
+}
+
 export function Header({
   logoUrl = '/images/warp_logo.svg',
+  logoRiveUrl = '/warpbnb.riv',
+  logoRiveStateMachines = 'State Machine 1',
   logoTextUrl,
   brandName = 'WarpBnB',
   navItems,
@@ -214,6 +305,7 @@ export function Header({
     >
       <div
         role={onLogoClick ? 'button' : undefined}
+        aria-label={onLogoClick ? brandName : undefined}
         onClick={onLogoClick}
         onKeyDown={onLogoClick ? (e) => e.key === 'Enter' && onLogoClick() : undefined}
         tabIndex={onLogoClick ? 0 : undefined}
@@ -224,7 +316,14 @@ export function Header({
           flex: 1,
         }}
       >
-        <img src={logoUrl} alt={brandName} style={{ width: 48, height: 48 }} />
+        {logoRiveUrl ? (
+          <HeaderLogoRive
+            src={logoRiveUrl}
+            stateMachines={logoRiveStateMachines}
+          />
+        ) : (
+          <img src={logoUrl} alt="" className="ds-header-logo-image" />
+        )}
         {logoTextUrl ? (
           <img
             src={logoTextUrl}

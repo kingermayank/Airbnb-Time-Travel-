@@ -139,6 +139,7 @@ export interface ListingCard {
   id: string;
   title: string;
   image: string;
+  hoverVideo?: string;
   /** Optional; omitted on homepage so price is not shown there */
   price?: string;
   rating?: string;
@@ -163,4 +164,3 @@ export interface Booking {
   created_at: string;
   updated_at: string;
 }
-

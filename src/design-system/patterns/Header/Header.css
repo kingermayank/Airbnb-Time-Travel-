@@ -9,6 +9,25 @@
   letter-spacing: -0.01em;
 }
 
+.ds-header-logo-rive-shell,
+.ds-header-logo-rive,
+.ds-header-logo-image {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: block;
+}
+
+.ds-header-logo-rive-shell {
+  overflow: hidden;
+}
+
+.ds-header-logo-rive canvas {
+  width: 48px !important;
+  height: 48px !important;
+  display: block;
+}
+
 
 /* Coming soon pill – Figma: radial gradient #354668 → #657E9B, corner radius 16 16 16 6 */
 .ds-header-coming-soon-badge {

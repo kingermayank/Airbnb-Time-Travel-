@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Text } from '../../foundations/Text';
 import { Badge } from '../../foundations/Badge';
 import { Icon } from '../../foundations/Icon';
@@ -8,6 +9,7 @@ import './ListingCard.css';
 export interface ListingCardProps {
   id: string;
   image: string;
+  hoverVideo?: string;
   title: string;
   /** Optional year or era (e.g. "30 BC", "2187") shown with title. */
   year?: string;
@@ -19,6 +21,7 @@ export interface ListingCardProps {
   /** Initial liked state for the heart (e.g. for Storybook). */
   defaultLiked?: boolean;
   onClick?: () => void;
+  imageLayoutId?: string;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -94,6 +97,7 @@ const SPECULAR_WAYPOINTS = [
 export function ListingCard({
   id,
   image,
+  hoverVideo,
   title,
   year,
   price,
@@ -102,12 +106,14 @@ export function ListingCard({
   isGuestFavorite,
   defaultLiked = false,
   onClick,
+  imageLayoutId,
   className,
   style,
 }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(defaultLiked);
   const [isHoveringImage, setIsHoveringImage] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
+  const hoverVideoRef = useRef<HTMLVideoElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const targetRef = useRef({ x: 0, y: 0, px: 50, py: 50, hover: 0 });
   const currentRef = useRef({ x: 0, y: 0, px: 50, py: 50, hover: 0 });
@@ -117,6 +123,22 @@ export function ListingCard({
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const enableCursorEffects = supportsHover && !prefersReducedMotion;
+  const enableHoverVideo = Boolean(hoverVideo && supportsHover && !prefersReducedMotion);
+
+  useEffect(() => {
+    const video = hoverVideoRef.current;
+    if (!video || !enableHoverVideo) return;
+
+    if (isHoveringImage) {
+      void video.play().catch(() => {
+        // Keep the static cover visible if a browser blocks autoplay.
+      });
+      return;
+    }
+
+    video.pause();
+    video.currentTime = 0;
+  }, [enableHoverVideo, isHoveringImage]);
 
   const applyPointerStyles = useCallback(() => {
     const el = imageContainerRef.current;
@@ -272,11 +294,14 @@ export function ListingCard({
           queuePointerAnimation();
         }}
       >
-        <img
+        <motion.img
           src={image}
           alt={title}
           loading="lazy"
+          layoutId={imageLayoutId}
           style={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
             objectFit: 'cover',
@@ -284,6 +309,28 @@ export function ListingCard({
             transition: `transform ${HOVER_DURATION_MS}ms ${EASE_OUT}`,
           }}
         />
+        {hoverVideo && (
+          <video
+            ref={hoverVideoRef}
+            src={hoverVideo}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden
+            tabIndex={-1}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: enableHoverVideo && isHoveringImage ? 1 : 0,
+              transition: `opacity ${HOVER_DURATION_MS}ms ${EASE_OUT}`,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
         <div
           className="ds-listing-card-specular-highlight"
           aria-hidden

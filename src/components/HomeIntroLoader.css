@@ -1,0 +1,132 @@
+.home-intro-loader {
+  --warp-blur: 0px;
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 120;
+  touch-action: none;
+  user-select: none;
+  cursor: default;
+}
+
+.home-intro-loader__whiteout {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.home-intro-loader__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.03) 0%, transparent 70%);
+}
+
+.home-intro-loader__carousel {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+
+.home-intro-loader__card-slot {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  -webkit-box-reflect: below 4px linear-gradient(transparent, transparent, rgba(0, 0, 0, 0.15));
+}
+
+@keyframes loaderIntroScaleFadeStagger {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.home-intro-loader__card-anim {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.home-intro-loader__card-front,
+.home-intro-loader__card-back {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  backface-visibility: hidden;
+  border-style: solid;
+}
+
+.home-intro-loader__card-front {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.home-intro-loader__card-back {
+  box-shadow: inset 0 0 22px rgba(255, 255, 255, 0.4);
+  transform: rotateY(180deg);
+}
+
+.home-intro-loader__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+.home-intro-loader__image--back {
+  transform: scale(1.7);
+  opacity: 0.55;
+  filter: blur(calc(52px + var(--warp-blur, 0px))) saturate(0.7) brightness(1.08);
+}
+
+.home-intro-loader__gloss {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top right, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.home-intro-loader__frost {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.home-intro-loader__reflection {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 14%,
+    rgba(255, 255, 255, 0.85) 46%,
+    rgba(255, 255, 255, 0) 74%
+  );
+  background-position: -180% 0;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
+  animation-name: reflectionSweep;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes reflectionSweep {
+  0% {
+    background-position: -180% 0;
+  }
+  50% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 180% 0;
+  }
+}

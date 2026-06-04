@@ -21,6 +21,7 @@ import {
   getThemeLabel,
   getEraLabel,
 } from '../../lib/homepage-filters';
+import { getListingHoverVideo } from '../../lib/listing-hover-videos';
 import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../../design-system/patterns/Header/header-nav-assets';
 import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
@@ -33,6 +34,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-3',
     title: "Crystal Villa, Atlantis",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/bbe5b882-690a-4661-836a-08f66193c3f1.jpg",
+    hoverVideo: getListingHoverVideo("Crystal Villa, Atlantis"),
     price: "₿0.012540 / hour",
     rating: "4.82",
     isGuestFavorite: true,
@@ -41,6 +43,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-9',
     title: "Manhattan Loft, New York",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1e517539-a473-4b2a-b992-a49cc7dbbe8e.jpg",
+    hoverVideo: getListingHoverVideo("Manhattan Loft, New York"),
     price: "₿0.002748 / hour",
     rating: "4.82",
   },
@@ -48,6 +51,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-8',
     title: "Alexander's Campaign Tent, Persia",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/31951292-b7a3-4d4e-9d00-944e3fd01f43.jpg",
+    hoverVideo: getListingHoverVideo("Alexander's Campaign Tent, Persia"),
     price: "₿0.008244 / hour",
     date: "330 BCE",
   },
@@ -55,6 +59,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-1',
     title: "Shah Jahan's Marble Suite, Agra",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/4d4e615e-dcce-4f7e-a73c-18add1151842.jpg",
+    hoverVideo: getListingHoverVideo("Shah Jahan's Marble Suite, Agra"),
     price: "₿0.019032 / hour",
     rating: "4.82",
   },
@@ -62,6 +67,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-2',
     title: "Mars Colony Pod, Olympus Mons",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
+    hoverVideo: getListingHoverVideo("Mars Colony Pod, Olympus Mons"),
     price: "₿0.008244 / hour",
     rating: "4.82",
     isGuestFavorite: true,
@@ -70,6 +76,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-4',
     title: "First-Class Suite, RMS Titanic",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/ab970d7e-74d0-4a74-8e5c-4ca8f2a64ad0.jpg",
+    hoverVideo: getListingHoverVideo("First-Class Suite, RMS Titanic"),
     price: "₿0.006768 / hour",
     rating: "4.82",
   },
@@ -77,6 +84,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-6',
     title: "Floating Mountain Bungalow, Pandora",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1221494e-450b-4112-b3ec-6845b91292d6.png",
+    hoverVideo: getListingHoverVideo("Floating Mountain Bungalow, Pandora"),
     price: "₿0.027180 / hour",
     rating: "4.82",
     isGuestFavorite: true,
@@ -85,6 +93,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-7',
     title: "Nile Villa, Ancient Egypt",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/04c1ff57-425d-4847-8646-178516b6c4f3.png",
+    hoverVideo: getListingHoverVideo("Nile Villa, Ancient Egypt"),
     price: "₿0.009384 / hour",
     date: "330 BCE",
   },
@@ -92,6 +101,7 @@ const MOCK_LISTINGS: ListingCardType[] = [
     id: 'mock-5',
     title: "Resistance Safehouse Loft, Berlin",
     image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/b2e96b48-0491-4bea-a1df-887341cc53d5.jpg",
+    hoverVideo: getListingHoverVideo("Resistance Safehouse Loft, Berlin"),
     price: "₿0.003576 / hour",
     rating: "4.82",
   },
@@ -157,41 +167,33 @@ interface TransitionListing {
   isGuestFavorite?: boolean;
 }
 
-interface TransitionSnapshot {
-  listing: TransitionListing;
-  cardRect: { left: number; top: number; width: number; height: number };
-}
-
 interface CardProps {
   listing: ListingCardType;
   variants: Variants;
   shouldReduceMotion: boolean;
-  onOpen: (listing: ListingCardType, element: HTMLDivElement) => void;
+  onOpen: (listing: ListingCardType) => void;
 }
 
 function Card({ listing, variants, shouldReduceMotion, onOpen }: CardProps) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-
   return (
     <motion.div
       variants={variants}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 560, damping: 40, mass: 0.55 }}
     >
-      <div ref={wrapperRef}>
-        <ListingCardPattern
-          id={listing.id}
-          image={listing.image}
-          title={listing.title}
-          year={listing.date}
-          rating={listing.rating}
-          isGuestFavorite={listing.isGuestFavorite}
-          onClick={() => {
-            const el = wrapperRef.current;
-            if (el) onOpen(listing, el);
-          }}
-        />
-      </div>
+      <ListingCardPattern
+        id={listing.id}
+        image={listing.image}
+        hoverVideo={listing.hoverVideo}
+        title={listing.title}
+        year={listing.date}
+        rating={listing.rating}
+        isGuestFavorite={listing.isGuestFavorite}
+        imageLayoutId={`listing-card-image-${listing.id}`}
+        onClick={() => {
+          onOpen(listing);
+        }}
+      />
     </motion.div>
   );
 }
@@ -203,7 +205,7 @@ interface CardGridProps {
   listingItemVariants: Variants;
   isMobile: boolean;
   shouldReduceMotion: boolean;
-  onOpen: (listing: ListingCardType, element: HTMLDivElement) => void;
+  onOpen: (listing: ListingCardType) => void;
 }
 
 function CardGrid({
@@ -241,107 +243,11 @@ function CardGrid({
   );
 }
 
-interface GenieTransitionLayerProps {
-  snapshot: TransitionSnapshot | null;
-  shouldReduceMotion: boolean;
-  onComplete: () => void;
-}
-
-function GenieTransitionLayer({ snapshot, shouldReduceMotion, onComplete }: GenieTransitionLayerProps) {
-  return (
-    <AnimatePresence>
-      {snapshot && (
-        <>
-          <motion.div
-            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
-            animate={{ opacity: 1, backdropFilter: 'blur(12px)' }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.16 : 0.38, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(10, 14, 24, 0.30)',
-              zIndex: 80,
-              pointerEvents: 'none',
-            }}
-          />
-
-          <motion.div
-            initial={{
-              left: snapshot.cardRect.left,
-              top: snapshot.cardRect.top,
-              width: snapshot.cardRect.width,
-              height: snapshot.cardRect.height,
-              borderRadius: 24,
-            }}
-            animate={{
-              left: 0,
-              top: 0,
-              width: window.innerWidth,
-              height: window.innerHeight,
-              borderRadius: 0,
-            }}
-            exit={{ opacity: 0 }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0.2 }
-                : { type: 'spring', stiffness: 205, damping: 23, mass: 0.9 }
-            }
-            onAnimationComplete={onComplete}
-            style={{
-              position: 'fixed',
-              overflow: 'hidden',
-              zIndex: 81,
-              background: '#ffffff',
-              boxShadow: '0 34px 90px rgba(0,0,0,0.30)',
-              pointerEvents: 'none',
-              willChange: 'transform, opacity',
-            }}
-          >
-            <motion.div
-              initial={{ scaleX: 1, scaleY: 1 }}
-              animate={
-                shouldReduceMotion
-                  ? { scaleX: 1, scaleY: 1 }
-                  : { scaleX: [1, 1.045, 0.985, 1], scaleY: [1, 0.95, 1.02, 1] }
-              }
-              transition={{ duration: 0.64, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                transformOrigin: 'center',
-              }}
-            />
-
-            <motion.img
-              src={snapshot.listing.image}
-              alt={snapshot.listing.title}
-              initial={{ opacity: 1, scale: 1 }}
-              animate={{ opacity: 0, scale: 1.08 }}
-              transition={{ duration: shouldReduceMotion ? 0.16 : 0.62, ease: [0.22, 1, 0.36, 1] }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                pointerEvents: 'none',
-                willChange: 'transform, opacity',
-              }}
-            />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
 export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const navigate = useNavigate();
   const [listings, setListings] = useState<ListingCardType[]>(MOCK_LISTINGS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTransition, setActiveTransition] = useState<TransitionSnapshot | null>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{ listingId: string } | null>(null);
   const isMobile = useIsMobile();
   const searchBarAreaRef = useRef<HTMLDivElement>(null);
@@ -360,7 +266,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const prevSectionRef = useRef<string | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  const direction = useMemo(() => OPEN_FROM_BOTTOM, [activeSection]);
+  const direction = OPEN_FROM_BOTTOM;
 
   // Update ref AFTER direction is computed; clear on close so next open uses bottom-entry.
   useEffect(() => {
@@ -452,47 +358,17 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   );
 
   const openListing = useCallback(
-    (listing: ListingCardType, element: HTMLDivElement) => {
+    (listing: ListingCardType) => {
       if (pendingNavigation) return;
-      if (shouldReduceMotion) {
-        navigate(`/listing/${listing.id}`, { state: { guestCount: totalGuestCount } });
-        return;
-      }
-
-      const rect = element.getBoundingClientRect();
-      setActiveTransition({
-        listing: {
-          id: listing.id,
-          image: listing.image,
-          title: listing.title,
-          year: listing.date,
-          rating: listing.rating,
-          isGuestFavorite: listing.isGuestFavorite,
-        },
-        cardRect: {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
+      setPendingNavigation({ listingId: listing.id });
+      navigate(`/listing/${listing.id}`, {
+        state: {
+          guestCount: totalGuestCount,
         },
       });
-      setPendingNavigation({ listingId: listing.id });
     },
-    [navigate, pendingNavigation, shouldReduceMotion, totalGuestCount]
+    [navigate, pendingNavigation, totalGuestCount]
   );
-
-  const handleTransitionComplete = useCallback(() => {
-    if (!pendingNavigation) return;
-    const { listingId } = pendingNavigation;
-    setPendingNavigation(null);
-    setActiveTransition(null);
-    navigate(`/listing/${listingId}`, {
-      state: {
-        guestCount: totalGuestCount,
-        fromGenieTransition: true,
-      },
-    });
-  }, [navigate, pendingNavigation, totalGuestCount]);
 
   const measureEraTabCenter = useCallback(() => {
     if (!searchDropdownRef.current) return;
@@ -981,12 +857,6 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
           />
         )}
       </main>
-
-      <GenieTransitionLayer
-        snapshot={activeTransition}
-        shouldReduceMotion={Boolean(shouldReduceMotion)}
-        onComplete={handleTransitionComplete}
-      />
 
       <Footer
         copyrightText="© 2026 Warpbnb Inc."
