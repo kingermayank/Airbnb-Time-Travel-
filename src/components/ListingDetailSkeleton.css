@@ -1,0 +1,228 @@
+.listing-detail-skeleton {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.listing-detail-skeleton__shell {
+  flex: 1;
+}
+
+.listing-detail-skeleton__max {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.listing-detail-skeleton__title-row,
+.listing-detail-skeleton__summary,
+.listing-detail-skeleton__content,
+.listing-detail-skeleton__host-row,
+.listing-detail-skeleton__feature,
+.listing-detail-skeleton__host-card-top,
+.listing-detail-skeleton__booking-row,
+.listing-detail-skeleton__amenity {
+  display: flex;
+}
+
+.listing-detail-skeleton__title-row,
+.listing-detail-skeleton__summary,
+.listing-detail-skeleton__content {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.listing-detail-skeleton__title-row {
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.listing-detail-skeleton__actions,
+.listing-detail-skeleton__summary-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.listing-detail-skeleton__summary {
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.listing-detail-skeleton__summary-left,
+.listing-detail-skeleton__summary-right,
+.listing-detail-skeleton__paragraphs,
+.listing-detail-skeleton__feature-copy,
+.listing-detail-skeleton__host-card-copy,
+.listing-detail-skeleton__booking-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.listing-detail-skeleton__summary-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.listing-detail-skeleton__content {
+  gap: 32px;
+}
+
+.listing-detail-skeleton__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.listing-detail-skeleton__booking {
+  width: 360px;
+  flex: 0 0 360px;
+}
+
+.listing-detail-skeleton__booking-card {
+  position: sticky;
+  top: 125px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.listing-detail-skeleton__booking-row {
+  gap: 12px;
+}
+
+.listing-detail-skeleton__booking-row > * {
+  flex: 1;
+}
+
+.listing-detail-skeleton__section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.listing-detail-skeleton__feature-list,
+.listing-detail-skeleton__amenities,
+.listing-detail-skeleton__reviews,
+.listing-detail-skeleton__beds,
+.listing-detail-skeleton__things {
+  display: grid;
+  gap: 12px;
+}
+
+.listing-detail-skeleton__feature,
+.listing-detail-skeleton__amenity {
+  align-items: center;
+  gap: 12px;
+}
+
+.listing-detail-skeleton__feature-list,
+.listing-detail-skeleton__things {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.listing-detail-skeleton__amenities {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.listing-detail-skeleton__reviews {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.listing-detail-skeleton__beds {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.listing-detail-skeleton__host-row,
+.listing-detail-skeleton__host-card-top {
+  align-items: center;
+  gap: 16px;
+}
+
+.listing-detail-skeleton__mobile-hero {
+  position: relative;
+  margin-bottom: 24px;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.listing-detail-skeleton__mobile-hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.lds-bar,
+.lds-card,
+.lds-circle {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: lds-shimmer 1.35s ease-in-out infinite;
+}
+
+.lds-bar {
+  border-radius: 999px;
+}
+
+.lds-card {
+  border-radius: 16px;
+}
+
+.lds-circle {
+  border-radius: 999px;
+}
+
+@keyframes lds-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .listing-detail-skeleton__content {
+    flex-direction: column;
+  }
+
+  .listing-detail-skeleton__booking {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .listing-detail-skeleton__booking-card {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .listing-detail-skeleton__summary,
+  .listing-detail-skeleton__title-row {
+    flex-direction: column;
+  }
+
+  .listing-detail-skeleton__actions,
+  .listing-detail-skeleton__summary-right {
+    gap: 16px;
+  }
+
+  .listing-detail-skeleton__amenities,
+  .listing-detail-skeleton__beds {
+    grid-template-columns: 1fr;
+  }
+}

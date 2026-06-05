@@ -1,3 +1,5 @@
+import { slugifyListingTitle } from './listing-slug';
+
 const LISTING_HOVER_VIDEO_BY_SLUG: Record<string, string> = {
   'alexander-s-campaign-tent-persia': '/videos/listing-hover/alexander-s-campaign-tent-persia.mp4',
   'cave-dwelling-lascaux': '/videos/listing-hover/cave-dwelling-lascaux.mp4',
@@ -17,10 +19,5 @@ const LISTING_HOVER_VIDEO_BY_SLUG: Record<string, string> = {
 };
 
 export function getListingHoverVideo(title: string): string | undefined {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  return LISTING_HOVER_VIDEO_BY_SLUG[slug];
+  return LISTING_HOVER_VIDEO_BY_SLUG[slugifyListingTitle(title)];
 }

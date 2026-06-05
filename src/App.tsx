@@ -41,8 +41,8 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={generatedComponent} />
-          <Route path="/listing/:id" element={<ListingDetailPage hideHeader />} />
-          <Route path="/listing/:id/confirm" element={<ConfirmationPage />} />
+          <Route path="/listing/:slug" element={<ListingDetailPage hideHeader />} />
+          <Route path="/listing/:slug/confirm" element={<ConfirmationPage />} />
           <Route path="/faq" element={<FaqPage hideHeader />} />
           <Route path="/feedback" element={<FeedbackPage hideHeader />} />
           <Route path="/support" element={<SupportPage hideHeader />} />

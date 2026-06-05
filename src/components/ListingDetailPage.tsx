@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchListingDetails } from '../lib/supabase-queries';
+import { getListingPath } from '../lib/listing-slug';
 import { computeBookingPricing } from '../lib/booking-pricing';
 import { formatEraAppropriateDuration } from '../lib/era-time-measurements';
 import { getHostDisplayName } from '../lib/host-display-name';
@@ -30,7 +31,7 @@ import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../design-system/patterns/
 import { HeaderRightSlotWithUserMenu } from './HeaderRightSlotWithUserMenu';
 import { PhotoViewer } from './PhotoViewer';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { HeroGridSkeleton } from './HeroGridSkeleton';
+import { ListingDetailSkeleton } from './ListingDetailSkeleton';
 import { TransactionLoader } from './TransactionLoader';
 import { Modal } from './Modal';
 import { useDeviceType } from '../hooks/use-mobile';
@@ -161,7 +162,7 @@ function formatHostingDuration(joinDate: string | null, listing: ListingDetails)
 // ============================================================================
 
 export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean }) {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [listing, setListing] = useState<ListingDetails | null>(null);
@@ -246,7 +247,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   }, [listing, location.state]);
 
   const loadListing = useCallback(async () => {
-    if (!id) {
+    if (!slug) {
       setError('No listing ID provided');
       setLoading(false);
       return;
@@ -256,7 +257,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
       setLoading(true);
       setError(null);
       setImageLoadingStates({});
-      const data = await fetchListingDetails(id);
+      const state = location.state as { listingId?: string; guestCount?: number } | null;
+      const data = await fetchListingDetails(state?.listingId ?? slug);
       if (data) {
         setListing(data);
       } else {
@@ -268,7 +270,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [location.state, slug]);
 
   useEffect(() => {
     loadListing();
@@ -276,12 +278,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
 
   useEffect(() => {
     setVisibleReviewCount(6);
-  }, [id]);
+  }, [slug]);
 
   // Reset mobile carousel to first image when listing changes
   useEffect(() => {
     setMobileCarouselIndex(0);
-  }, [id, listing?.id]);
+  }, [slug, listing?.id]);
 
   // Scroll mobile carousel when index changes (e.g. after tapping chevrons)
   useEffect(() => {
@@ -358,7 +360,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const handleReserve = () => {
     if (!listing || totalGuests < 1) return;
 
-    navigate(`/listing/${listing.id}/confirm`, {
+    navigate(`${getListingPath(listing.title)}/confirm`, {
       state: {
         listing, // full listing so confirm page can render immediately without refetch
         booking: {
@@ -479,61 +481,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     : { duration: 0.18, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
 
   if (loading) {
-    return (
-      <div style={{
-          backgroundColor: '#ffffff',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
-          {!hideHeader && (
-            <Header
-              brandName="WarpBnB"
-              navItems={FIGMA_NAV_ITEMS}
-              activeNavLabel="Time Travel"
-              onNavClick={() => {}}
-              onLogoClick={() => navigate('/')}
-              rightSlot={<HeaderRightSlotWithUserMenu />}
-              showDivider
-            />
-          )}
-          <div style={{ flex: 1, padding: '32px 24px 64px 24px' }}>
-            <div style={{ maxWidth: 1120, width: '100%', margin: '0 auto' }}>
-              {/* Title row placeholder: mirrors the real title/action row footprint so hero Y-position matches loaded state */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '24px',
-                  gap: '16px',
-                  flexWrap: isCompactLayout ? 'wrap' : 'nowrap',
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    height: isCompactLayout ? 32 : 40,
-                  }}
-                />
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: isCompactLayout ? '16px' : '24px',
-                    flexShrink: 0,
-                  }}
-                >
-                  <div style={{ width: 56, height: 18 }} />
-                  <div style={{ width: 56, height: 18 }} />
-                </div>
-              </div>
-              <HeroGridSkeleton />
-            </div>
-          </div>
-        </div>
-    );
+    return <ListingDetailSkeleton hideHeader={hideHeader} isMobile={isMobile} isTablet={isTablet} />;
   }
 
   if (error || !listing) {

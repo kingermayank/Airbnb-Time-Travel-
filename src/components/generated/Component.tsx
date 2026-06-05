@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { fetchListings } from '../../lib/supabase-queries';
+import { getListingPath } from '../../lib/listing-slug';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import type { ListingCard as ListingCardType } from '../../types/database';
 import {
@@ -361,9 +362,10 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
     (listing: ListingCardType) => {
       if (pendingNavigation) return;
       setPendingNavigation({ listingId: listing.id });
-      navigate(`/listing/${listing.id}`, {
+      navigate(getListingPath(listing.title), {
         state: {
           guestCount: totalGuestCount,
+          listingId: listing.id,
         },
       });
     },

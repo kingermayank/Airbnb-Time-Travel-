@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hasDedicatedAmenityIcon } from './amenity-icons';
 import { getListingHoverVideo } from './listing-hover-videos';
+import { slugifyListingTitle } from './listing-slug';
 import type {
   Listing,
   ListingWithHost,
@@ -153,7 +154,7 @@ export async function fetchListings(options?: FetchListingsOptions): Promise<Lis
 /**
  * Mock listing details for development/testing
  */
-function getMockListingDetails(listingId: string): ListingDetails | null {
+function getMockListingDetails(listingKey: string): ListingDetails | null {
   const mockData: Record<string, ListingDetails> = {
     'mock-2': {
       id: 'mock-2',
@@ -254,39 +255,17 @@ function getMockListingDetails(listingId: string): ListingDetails | null {
     }
   };
 
-  return mockData[listingId] || null;
+  const byKey = mockData[listingKey];
+  if (byKey) return byKey;
+  const normalized = slugifyListingTitle(listingKey);
+  return Object.values(mockData).find((listing) => slugifyListingTitle(listing.title) === normalized) || null;
 }
 
 /**
  * Fetch a single listing with all related data (host, images, amenities, reviews)
  */
-export async function fetchListingDetails(listingId: string): Promise<ListingDetails | null> {
-  // ALWAYS check for mock data first - this ensures mock listings work regardless of Supabase config
-  // This MUST happen before any async operations or Supabase calls
-  if (listingId && listingId.startsWith('mock-')) {
-    const mockData = getMockListingDetails(listingId);
-    if (mockData) {
-      if (isDev) console.log('✅ Returning mock data for listing:', listingId);
-      return mockData;
-    }
-    if (isDev) console.warn('⚠️ Mock listing ID provided but no mock data found:', listingId);
-  }
-
-  // If Supabase is not configured, try mock data as fallback for any ID
-  if (!isSupabaseConfigured()) {
-    if (isDev) console.log('ℹ️ Supabase not configured, trying mock data for:', listingId);
-    const mockData = getMockListingDetails(listingId);
-    if (mockData) {
-      return mockData;
-    }
-    return null;
-  }
-
+async function fetchListingDetailsById(listingId: string): Promise<ListingDetails | null> {
   try {
-    // Only try Supabase if it's configured AND it's not a mock ID
-    if (isDev) console.log('🔍 Fetching listing details for ID:', listingId);
-    
-    // Fetch listing with host - explicitly include all fields from populate-full-listing-content.sql
     const { data: listingData, error: listingError } = await supabase
       .from('listings')
       .select(`
@@ -296,44 +275,20 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       .eq('id', listingId)
       .single();
 
-    if (listingError) {
-      console.error('❌ Error fetching listing from Supabase:', listingError);
-      console.error('Error details:', {
-        message: listingError.message,
-        details: listingError.details,
-        hint: listingError.hint,
-        code: listingError.code
-      });
-      
-      // Don't throw - return null so the UI can show a proper error message
+    if (listingError || !listingData) {
+      if (listingError && isDev) {
+        console.warn('⚠️ Listing lookup by ID failed:', listingError.message);
+      }
       return null;
     }
 
-    if (!listingData) {
-      if (isDev) console.warn('⚠️ No listing data returned for ID:', listingId);
-      return null;
-    }
-
-    if (isDev) {
-      console.log('✅ Listing data fetched successfully:', listingData.title);
-      console.log('🔍 Host data structure:', {
-        hostsType: Array.isArray(listingData.hosts) ? 'array' : typeof listingData.hosts,
-        hostsValue: listingData.hosts
-      });
-    }
-
-    // Handle hosts - Supabase might return it as an array or object
-    // For foreign key relationships, it should be a single object, but let's be safe
     let hostData: Host | null = null;
     if (listingData.hosts) {
-      if (Array.isArray(listingData.hosts)) {
-        hostData = listingData.hosts[0] as Host | null;
-      } else {
-        hostData = listingData.hosts as Host;
-      }
+      hostData = Array.isArray(listingData.hosts)
+        ? (listingData.hosts[0] as Host | null)
+        : (listingData.hosts as Host);
     }
 
-    // Fetch images
     const { data: imagesData, error: imagesError } = await supabase
       .from('listing_images')
       .select('*')
@@ -344,7 +299,6 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       console.error('Error fetching listing images:', imagesError);
     }
 
-    // Fetch amenities
     const { data: amenitiesData, error: amenitiesError } = await supabase
       .from('listing_amenities')
       .select(`
@@ -357,7 +311,6 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       console.error('Error fetching listing amenities:', amenitiesError);
     }
 
-    // Fetch reviews
     const { data: reviewsData, error: reviewsError } = await supabase
       .from('reviews')
       .select('*')
@@ -368,12 +321,16 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       console.error('Error fetching reviews:', reviewsError);
     }
 
-    // Transform the data — only include amenities that have a dedicated icon
-    const amenities = (amenitiesData || [])
-      .map((item: any) => item.amenities)
-      .filter((amenity: Amenity | null) => amenity !== null && hasDedicatedAmenityIcon(amenity.name)) as Amenity[];
+    const amenitiesRows = (amenitiesData || []) as Array<{
+      amenities: Amenity | Amenity[] | null;
+    }>;
+    const amenities = amenitiesRows
+      .flatMap((item) => {
+        if (Array.isArray(item.amenities)) return item.amenities;
+        return item.amenities ? [item.amenities] : [];
+      })
+      .filter((amenity): amenity is Amenity => hasDedicatedAmenityIcon(amenity.name));
 
-    // Dedupe reviews by listing_id + reviewer_name + review_date + comment (keep first occurrence)
     const seen = new Set<string>();
     const uniqueReviews = (reviewsData || []).filter((r: Review) => {
       const key = `${r.listing_id}|${r.reviewer_name}|${r.review_date}|${r.comment ?? ''}`;
@@ -382,32 +339,53 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
       return true;
     }) as Review[];
 
-    // Extract listing data without hosts to avoid duplication
-    const { hosts: _, ...listingDataWithoutHosts } = listingData as any;
-
-    const result: ListingDetails = {
+    const { hosts: _, ...listingDataWithoutHosts } = listingData as ListingDetails;
+    return {
       ...listingDataWithoutHosts,
       hosts: hostData,
       listing_images: (imagesData || []) as ListingImage[],
-      amenities: amenities,
+      amenities,
       reviews: uniqueReviews,
     };
+  } catch (error) {
+    console.error('❌ Exception in fetchListingDetailsById:', error);
+    return null;
+  }
+}
 
-    if (isDev) {
-      console.log('✅ Listing details assembled successfully:', {
-        title: result.title,
-        host: result.hosts?.name || 'No host',
-        imagesCount: result.listing_images.length,
-        amenitiesCount: result.amenities.length,
-        reviewsCount: result.reviews.length
-      });
+export async function fetchListingDetails(listingId: string): Promise<ListingDetails | null> {
+  if (listingId && listingId.startsWith('mock-')) {
+    const mockData = getMockListingDetails(listingId);
+    if (mockData) return mockData;
+  }
+
+  if (!isSupabaseConfigured()) {
+    return getMockListingDetails(listingId);
+  }
+
+  const direct = await fetchListingDetailsById(listingId);
+  if (direct) return direct;
+
+  try {
+    const normalizedKey = slugifyListingTitle(listingId);
+    const { data: listingIndex, error: listingIndexError } = await supabase
+      .from('listings')
+      .select('id, title')
+      .order('created_at', { ascending: false });
+
+    if (listingIndexError) {
+      console.error('❌ Error resolving listing slug from Supabase:', listingIndexError);
+      return null;
     }
 
-    return result;
+    const resolvedListing = (listingIndex || []).find((listing) => (
+      listing.id === listingId || slugifyListingTitle(listing.title) === normalizedKey
+    ));
+
+    if (!resolvedListing) return null;
+    return await fetchListingDetailsById(resolvedListing.id);
   } catch (error) {
     console.error('❌ Exception in fetchListingDetails:', error);
-    console.error('Exception details:', error instanceof Error ? error.message : String(error));
-    // Don't throw - return null so the UI can show a proper error message
     return null;
   }
 }
@@ -429,7 +407,7 @@ export async function fetchListingsWithHosts(): Promise<ListingWithHost[]> {
     throw error;
   }
 
-  return (data || []).map((item: any) => ({
+  return ((data || []) as ListingWithHost[]).map((item) => ({
     ...item,
     hosts: item.hosts as Host | null,
   }));

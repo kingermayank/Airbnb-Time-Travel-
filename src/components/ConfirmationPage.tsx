@@ -1,6 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchListingDetails, createBooking, getBookingCountForListing } from '../lib/supabase-queries';
+import { getListingPath } from '../lib/listing-slug';
+import { slugifyListingTitle } from '../lib/listing-slug';
 import { computeBookingPricing } from '../lib/booking-pricing';
 import type { ListingDetails } from '../types/database';
 import { Button, IconButton, Text, Divider, Footer } from '../design-system';
@@ -105,9 +107,10 @@ function AnimatedSwapText({
 }
 
 export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHeader?: boolean }) {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const locationState = (location as { state?: unknown }).state;
   const [listing, setListing] = useState<ListingDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,12 +181,12 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   }, [bookingConfirmed, showWarpLoader, listing, confirmationBgColor]);
 
   const fetchListingForConfirm = useCallback(async () => {
-    if (!id) return;
+    if (!slug) return;
 
     try {
       setIsLoading(true);
       setError(null);
-      const data = await fetchListingDetails(id);
+      const data = await fetchListingDetails(slug);
       if (!data) {
         setError('Listing not found. Please check the console for details.');
       } else {
@@ -195,21 +198,19 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [slug]);
 
   useEffect(() => {
-    if (!id) {
+    if (!slug) {
       setError('Listing ID is required');
       setIsLoading(false);
       return;
     }
 
-    const routeState = (location as {
-      state?: {
-        listing?: ListingDetails;
-        booking?: { guests?: number; durationMultiplier?: number };
-      };
-    }).state;
+    const routeState = locationState as {
+      listing?: ListingDetails;
+      booking?: { guests?: number; durationMultiplier?: number };
+    } | null;
     const bookingGuests = routeState?.booking?.guests;
     if (typeof bookingGuests === 'number' && bookingGuests >= 1) {
       setAdultsCount(bookingGuests);
@@ -223,14 +224,14 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
     }
 
     const stateListing = routeState?.listing;
-    if (stateListing && stateListing.id === id && stateListing.price_per_night != null) {
+    if (stateListing && slugifyListingTitle(stateListing.title) === slug && stateListing.price_per_night != null) {
       setListing(stateListing);
       setIsLoading(false);
       return;
     }
 
     fetchListingForConfirm();
-  }, [id, (location as { state?: unknown }).state, fetchListingForConfirm]);
+  }, [slug, locationState, fetchListingForConfirm]);
 
   const handlePaymentMethodChange = () => {
     setTempSelectedPayment(selectedPaymentMethod);
@@ -278,9 +279,9 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
   }, []);
 
   const getShareUrl = useCallback(() => {
-    const path = `/listing/${listing?.id ?? id}`;
+    const path = listing ? getListingPath(listing.title) : `/listing/${slug ?? ''}`;
     return `${window.location.origin}${path}`;
-  }, [listing?.id, id]);
+  }, [listing, slug]);
 
   const copyToClipboard = useCallback(async (text: string, feedbackLabel: string) => {
     try {
@@ -527,7 +528,7 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
           <IconButton
             icon={<ChevronLeft size={24} strokeWidth={2} style={{ color: 'var(--ds-text-primary)' }} />}
             ariaLabel="Back to listing"
-            onClick={() => navigate(`/listing/${id}`)}
+            onClick={() => navigate(listing ? getListingPath(listing.title) : `/listing/${slug}`)}
             style={{ minWidth: 44, minHeight: 44, width: 44, height: 44, flexShrink: 0 }}
           />
           <div style={{
