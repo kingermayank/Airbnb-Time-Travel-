@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
+import { Search } from 'lucide-react';
 import { fetchListings } from '../../lib/supabase-queries';
 import { getListingPath } from '../../lib/listing-slug';
 import { isSupabaseConfigured } from '../../lib/supabase';
@@ -496,9 +497,9 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
         style={{
           width: '100%',
           padding: isMobile
-            ? 'var(--ds-spacing-12) 0 var(--ds-spacing-20) 0'
-            : 'var(--ds-spacing-12) 0 var(--ds-spacing-32) 0',
-          backgroundColor: 'var(--ds-surface-header)',
+            ? '8px 0 var(--ds-spacing-20) 0'
+            : '8px 0 var(--ds-spacing-32) 0',
+          background: 'linear-gradient(to bottom, #FBFBFB 0%, #F7F7F7 100%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -540,13 +541,13 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
                   border: '1px solid var(--ds-border-light)',
                   borderRadius: 16,
                   background: activeSection === 'where' ? 'var(--ds-surface-icon-button)' : 'transparent',
-                  minHeight: 52,
+                  minHeight: 46,
                   textAlign: 'left',
                   padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 500, color: 'var(--ds-text-primary)' }}>
                   Theme
                 </div>
                 <div style={{ fontSize: 'var(--ds-text-14)', color: selectedTheme ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
@@ -560,13 +561,13 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
                   border: '1px solid var(--ds-border-light)',
                   borderRadius: 16,
                   background: activeSection === 'era' ? 'var(--ds-surface-icon-button)' : 'transparent',
-                  minHeight: 52,
+                  minHeight: 46,
                   textAlign: 'left',
                   padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 500, color: 'var(--ds-text-primary)' }}>
                   Era
                 </div>
                 <div style={{ fontSize: 'var(--ds-text-14)', color: selectedEra ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
@@ -580,21 +581,36 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
                   border: '1px solid var(--ds-border-light)',
                   borderRadius: 16,
                   background: activeSection === 'who' ? 'var(--ds-surface-icon-button)' : 'transparent',
-                  minHeight: 52,
+                  minHeight: 46,
                   textAlign: 'left',
                   padding: 'var(--ds-spacing-10) var(--ds-spacing-12)',
                   cursor: 'pointer',
                 }}
               >
-                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 'var(--ds-font-semibold)', color: 'var(--ds-text-primary)' }}>
+                <div style={{ fontSize: 'var(--ds-text-12)', fontWeight: 500, color: 'var(--ds-text-primary)' }}>
                   Who
                 </div>
                 <div style={{ fontSize: 'var(--ds-text-14)', color: totalGuestCount > 0 ? 'var(--ds-text-primary)' : 'var(--ds-text-secondary)' }}>
                   {totalGuestCount > 0 ? `${totalGuestCount} guest${totalGuestCount !== 1 ? 's' : ''}` : 'Add guests'}
                 </div>
               </button>
-              <Button variant="primary" size="md" onClick={handleSearch} style={{ width: '100%', borderRadius: 999 }}>
-                Search
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSearch}
+                style={{
+                  width: '100%',
+                  borderRadius: 999,
+                  backgroundColor: 'var(--ds-accent)',
+                  borderColor: 'var(--ds-accent)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>Search</span>
+                <Search size={12} strokeWidth={3} />
               </Button>
             </div>
           ) : (
@@ -731,7 +747,7 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
         <div
           style={{
             padding: 'var(--ds-spacing-12) var(--ds-spacing-80)',
-            backgroundColor: 'var(--ds-surface-header)',
+            backgroundColor: '#F7F7F7',
             borderBottom: '1px solid var(--ds-border-light)',
             fontSize: 'var(--ds-text-14)',
             color: 'var(--ds-text-secondary)',

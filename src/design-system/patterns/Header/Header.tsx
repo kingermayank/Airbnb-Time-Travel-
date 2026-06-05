@@ -95,7 +95,7 @@ const headerBaseStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  backgroundColor: 'var(--ds-surface-header)',
+  backgroundColor: '#FBFBFB',
   boxSizing: 'border-box',
   position: 'sticky',
   top: 0,
@@ -106,7 +106,7 @@ const headerWrapperWithDividerStyle: React.CSSProperties = {
   position: 'sticky',
   top: 0,
   zIndex: 10,
-  backgroundColor: 'var(--ds-surface-header)',
+  backgroundColor: '#FBFBFB',
 };
 
 const headerDividerStyle: React.CSSProperties = {

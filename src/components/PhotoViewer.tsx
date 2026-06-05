@@ -1,26 +1,98 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { Share, Heart, ChevronLeft } from 'lucide-react';
 import { SpotlightOverlay } from '@/components/ui/image-reveal';
 import { useDeviceType } from '../hooks/use-mobile';
 import './PhotoViewer.css';
 
+type DesktopSlotKey = 'offLeft' | 'left' | 'center' | 'right' | 'offRight';
+
+type MotionSlotFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type DesktopFrames = Record<DesktopSlotKey, MotionSlotFrame>;
+
+type DesktopAnimationState = {
+  cycle: number;
+  direction: 1 | -1;
+  nextIndex: number;
+};
+
 interface PhotoViewerProps {
   images: string[];
   initialIndex: number;
   onClose: () => void;
   onShareClick?: () => void;
-  layoutId?: string; // Deprecated: kept for backward compatibility, no longer used
+  layoutId?: string;
   enableSpotlight?: boolean;
 }
 
-// Slower, gentler ease-out so motion feels fluid and not abrupt
-const CAROUSEL_TRANSITION = {
+const PANEL_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+const PANEL_TRANSITION = {
   type: 'tween' as const,
-  duration: 0.82,
-  ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+  duration: 0.36,
+  ease: PANEL_EASE,
 };
+
+const DESKTOP_PANEL_GAP = 48;
+const PANEL_RADIUS = 16;
+const DESKTOP_CENTER_SCALE = 0.975;
+
+function wrapIndex(index: number, count: number) {
+  return ((index % count) + count) % count;
+}
+
+function getDesktopFrames(width: number, height: number): DesktopFrames {
+  const sideWidth = width * 0.08;
+  const sideHeight = height * 0.68;
+  const gap = DESKTOP_PANEL_GAP;
+  const rawCenterWidth = width - sideWidth * 2 - gap * 2;
+  const centerWidth = rawCenterWidth * DESKTOP_CENTER_SCALE;
+  const centerHeight = centerWidth * (9 / 16);
+  const sideTop = (height - sideHeight) / 2;
+  const centerTop = (height - centerHeight) / 2;
+  const offscreenGap = Math.max(40, sideWidth * 0.72);
+  const centerX = sideWidth + gap + (rawCenterWidth - centerWidth) / 2;
+
+  return {
+    offLeft: {
+      x: -sideWidth - offscreenGap,
+      y: sideTop,
+      width: sideWidth,
+      height: sideHeight,
+    },
+    left: {
+      x: 0,
+      y: sideTop,
+      width: sideWidth,
+      height: sideHeight,
+    },
+    center: {
+      x: centerX,
+      y: centerTop,
+      width: centerWidth,
+      height: centerHeight,
+    },
+    right: {
+      x: width - sideWidth,
+      y: sideTop,
+      width: sideWidth,
+      height: sideHeight,
+    },
+    offRight: {
+      x: width + offscreenGap,
+      y: sideTop,
+      width: sideWidth,
+      height: sideHeight,
+    },
+  };
+}
 
 export function PhotoViewer({
   images,
@@ -34,28 +106,36 @@ export function PhotoViewer({
   const [isLiked, setIsLiked] = useState(false);
   const [isShareHovered, setIsShareHovered] = useState(false);
   const [isSaveHovered, setIsSaveHovered] = useState(false);
-  const [navDuration, setNavDuration] = useState(CAROUSEL_TRANSITION.duration);
-  const [navDirection, setNavDirection] = useState<1 | -1>(1);
+  const [desktopAnimation, setDesktopAnimation] = useState<DesktopAnimationState | null>(null);
+  const [desktopSceneSize, setDesktopSceneSize] = useState({ width: 0, height: 0 });
   const [viewerGlare, setViewerGlare] = useState({ x: 50, y: 50, active: false });
   const shouldReduceMotion = useReducedMotion();
   const { isMobile } = useDeviceType();
   const mainImageFrameRef = useRef<HTMLDivElement>(null);
-  const lastNavAtRef = useRef(0);
-  const navResetTimerRef = useRef<number | null>(null);
+  const desktopSceneRef = useRef<HTMLDivElement>(null);
+  const queuedDesktopDirectionRef = useRef<1 | -1 | null>(null);
+  const animationCycleRef = useRef(0);
   const touchStartXRef = useRef<number | null>(null);
 
   const n = images.length;
-  const prevIndex = n > 1 ? (currentIndex - 1 + n) % n : 0;
-  const nextIndex = n > 1 ? (currentIndex + 1) % n : 0;
+  const prevIndex = n > 1 ? wrapIndex(currentIndex - 1, n) : 0;
+  const nextIndex = n > 1 ? wrapIndex(currentIndex + 1, n) : 0;
+  const prev2Index = n > 2 ? wrapIndex(currentIndex - 2, n) : 0;
+  const next2Index = n > 2 ? wrapIndex(currentIndex + 2, n) : 0;
   const hasMultiple = n > 1;
-  const effectiveRightIndex = n === 2 ? null : nextIndex;
+  const hasDualPreview = n > 2;
   const supportsHover =
     typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
-  const enableViewerGlare = supportsHover && !shouldReduceMotion && !enableSpotlight;
-  const slotTransition = shouldReduceMotion
-    ? { duration: 0 }
-    : { ...CAROUSEL_TRANSITION, duration: navDuration };
+  const canUseGlare = supportsHover && !shouldReduceMotion && !enableSpotlight;
+  const isDesktopAnimating = !isMobile && desktopAnimation !== null;
+  const desktopFrames =
+    !isMobile && desktopSceneSize.width > 0 && desktopSceneSize.height > 0
+      ? getDesktopFrames(desktopSceneSize.width, desktopSceneSize.height)
+      : null;
+  const canAnimateDesktop = !isMobile && !shouldReduceMotion && n > 2 && desktopFrames !== null;
+  const transition = shouldReduceMotion ? { duration: 0 } : PANEL_TRANSITION;
   const centerCardShadow = '0 20px 60px rgba(0, 0, 0, 0.4)';
+  const displayIndex = desktopAnimation?.nextIndex ?? currentIndex;
   const centerLayoutId =
     layoutId && currentIndex === initialIndex
       ? layoutId
@@ -63,58 +143,29 @@ export function PhotoViewer({
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
+    setDesktopAnimation(null);
+    queuedDesktopDirectionRef.current = null;
   }, [initialIndex]);
 
   useEffect(() => {
-    return () => {
-      if (navResetTimerRef.current != null) {
-        window.clearTimeout(navResetTimerRef.current);
-      }
+    if (isMobile) return;
+    const element = desktopSceneRef.current;
+    if (!element) return;
+
+    const updateSceneSize = () => {
+      const rect = element.getBoundingClientRect();
+      setDesktopSceneSize({
+        width: rect.width,
+        height: rect.height,
+      });
     };
-  }, []);
 
-  const tuneNavigationMomentum = useCallback((direction: 1 | -1) => {
-    if (shouldReduceMotion) return;
-    setNavDirection(direction);
-    const now = Date.now();
-    const rapid = now - lastNavAtRef.current < 280;
-    lastNavAtRef.current = now;
-    setNavDuration(rapid ? 0.38 : CAROUSEL_TRANSITION.duration);
-    if (navResetTimerRef.current != null) {
-      window.clearTimeout(navResetTimerRef.current);
-    }
-    navResetTimerRef.current = window.setTimeout(() => {
-      setNavDuration(CAROUSEL_TRANSITION.duration);
-    }, 280);
-  }, [shouldReduceMotion]);
+    updateSceneSize();
+    const observer = new ResizeObserver(updateSceneSize);
+    observer.observe(element);
 
-  // Previous = go to lower index (image 2 -> 1). Next = go to higher index (image 1 -> 2).
-  const handlePrevious = useCallback(() => {
-    tuneNavigationMomentum(-1);
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : n - 1));
-  }, [n, tuneNavigationMomentum]);
-
-  const handleNext = useCallback(() => {
-    tuneNavigationMomentum(1);
-    setCurrentIndex((prev) => (prev < n - 1 ? prev + 1 : 0));
-  }, [n, tuneNavigationMomentum]);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    touchStartXRef.current = e.touches[0]?.clientX ?? null;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (!hasMultiple || touchStartXRef.current == null) return;
-    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
-    const deltaX = endX - touchStartXRef.current;
-    touchStartXRef.current = null;
-    if (Math.abs(deltaX) < 44) return;
-    if (deltaX > 0) {
-      handlePrevious();
-    } else {
-      handleNext();
-    }
-  }, [handleNext, handlePrevious, hasMultiple]);
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -134,7 +185,85 @@ export function PhotoViewer({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [handlePrevious, handleNext, onClose]);
+  });
+
+  const commitDesktopAnimation = useCallback((cycle: number) => {
+    setDesktopAnimation((active) => {
+      if (!active || active.cycle !== cycle) return active;
+      const committedIndex = active.nextIndex;
+      const queuedDirection = queuedDesktopDirectionRef.current;
+      queuedDesktopDirectionRef.current = null;
+      setCurrentIndex(committedIndex);
+      if (queuedDirection && n > 2) {
+        window.requestAnimationFrame(() => {
+          animationCycleRef.current += 1;
+          setDesktopAnimation({
+            cycle: animationCycleRef.current,
+            direction: queuedDirection,
+            nextIndex: wrapIndex(committedIndex + queuedDirection, n),
+          });
+        });
+      }
+      return null;
+    });
+  }, [n]);
+
+  const startDesktopStep = useCallback((direction: 1 | -1) => {
+    if (!hasMultiple) return;
+
+    if (desktopAnimation) {
+      queuedDesktopDirectionRef.current = direction;
+      return;
+    }
+
+    if (!canAnimateDesktop) {
+      setCurrentIndex((prev) => wrapIndex(prev + direction, n));
+      return;
+    }
+
+    animationCycleRef.current += 1;
+    setViewerGlare((prev) => ({ ...prev, active: false }));
+    setDesktopAnimation({
+      cycle: animationCycleRef.current,
+      direction,
+      nextIndex: wrapIndex(currentIndex + direction, n),
+    });
+  }, [canAnimateDesktop, currentIndex, desktopAnimation, hasMultiple, n]);
+
+  const handlePrevious = useCallback(() => {
+    if (!hasMultiple) return;
+    if (isMobile || shouldReduceMotion) {
+      setCurrentIndex((prev) => wrapIndex(prev - 1, n));
+      return;
+    }
+    startDesktopStep(-1);
+  }, [hasMultiple, isMobile, n, shouldReduceMotion, startDesktopStep]);
+
+  const handleNext = useCallback(() => {
+    if (!hasMultiple) return;
+    if (isMobile || shouldReduceMotion) {
+      setCurrentIndex((prev) => wrapIndex(prev + 1, n));
+      return;
+    }
+    startDesktopStep(1);
+  }, [hasMultiple, isMobile, n, shouldReduceMotion, startDesktopStep]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = e.touches[0]?.clientX ?? null;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultiple || touchStartXRef.current == null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartXRef.current;
+    const deltaX = endX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(deltaX) < 44) return;
+    if (deltaX > 0) {
+      handlePrevious();
+    } else {
+      handleNext();
+    }
+  }, [handleNext, handlePrevious, hasMultiple]);
 
   const handleShare = () => {
     if (onShareClick) {
@@ -167,6 +296,357 @@ export function PhotoViewer({
     },
   };
 
+  const renderStaticPanel = (
+    frame: MotionSlotFrame,
+    options: {
+      key: string;
+      imageIndex: number;
+      role: 'left' | 'center' | 'right';
+      panelRef?: React.RefObject<HTMLDivElement | null>;
+      interactive?: boolean;
+      layoutIdValue?: string;
+    },
+  ) => {
+    const isCenter = options.role === 'center';
+    const borderRadius =
+      options.role === 'left'
+        ? `0 ${PANEL_RADIUS}px ${PANEL_RADIUS}px 0`
+        : options.role === 'right'
+          ? `${PANEL_RADIUS}px 0 0 ${PANEL_RADIUS}px`
+          : `${PANEL_RADIUS}px`;
+
+    return (
+      <motion.div
+        key={options.key}
+        layout={isCenter}
+        layoutId={options.layoutIdValue}
+        transition={transition}
+        initial={false}
+        animate={{
+          left: frame.x,
+          top: frame.y,
+          width: frame.width,
+          height: frame.height,
+          opacity: 1,
+        }}
+        style={{
+          position: 'absolute',
+          overflow: 'hidden',
+          borderRadius,
+          boxShadow: isCenter ? centerCardShadow : 'none',
+        }}
+      >
+        <div
+          ref={options.panelRef}
+          onTouchStart={isCenter ? handleTouchStart : undefined}
+          onTouchEnd={isCenter ? handleTouchEnd : undefined}
+          onMouseMove={isCenter && options.interactive ? ((e) => {
+            if (!canUseGlare) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const relativeX = e.clientX - rect.left;
+            const relativeY = e.clientY - rect.top;
+            const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+            const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
+            setViewerGlare({ x: percentX, y: percentY, active: true });
+          }) : undefined}
+          onMouseEnter={isCenter && options.interactive ? (() => {
+            if (!canUseGlare) return;
+            setViewerGlare((prev) => ({ ...prev, active: true }));
+          }) : undefined}
+          onMouseLeave={isCenter && options.interactive ? (() => {
+            if (!canUseGlare) return;
+            setViewerGlare((prev) => ({ ...prev, active: false }));
+          }) : undefined}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden',
+            borderRadius,
+          }}
+        >
+          <img
+            src={images[options.imageIndex]}
+            alt={isCenter ? `Photo ${options.imageIndex + 1} of ${images.length}` : ''}
+            aria-hidden={!isCenter}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition:
+                options.role === 'left'
+                  ? 'right center'
+                  : options.role === 'right'
+                    ? 'left center'
+                    : 'center',
+              filter: isCenter ? 'none' : 'brightness(0.9) saturate(1.05) blur(1.6px)',
+              transform: isCenter ? 'scale(1)' : 'scale(1.03)',
+            }}
+          />
+          {isCenter && options.interactive && <SpotlightOverlay enabled={enableSpotlight} />}
+          {isCenter && options.interactive && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: canUseGlare && viewerGlare.active ? 0.52 : 0,
+                transition: 'opacity 0.2s ease',
+                pointerEvents: 'none',
+                mixBlendMode: 'screen',
+                filter: 'blur(4px) saturate(1.05)',
+                background:
+                  `radial-gradient(circle 44px at ${viewerGlare.x}% ${viewerGlare.y}%, ` +
+                  'hsla(2, 88%, 62%, 0.38) 0%, ' +
+                  'hsla(44, 95%, 62%, 0.34) 28%, ' +
+                  'hsla(190, 92%, 64%, 0.30) 56%, ' +
+                  'hsla(318, 92%, 66%, 0.32) 78%, ' +
+                  'hsla(318, 92%, 66%, 0) 100%)',
+              }}
+            />
+          )}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.28)',
+              opacity: isCenter ? 0 : 1,
+              pointerEvents: 'none',
+            }}
+          />
+          {!isCenter && (
+            <>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: options.role === 'left'
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)'
+                    : 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                  mixBlendMode: 'screen',
+                  pointerEvents: 'none',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: options.role === 'left'
+                    ? 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)'
+                    : 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
+                  pointerEvents: 'none',
+                }}
+              />
+            </>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderAnimatedPanel = (
+    key: string,
+    imageIndex: number,
+    from: MotionSlotFrame,
+    to: MotionSlotFrame,
+    role: 'left' | 'center' | 'right',
+    onComplete?: () => void,
+  ) => {
+    const isCenter = role === 'center';
+    return (
+      <motion.div
+        key={key}
+        initial={{
+          left: from.x,
+          top: from.y,
+          width: from.width,
+          height: from.height,
+          opacity: 1,
+        }}
+        animate={{
+          left: to.x,
+          top: to.y,
+          width: to.width,
+          height: to.height,
+          opacity: 1,
+        }}
+        transition={transition}
+        onAnimationComplete={onComplete}
+        style={{
+          position: 'absolute',
+          overflow: 'hidden',
+          borderRadius: `${PANEL_RADIUS}px`,
+          boxShadow: isCenter ? centerCardShadow : 'none',
+          willChange: 'left, top, width, height',
+        }}
+      >
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden',
+            borderRadius: `${PANEL_RADIUS}px`,
+          }}
+        >
+          <img
+            src={images[imageIndex]}
+            alt={isCenter ? `Photo ${imageIndex + 1} of ${images.length}` : ''}
+            aria-hidden={!isCenter}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition:
+                role === 'left'
+                  ? 'right center'
+                  : role === 'right'
+                    ? 'left center'
+                    : 'center',
+              filter: isCenter ? 'none' : 'brightness(0.9) saturate(1.05) blur(1.6px)',
+              transform: isCenter ? 'scale(1)' : 'scale(1.03)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.28)',
+              opacity: isCenter ? 0 : 1,
+              pointerEvents: 'none',
+            }}
+          />
+          {!isCenter && (
+            <>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: role === 'left'
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)'
+                    : 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
+                  mixBlendMode: 'screen',
+                  pointerEvents: 'none',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: role === 'left'
+                    ? 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)'
+                    : 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
+                  pointerEvents: 'none',
+                }}
+              />
+            </>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderDesktopScene = () => {
+    if (!desktopFrames) return null;
+
+    const leadCycle = desktopAnimation?.cycle;
+    const leadComplete = leadCycle != null ? () => commitDesktopAnimation(leadCycle) : undefined;
+
+    if (!desktopAnimation) {
+      return (
+        <>
+          {renderStaticPanel(desktopFrames.left, {
+            key: `idle-left-${prevIndex}`,
+            imageIndex: prevIndex,
+            role: 'left',
+          })}
+          {renderStaticPanel(desktopFrames.center, {
+            key: `idle-center-${currentIndex}`,
+            imageIndex: currentIndex,
+            role: 'center',
+            panelRef: mainImageFrameRef,
+            interactive: true,
+            layoutIdValue: centerLayoutId,
+          })}
+          {hasDualPreview && renderStaticPanel(desktopFrames.right, {
+            key: `idle-right-${nextIndex}`,
+            imageIndex: nextIndex,
+            role: 'right',
+          })}
+        </>
+      );
+    }
+
+    if (desktopAnimation.direction === 1) {
+      return (
+        <>
+          {renderAnimatedPanel(
+            `anim-left-out-${prevIndex}-${desktopAnimation.cycle}`,
+            prevIndex,
+            desktopFrames.left,
+            desktopFrames.offLeft,
+            'left',
+          )}
+          {renderAnimatedPanel(
+            `anim-center-to-left-${currentIndex}-${desktopAnimation.cycle}`,
+            currentIndex,
+            desktopFrames.center,
+            desktopFrames.left,
+            'left',
+          )}
+          {renderAnimatedPanel(
+            `anim-right-to-center-${nextIndex}-${desktopAnimation.cycle}`,
+            nextIndex,
+            desktopFrames.right,
+            desktopFrames.center,
+            'center',
+            leadComplete,
+          )}
+          {renderAnimatedPanel(
+            `anim-incoming-right-${next2Index}-${desktopAnimation.cycle}`,
+            next2Index,
+            desktopFrames.offRight,
+            desktopFrames.right,
+            'right',
+          )}
+        </>
+      );
+    }
+
+    return (
+      <>
+        {renderAnimatedPanel(
+          `anim-right-out-${nextIndex}-${desktopAnimation.cycle}`,
+          nextIndex,
+          desktopFrames.right,
+          desktopFrames.offRight,
+          'right',
+        )}
+        {renderAnimatedPanel(
+          `anim-center-to-right-${currentIndex}-${desktopAnimation.cycle}`,
+          currentIndex,
+          desktopFrames.center,
+          desktopFrames.right,
+          'right',
+        )}
+        {renderAnimatedPanel(
+          `anim-left-to-center-${prevIndex}-${desktopAnimation.cycle}`,
+          prevIndex,
+          desktopFrames.left,
+          desktopFrames.center,
+          'center',
+          leadComplete,
+        )}
+        {renderAnimatedPanel(
+          `anim-incoming-left-${prev2Index}-${desktopAnimation.cycle}`,
+          prev2Index,
+          desktopFrames.offLeft,
+          desktopFrames.left,
+          'left',
+        )}
+      </>
+    );
+  };
+
   const viewer = (
     <AnimatePresence>
       <motion.div
@@ -189,12 +669,12 @@ export function PhotoViewer({
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest('[data-photo-viewer-control="true"]')) return;
-          if (!mainImageFrameRef.current?.contains(target)) {
+          const activeFrame = isMobile ? mainImageFrameRef.current : desktopSceneRef.current;
+          if (!activeFrame?.contains(target)) {
             onClose();
           }
         }}
       >
-        {/* Top Bar - white text and icons on dark */}
         <div
           data-photo-viewer-control="true"
           style={{
@@ -254,7 +734,7 @@ export function PhotoViewer({
               pointerEvents: 'none',
             }}
           >
-            {currentIndex + 1} / {images.length}
+            {displayIndex + 1} / {images.length}
           </div>
 
           <div
@@ -314,291 +794,126 @@ export function PhotoViewer({
           </div>
         </div>
 
-        {/* Carousel row: shared-layout animation so center/side images physically flow between slots */}
-        <LayoutGroup id="photo-viewer-carousel">
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              padding: isMobile ? '64px 0 86px' : '80px 0 60px',
-              boxSizing: 'border-box',
-              zIndex: 9999,
-              overflow: 'hidden',
-              maxHeight: isMobile ? '100dvh' : '85vh',
-            }}
-          >
-            {/* Left strip */}
-            {!isMobile && (
-              <div
-                style={{
-                  flex: '0 0 8%',
-                  height: '68%',
-                  minHeight: 120,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  borderRadius: '0 16px 16px 0',
-                  background: 'transparent',
-                }}
-              >
-                {hasMultiple && (
-                  <>
-                    <motion.div
-                      layout
-                      layoutId={`photo-viewer-image-${prevIndex}`}
-                      transition={slotTransition}
-                      initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: '0 16px 16px 0',
-                        overflow: 'hidden',
-                        transformOrigin: 'center',
-                        boxShadow: 'none',
-                      }}
-                    >
-                      <img
-                        src={images[prevIndex]}
-                        alt=""
-                        aria-hidden
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'right center',
-                          filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
-                          transform: 'scale(1.03)',
-                        }}
-                      />
-                      <motion.div
-                        key={`left-overlay-${prevIndex}`}
-                        initial={shouldReduceMotion ? false : { opacity: navDirection === 1 ? 0.18 : 1 }}
-                        transition={slotTransition}
-                        animate={{ opacity: 1 }}
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'rgba(0, 0, 0, 0.28)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
-                          mixBlendMode: 'screen',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                    </motion.div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Center slot */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            padding: isMobile ? '64px 0 86px' : '80px 0 60px',
+            boxSizing: 'border-box',
+            zIndex: 9999,
+            overflow: 'hidden',
+            maxHeight: isMobile ? '100dvh' : '85vh',
+          }}
+        >
+          {isMobile ? (
             <div
+              ref={mainImageFrameRef}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onMouseMove={(e) => {
+                if (!canUseGlare) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const relativeX = e.clientX - rect.left;
+                const relativeY = e.clientY - rect.top;
+                const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
+                const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
+                setViewerGlare({ x: percentX, y: percentY, active: true });
+              }}
+              onMouseEnter={() => {
+                if (!canUseGlare) return;
+                setViewerGlare((prev) => ({ ...prev, active: true }));
+              }}
+              onMouseLeave={() => {
+                if (!canUseGlare) return;
+                setViewerGlare((prev) => ({ ...prev, active: false }));
+              }}
               style={{
-                flex: isMobile ? '1 1 100%' : '1 1 84%',
-                minWidth: 0,
-                alignSelf: 'center',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: isMobile ? '0 16px' : '0 64px',
                 position: 'relative',
-                height: '100%',
+                width: '100%',
+                maxWidth: 'calc(100vw - 32px)',
+                aspectRatio: '4 / 5',
+                maxHeight: 'calc(100dvh - 190px)',
+                overflow: 'hidden',
+                borderRadius: PANEL_RADIUS,
+                background: 'transparent',
+                margin: '0 auto',
               }}
             >
-              <div
-                ref={mainImageFrameRef}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onMouseMove={(e) => {
-                  if (!enableViewerGlare) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const relativeX = e.clientX - rect.left;
-                  const relativeY = e.clientY - rect.top;
-                  const percentX = Math.max(0, Math.min(100, (relativeX / rect.width) * 100));
-                  const percentY = Math.max(0, Math.min(100, (relativeY / rect.height) * 100));
-                  setViewerGlare({ x: percentX, y: percentY, active: true });
-                }}
-                onMouseEnter={() => {
-                  if (!enableViewerGlare) return;
-                  setViewerGlare((prev) => ({ ...prev, active: true }));
-                }}
-                onMouseLeave={() => {
-                  if (!enableViewerGlare) return;
-                  setViewerGlare((prev) => ({ ...prev, active: false }));
-                }}
+              <motion.div
+                layout
+                layoutId={centerLayoutId}
+                transition={transition}
+                initial={false}
+                animate={{ opacity: 1, scale: 1 }}
                 style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: isMobile ? 'calc(100vw - 32px)' : '100%',
-                  aspectRatio: isMobile ? '4 / 5' : '16 / 9',
-                  maxHeight: isMobile ? 'calc(100dvh - 190px)' : undefined,
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: `${PANEL_RADIUS}px`,
                   overflow: 'hidden',
-                  borderRadius: 16,
-                  background: 'transparent',
+                  transformOrigin: 'center',
+                  boxShadow: centerCardShadow,
                 }}
               >
-                <motion.div
-                  layout
-                  layoutId={centerLayoutId}
-                  transition={slotTransition}
-                  initial={shouldReduceMotion ? false : {
-                    scale: 0.94,
-                    x: navDirection === 1 ? -18 : 18,
+                <img
+                  src={images[currentIndex]}
+                  alt={`Photo ${currentIndex + 1} of ${images.length}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
                   }}
-                  animate={{ scale: 1, x: 0 }}
+                />
+                <SpotlightOverlay enabled={enableSpotlight} />
+                <div
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    transformOrigin: 'center',
-                    boxShadow: centerCardShadow,
-                    scale: 1,
+                    opacity: canUseGlare && viewerGlare.active ? 0.52 : 0,
+                    transition: 'opacity 0.2s ease',
+                    pointerEvents: 'none',
+                    mixBlendMode: 'screen',
+                    filter: 'blur(4px) saturate(1.05)',
+                    background:
+                      `radial-gradient(circle 44px at ${viewerGlare.x}% ${viewerGlare.y}%, ` +
+                      'hsla(2, 88%, 62%, 0.38) 0%, ' +
+                      'hsla(44, 95%, 62%, 0.34) 28%, ' +
+                      'hsla(190, 92%, 64%, 0.30) 56%, ' +
+                      'hsla(318, 92%, 66%, 0.32) 78%, ' +
+                      'hsla(318, 92%, 66%, 0) 100%)',
                   }}
-                >
-                  <img
-                    src={images[currentIndex]}
-                    alt={`Photo ${currentIndex + 1} of ${images.length}`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: isMobile ? 'contain' : 'cover',
-                      objectPosition: 'center',
-                    }}
-                  />
-                  <SpotlightOverlay enabled={enableSpotlight} />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: enableViewerGlare && viewerGlare.active ? 0.52 : 0,
-                      transition: 'opacity 0.2s ease',
-                      pointerEvents: 'none',
-                      mixBlendMode: 'screen',
-                      filter: 'blur(4px) saturate(1.05)',
-                      background:
-                        `radial-gradient(circle 44px at ${viewerGlare.x}% ${viewerGlare.y}%, ` +
-                        'hsla(2, 88%, 62%, 0.38) 0%, ' +
-                        'hsla(44, 95%, 62%, 0.34) 28%, ' +
-                        'hsla(190, 92%, 64%, 0.30) 56%, ' +
-                        'hsla(318, 92%, 66%, 0.32) 78%, ' +
-                        'hsla(318, 92%, 66%, 0) 100%)',
-                    }}
-                  />
-                  <motion.div
-                    key={`center-overlay-${currentIndex}`}
-                    initial={shouldReduceMotion ? false : { opacity: 0.38 }}
-                    transition={slotTransition}
-                    animate={{ opacity: 0 }}
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'rgba(0, 0, 0, 0.28)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                </motion.div>
-              </div>
+                />
+                <motion.div
+                  key={`center-overlay-${currentIndex}`}
+                  initial={shouldReduceMotion ? false : { opacity: 0.38 }}
+                  transition={transition}
+                  animate={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0, 0, 0, 0.28)',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </motion.div>
             </div>
+          ) : (
+            <div
+              ref={desktopSceneRef}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              {renderDesktopScene()}
+            </div>
+          )}
+        </div>
 
-            {/* Right strip */}
-            {!isMobile && (
-              <div
-                style={{
-                  flex: '0 0 8%',
-                  height: '68%',
-                  minHeight: 120,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  borderRadius: '16px 0 0 16px',
-                  background: 'transparent',
-                }}
-              >
-                {hasMultiple && effectiveRightIndex != null && (
-                  <>
-                    <motion.div
-                      layout
-                      layoutId={`photo-viewer-image-${effectiveRightIndex}`}
-                      transition={slotTransition}
-                      initial={shouldReduceMotion ? false : { opacity: 0.9, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: '16px 0 0 16px',
-                        overflow: 'hidden',
-                        transformOrigin: 'center',
-                        boxShadow: 'none',
-                      }}
-                    >
-                      <img
-                        src={images[effectiveRightIndex]}
-                        alt=""
-                        aria-hidden
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'left center',
-                          filter: 'brightness(0.9) saturate(1.05) blur(1.6px)',
-                          transform: 'scale(1.03)',
-                        }}
-                      />
-                      <motion.div
-                        key={`right-overlay-${effectiveRightIndex}`}
-                        initial={shouldReduceMotion ? false : { opacity: navDirection === -1 ? 0.18 : 1 }}
-                        transition={slotTransition}
-                        animate={{ opacity: 1 }}
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'rgba(0, 0, 0, 0.28)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
-                          mixBlendMode: 'screen',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                    </motion.div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </LayoutGroup>
-
-        {/* Navigation Arrows - black background, white icon (over side panels) */}
         {hasMultiple && !isMobile && (
           <>
             <button

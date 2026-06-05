@@ -93,8 +93,8 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
     };
   }, [isOpen]);
 
-  const motionDuration = shouldReduceMotion ? 0 : 0.2;
-  const motionEase = [0.25, 0.46, 0.45, 0.94] as const;
+  const motionDuration = shouldReduceMotion ? 0 : 0.12;
+  const motionEase = [0.2, 0, 0, 1] as const;
 
   const backdropTransition = { duration: motionDuration, ease: motionEase };
   const contentTransition = { duration: motionDuration, ease: motionEase };
@@ -114,9 +114,9 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
             ref={contentRef}
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
-            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95, y: 40 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.98, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 40 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.985 }}
             transition={contentTransition}
             style={{
               backgroundColor: 'rgb(255, 255, 255)',
@@ -132,4 +132,3 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
 
   return createPortal(modalNode, document.body);
 }
-

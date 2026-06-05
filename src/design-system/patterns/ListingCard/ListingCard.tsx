@@ -233,7 +233,7 @@ export function ListingCard({
 
   const imageContainerDynamicStyle: React.CSSProperties = {
     height: 248,
-    borderRadius: 'var(--ds-radius-lg)',
+    borderRadius: 'calc(var(--ds-radius-lg) + 4px)',
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#f3f3f3',
@@ -245,7 +245,7 @@ export function ListingCard({
       ? undefined
       : `transform ${HOVER_DURATION_MS}ms ${EASE_OUT}, box-shadow ${HOVER_DURATION_MS}ms ease`,
     boxShadow: isHoveringImage
-      ? '0 12px 28px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06)'
+      ? '0 16px 34px rgba(0,0,0,0.13), 0 6px 16px rgba(0,0,0,0.08)'
       : '0 4px 12px rgba(0,0,0,0.04)',
     willChange: 'transform, opacity',
     ['--ds-listing-highlight-x' as string]: '50%',

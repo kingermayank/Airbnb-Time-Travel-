@@ -184,7 +184,6 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
   const [isSaved, setIsSaved] = useState(false);
-  const [photoViewerLayoutId, setPhotoViewerLayoutId] = useState<string | undefined>(undefined);
   const [hoveredHeroImageKey, setHoveredHeroImageKey] = useState<string | null>(null);
   const [heroGlare, setHeroGlare] = useState<{ key: string | null; x: number; y: number; active: boolean }>({
     key: null,
@@ -205,10 +204,9 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const durationDropdownRef = useRef<HTMLDivElement>(null);
   const bookingCardRef = useRef<HTMLDivElement>(null);
   const appliedInitialGuestCountRef = useRef(false);
-  const mobileCarouselRef = useRef<HTMLDivElement>(null);
-  const mobileCarouselScrollTimeoutRef = useRef<number | null>(null);
-  const isProgrammaticScrollRef = useRef(false);
+  const mobileTouchStartXRef = useRef<number | null>(null);
   const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
+  const [mobileCarouselDirection, setMobileCarouselDirection] = useState<1 | -1>(1);
   const { isMobile, isTablet } = useDeviceType();
   const isCompactLayout = isMobile || isTablet;
   const shouldReduceMotion = useReducedMotion();
@@ -285,28 +283,6 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     setMobileCarouselIndex(0);
   }, [slug, listing?.id]);
 
-  // Scroll mobile carousel when index changes (e.g. after tapping chevrons)
-  useEffect(() => {
-    if (!isMobile || !mobileCarouselRef.current) return;
-    const el = mobileCarouselRef.current;
-    const w = el.offsetWidth;
-    if (w <= 0) return;
-    isProgrammaticScrollRef.current = true;
-    el.scrollTo({ left: mobileCarouselIndex * w, behavior: 'smooth' });
-    const t = window.setTimeout(() => {
-      isProgrammaticScrollRef.current = false;
-    }, 450);
-    return () => window.clearTimeout(t);
-  }, [mobileCarouselIndex, isMobile]);
-
-  useEffect(() => {
-    return () => {
-      if (mobileCarouselScrollTimeoutRef.current != null) {
-        window.clearTimeout(mobileCarouselScrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -340,9 +316,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isCompactLayout]);
 
-  const handleImageClick = (index: number, layoutId?: string) => {
+  const handleImageClick = (index: number) => {
     setPhotoViewerIndex(index);
-    setPhotoViewerLayoutId(layoutId);
     setShowPhotoViewer(true);
   };
 
@@ -351,6 +326,12 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
       ...prev,
       [imageKey]: true,
     }));
+  };
+
+  const handleImageReady = (imageKey: string, image: HTMLImageElement | null) => {
+    if (image?.complete) {
+      handleImageLoad(imageKey);
+    }
   };
 
   const isImageLoaded = (imageKey: string) => {
@@ -436,21 +417,31 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     ? [listing.main_image, ...galleryImages.map((img) => img.image_url)]
     : [];
 
-  // Sync mobile carousel index from scroll position when user finishes swiping (scrollend)
-  useEffect(() => {
-    const el = mobileCarouselRef.current;
-    if (!isMobile || !el || allImages.length === 0) return;
-    const handleScrollEnd = () => {
-      if (isProgrammaticScrollRef.current) return;
-      const w = el.offsetWidth;
-      if (w <= 0) return;
-      const index = Math.round(el.scrollLeft / w);
-      const clamped = Math.min(Math.max(0, index), allImages.length - 1);
-      setMobileCarouselIndex(clamped);
-    };
-    el.addEventListener('scrollend', handleScrollEnd);
-    return () => el.removeEventListener('scrollend', handleScrollEnd);
-  }, [isMobile, allImages.length]);
+  const handleMobileCarouselStep = useCallback((direction: 1 | -1) => {
+    if (allImages.length <= 1) return;
+    setMobileCarouselDirection(direction);
+    setMobileCarouselIndex((prev) => {
+      const next = prev + direction;
+      return Math.min(Math.max(0, next), allImages.length - 1);
+    });
+  }, [allImages.length]);
+
+  const handleMobileTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    mobileTouchStartXRef.current = e.touches[0]?.clientX ?? null;
+  }, []);
+
+  const handleMobileTouchEnd = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (allImages.length <= 1 || mobileTouchStartXRef.current == null) return;
+    const endX = e.changedTouches[0]?.clientX ?? mobileTouchStartXRef.current;
+    const deltaX = endX - mobileTouchStartXRef.current;
+    mobileTouchStartXRef.current = null;
+    if (Math.abs(deltaX) < 44) return;
+    if (deltaX > 0) {
+      handleMobileCarouselStep(-1);
+    } else {
+      handleMobileCarouselStep(1);
+    }
+  }, [allImages.length, handleMobileCarouselStep]);
 
   const reviewCount = listing?.reviews.length ?? 0;
   const hasMoreReviews = reviewCount > visibleReviewCount;
@@ -581,7 +572,6 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         <PhotoViewer
           images={allImages}
           initialIndex={photoViewerIndex}
-          layoutId={photoViewerLayoutId}
           enableSpotlight={enableArea51Spotlight}
           onShareClick={() => {
             setShowPhotoViewer(false);
@@ -834,51 +824,32 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
             </div>
             {/* Swipeable carousel: one viewport-width slide per image, images fill (cover) */}
             <div
-              ref={mobileCarouselRef}
               role="region"
               aria-label="Listing photos"
               style={{
-                overflowX: 'auto',
+                overflow: 'hidden',
                 overflowY: 'hidden',
-                scrollSnapType: 'x mandatory',
-                WebkitOverflowScrolling: 'touch',
-                touchAction: 'pan-x',
-                display: 'flex',
                 height: 320,
                 width: '100%',
                 maxWidth: '100vw',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
                 backgroundColor: '#111',
+                position: 'relative',
               }}
-              className="listing-mobile-photo-carousel"
-              onScroll={() => {
-                if (mobileCarouselScrollTimeoutRef.current != null) {
-                  window.clearTimeout(mobileCarouselScrollTimeoutRef.current);
-                }
-                mobileCarouselScrollTimeoutRef.current = window.setTimeout(() => {
-                  mobileCarouselScrollTimeoutRef.current = null;
-                  if (isProgrammaticScrollRef.current) return;
-                  const el = mobileCarouselRef.current;
-                  if (!el) return;
-                  const w = el.offsetWidth;
-                  if (w <= 0) return;
-                  const index = Math.round(el.scrollLeft / w);
-                  const clamped = Math.min(Math.max(0, index), allImages.length - 1);
-                  setMobileCarouselIndex(clamped);
-                }, 200);
-              }}
+              onTouchStart={handleMobileTouchStart}
+              onTouchEnd={handleMobileTouchEnd}
             >
-              {allImages.map((url, idx) => (
-                <div
-                  key={idx}
+              <AnimatePresence initial={false} custom={mobileCarouselDirection} mode="popLayout">
+                <motion.div
+                  key={mobileCarouselIndex}
+                  custom={mobileCarouselDirection}
+                  initial={shouldReduceMotion ? false : { x: mobileCarouselDirection > 0 ? '12%' : '-12%', opacity: 0.7 }}
+                  animate={{ x: '0%', opacity: 1 }}
+                  exit={shouldReduceMotion ? { opacity: 1 } : { x: mobileCarouselDirection > 0 ? '-12%' : '12%', opacity: 0.55 }}
+                  transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.34, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
                   style={{
+                    position: 'absolute',
+                    inset: 0,
                     width: '100%',
-                    minWidth: '100%',
-                    maxWidth: '100%',
-                    scrollSnapAlign: 'start',
-                    flexShrink: 0,
-                    position: 'relative',
                     height: '100%',
                     display: 'flex',
                     alignItems: 'center',
@@ -886,8 +857,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   }}
                 >
                   <img
-                    src={url}
-                    alt={idx === 0 ? listing.title : `${listing.title} photo ${idx + 1}`}
+                    src={allImages[mobileCarouselIndex]}
+                    alt={mobileCarouselIndex === 0 ? listing.title : `${listing.title} photo ${mobileCarouselIndex + 1}`}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -896,8 +867,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       verticalAlign: 'middle',
                     }}
                   />
-                </div>
-              ))}
+                </motion.div>
+              </AnimatePresence>
             </div>
             {/* Left/right chevrons to navigate photos */}
             {allImages.length > 1 && (
@@ -905,7 +876,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <button
                   type="button"
                   aria-label="Previous photo"
-                  onClick={() => setMobileCarouselIndex((prev) => Math.max(0, prev - 1))}
+                  onClick={() => handleMobileCarouselStep(-1)}
                   style={{
                     position: 'absolute',
                     left: 12,
@@ -930,7 +901,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 <button
                   type="button"
                   aria-label="Next photo"
-                  onClick={() => setMobileCarouselIndex((prev) => Math.min(allImages.length - 1, prev + 1))}
+                  onClick={() => handleMobileCarouselStep(1)}
                   style={{
                     position: 'absolute',
                     right: 12,
@@ -995,7 +966,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
         >
           {/* Main Image */}
           <div
-            onClick={() => handleImageClick(0, `listing-hero-image-0`)}
+            onClick={() => handleImageClick(0)}
             onMouseEnter={(e) => {
               setHoveredHeroImageKey('main');
               updateHeroGlare('main', e);
@@ -1039,7 +1010,9 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
               layoutId="listing-hero-image-0"
               src={listing.main_image}
               alt={listing.title}
+              ref={(node) => handleImageReady('main', node)}
               onLoad={() => handleImageLoad('main')}
+              onError={() => handleImageLoad('main')}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -1104,7 +1077,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
             return (
               <div
                 key={img.id}
-                onClick={() => handleImageClick(idx + 1, `listing-hero-image-${idx + 1}`)}
+                onClick={() => handleImageClick(idx + 1)}
                 onMouseEnter={(e) => {
                   setHoveredHeroImageKey(imageKey);
                   updateHeroGlare(imageKey, e);
@@ -1147,7 +1120,9 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                   layoutId={`listing-hero-image-${idx + 1}`}
                   src={img.image_url}
                   alt={img.caption || `Image ${idx + 2}`}
+                  ref={(node) => handleImageReady(imageKey, node)}
                   onLoad={() => handleImageLoad(imageKey)}
+                  onError={() => handleImageLoad(imageKey)}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -1196,7 +1171,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           })}
           <button
             type="button"
-            onClick={() => handleImageClick(0, 'listing-hero-image-0')}
+            onClick={() => handleImageClick(0)}
             style={{
               position: 'absolute',
               right: 16,
