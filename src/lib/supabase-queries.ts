@@ -24,6 +24,7 @@ export interface FetchListingsOptions {
  * Optional theme/era filter; applied only when provided (e.g. when user clicks Search).
  */
 const isDev = import.meta.env.DEV;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function fetchListings(options?: FetchListingsOptions): Promise<ListingCard[]> {
   if (!isSupabaseConfigured()) {
@@ -289,33 +290,37 @@ async function fetchListingDetailsById(listingId: string): Promise<ListingDetail
         : (listingData.hosts as Host);
     }
 
-    const { data: imagesData, error: imagesError } = await supabase
-      .from('listing_images')
-      .select('*')
-      .eq('listing_id', listingId)
-      .order('image_order', { ascending: true });
+    const [imagesResult, amenitiesResult, reviewsResult] = await Promise.all([
+      supabase
+        .from('listing_images')
+        .select('*')
+        .eq('listing_id', listingId)
+        .order('image_order', { ascending: true }),
+      supabase
+        .from('listing_amenities')
+        .select(`
+          amenity_id,
+          amenities (*)
+        `)
+        .eq('listing_id', listingId),
+      supabase
+        .from('reviews')
+        .select('*')
+        .eq('listing_id', listingId)
+        .order('review_date', { ascending: false }),
+    ]);
+
+    const { data: imagesData, error: imagesError } = imagesResult;
+    const { data: amenitiesData, error: amenitiesError } = amenitiesResult;
+    const { data: reviewsData, error: reviewsError } = reviewsResult;
 
     if (imagesError) {
       console.error('Error fetching listing images:', imagesError);
     }
 
-    const { data: amenitiesData, error: amenitiesError } = await supabase
-      .from('listing_amenities')
-      .select(`
-        amenity_id,
-        amenities (*)
-      `)
-      .eq('listing_id', listingId);
-
     if (amenitiesError) {
       console.error('Error fetching listing amenities:', amenitiesError);
     }
-
-    const { data: reviewsData, error: reviewsError } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('listing_id', listingId)
-      .order('review_date', { ascending: false });
 
     if (reviewsError) {
       console.error('Error fetching reviews:', reviewsError);
@@ -363,8 +368,10 @@ export async function fetchListingDetails(listingId: string): Promise<ListingDet
     return getMockListingDetails(listingId);
   }
 
-  const direct = await fetchListingDetailsById(listingId);
-  if (direct) return direct;
+  if (UUID_REGEX.test(listingId)) {
+    const direct = await fetchListingDetailsById(listingId);
+    if (direct) return direct;
+  }
 
   try {
     const normalizedKey = slugifyListingTitle(listingId);

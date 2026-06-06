@@ -51,6 +51,7 @@ export interface Listing {
   host_id: string | null;
   title: string;
   main_image: string;
+  thumbnail_image?: string | null;
   property_type: string | null;
   guest_capacity: number | null;
   bedrooms: number | null;

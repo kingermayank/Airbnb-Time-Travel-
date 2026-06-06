@@ -416,15 +416,17 @@ export function ConfirmationPage({ hideHeader: _hideHeader = false }: { hideHead
         },
   } as const;
 
-  /** Confirmed: enter with scale-up (0.98 → 1) + fade so it feels like it "lands" */
+  /** Confirmed: keep the page transition to a quiet fade; children handle the staged motion. */
   const confirmedPageVariants = {
-    hidden: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 },
+    hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      scale: 1,
-      transition: { duration: shouldReduceMotion ? 0.01 : 0.35, ease: easeSmooth },
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.2, ease: easeSmooth },
     },
-    exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.995 },
+    exit: {
+      opacity: 0,
+      transition: { duration: shouldReduceMotion ? 0.01 : 0.16, ease: easeSmooth },
+    },
   } as const;
 
   const stagedContainer = {

@@ -205,6 +205,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const bookingCardRef = useRef<HTMLDivElement>(null);
   const appliedInitialGuestCountRef = useRef(false);
   const mobileTouchStartXRef = useRef<number | null>(null);
+  const preloadedImageUrlsRef = useRef<Set<string>>(new Set());
   const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
   const [mobileCarouselDirection, setMobileCarouselDirection] = useState<1 | -1>(1);
   const { isMobile, isTablet } = useDeviceType();
@@ -316,23 +317,21 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isCompactLayout]);
 
-  const handleImageClick = (index: number) => {
-    setPhotoViewerIndex(index);
-    setShowPhotoViewer(true);
-  };
+  const handleImageLoad = useCallback((imageKey: string) => {
+    setImageLoadingStates((prev) => {
+      if (prev[imageKey]) return prev;
+      return {
+        ...prev,
+        [imageKey]: true,
+      };
+    });
+  }, []);
 
-  const handleImageLoad = (imageKey: string) => {
-    setImageLoadingStates((prev) => ({
-      ...prev,
-      [imageKey]: true,
-    }));
-  };
-
-  const handleImageReady = (imageKey: string, image: HTMLImageElement | null) => {
+  const handleImageReady = useCallback((imageKey: string, image: HTMLImageElement | null) => {
     if (image?.complete) {
       handleImageLoad(imageKey);
     }
-  };
+  }, [handleImageLoad]);
 
   const isImageLoaded = (imageKey: string) => {
     return imageLoadingStates[imageKey] === true;
@@ -416,6 +415,42 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
   const allImages = listing
     ? [listing.main_image, ...galleryImages.map((img) => img.image_url)]
     : [];
+
+  const preloadImage = useCallback((url: string | undefined) => {
+    if (!url || preloadedImageUrlsRef.current.has(url)) return;
+    preloadedImageUrlsRef.current.add(url);
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = url;
+  }, []);
+
+  const scheduleImagePreload = useCallback((url: string | undefined) => {
+    if (!url || preloadedImageUrlsRef.current.has(url)) return;
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+    };
+    if (idleWindow.requestIdleCallback) {
+      idleWindow.requestIdleCallback(() => preloadImage(url), { timeout: 1200 });
+      return;
+    }
+    window.setTimeout(() => preloadImage(url), 0);
+  }, [preloadImage]);
+
+  const firstImageUrl = allImages[0];
+  const nextImageUrl = allImages[1];
+  const previousImageUrl = allImages[allImages.length - 1];
+
+  useEffect(() => {
+    scheduleImagePreload(firstImageUrl);
+    scheduleImagePreload(nextImageUrl);
+    scheduleImagePreload(previousImageUrl);
+  }, [firstImageUrl, nextImageUrl, previousImageUrl, scheduleImagePreload]);
+
+  const handleImageClick = (index: number) => {
+    preloadImage(allImages[index]);
+    setPhotoViewerIndex(index);
+    setShowPhotoViewer(true);
+  };
 
   const handleMobileCarouselStep = useCallback((direction: 1 | -1) => {
     if (allImages.length <= 1) return;
@@ -863,6 +898,8 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
+                      objectPosition: 'center',
+                      backgroundColor: '#111',
                       display: 'block',
                       verticalAlign: 'middle',
                     }}
@@ -968,9 +1005,11 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
           <div
             onClick={() => handleImageClick(0)}
             onMouseEnter={(e) => {
+              scheduleImagePreload(allImages[0]);
               setHoveredHeroImageKey('main');
               updateHeroGlare('main', e);
             }}
+            onTouchStart={() => scheduleImagePreload(allImages[0])}
             onMouseMove={(e) => updateHeroGlare('main', e)}
             onMouseLeave={() => {
               setHoveredHeroImageKey((prev) => (prev === 'main' ? null : prev));
@@ -1020,6 +1059,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                objectPosition: 'center',
                 transition: 'transform 0.3s ease, opacity 0.38s ease, filter 0.38s ease',
                 opacity: isImageLoaded('main') ? 1 : 0,
                 filter: isImageLoaded('main') ? 'blur(0px)' : 'blur(8px)',
@@ -1079,9 +1119,11 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                 key={img.id}
                 onClick={() => handleImageClick(idx + 1)}
                 onMouseEnter={(e) => {
+                  scheduleImagePreload(allImages[idx + 1]);
                   setHoveredHeroImageKey(imageKey);
                   updateHeroGlare(imageKey, e);
                 }}
+                onTouchStart={() => scheduleImagePreload(allImages[idx + 1])}
                 onMouseMove={(e) => updateHeroGlare(imageKey, e)}
                 onMouseLeave={() => {
                   setHoveredHeroImageKey((prev) => (prev === imageKey ? null : prev));
@@ -1130,6 +1172,7 @@ export function ListingDetailPage({ hideHeader = false }: { hideHeader?: boolean
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: 'center',
                     transition: 'transform 0.3s ease, opacity 0.38s ease, filter 0.38s ease',
                     opacity: isImageLoaded(imageKey) ? 1 : 0,
                     filter: isImageLoaded(imageKey) ? 'blur(0px)' : 'blur(8px)',

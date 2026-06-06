@@ -7,6 +7,7 @@ import { useDeviceType } from '../hooks/use-mobile';
 import './PhotoViewer.css';
 
 type DesktopSlotKey = 'offLeft' | 'left' | 'center' | 'right' | 'offRight';
+type PanelRole = 'left' | 'center' | 'right';
 
 type MotionSlotFrame = {
   x: number;
@@ -32,17 +33,26 @@ interface PhotoViewerProps {
   enableSpotlight?: boolean;
 }
 
-const PANEL_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const PANEL_EASE: [number, number, number, number] = [0.25, 1, 0.4, 1];
 
 const PANEL_TRANSITION = {
   type: 'tween' as const,
-  duration: 0.36,
+  duration: 0.4,
   ease: PANEL_EASE,
 };
 
 const DESKTOP_PANEL_GAP = 48;
 const PANEL_RADIUS = 16;
 const DESKTOP_CENTER_SCALE = 0.975;
+
+function getPanelRadius(role: PanelRole) {
+  return {
+    borderTopLeftRadius: role === 'left' ? 0 : PANEL_RADIUS,
+    borderTopRightRadius: role === 'right' ? 0 : PANEL_RADIUS,
+    borderBottomRightRadius: role === 'right' ? 0 : PANEL_RADIUS,
+    borderBottomLeftRadius: role === 'left' ? 0 : PANEL_RADIUS,
+  };
+}
 
 function wrapIndex(index: number, count: number) {
   return ((index % count) + count) % count;
@@ -301,19 +311,14 @@ export function PhotoViewer({
     options: {
       key: string;
       imageIndex: number;
-      role: 'left' | 'center' | 'right';
+      role: PanelRole;
       panelRef?: React.RefObject<HTMLDivElement | null>;
       interactive?: boolean;
       layoutIdValue?: string;
     },
   ) => {
     const isCenter = options.role === 'center';
-    const borderRadius =
-      options.role === 'left'
-        ? `0 ${PANEL_RADIUS}px ${PANEL_RADIUS}px 0`
-        : options.role === 'right'
-          ? `${PANEL_RADIUS}px 0 0 ${PANEL_RADIUS}px`
-          : `${PANEL_RADIUS}px`;
+    const panelRadius = getPanelRadius(options.role);
 
     return (
       <motion.div
@@ -332,7 +337,7 @@ export function PhotoViewer({
         style={{
           position: 'absolute',
           overflow: 'hidden',
-          borderRadius,
+          ...panelRadius,
           boxShadow: isCenter ? centerCardShadow : 'none',
         }}
       >
@@ -362,7 +367,7 @@ export function PhotoViewer({
             width: '100%',
             height: '100%',
             overflow: 'hidden',
-            borderRadius,
+            borderRadius: 'inherit',
           }}
         >
           <img
@@ -448,10 +453,13 @@ export function PhotoViewer({
     imageIndex: number,
     from: MotionSlotFrame,
     to: MotionSlotFrame,
-    role: 'left' | 'center' | 'right',
+    fromRole: PanelRole,
+    toRole: PanelRole,
     onComplete?: () => void,
   ) => {
-    const isCenter = role === 'center';
+    const isCenter = toRole === 'center';
+    const fromRadius = getPanelRadius(fromRole);
+    const toRadius = getPanelRadius(toRole);
     return (
       <motion.div
         key={key}
@@ -461,6 +469,7 @@ export function PhotoViewer({
           width: from.width,
           height: from.height,
           opacity: 1,
+          ...fromRadius,
         }}
         animate={{
           left: to.x,
@@ -468,15 +477,16 @@ export function PhotoViewer({
           width: to.width,
           height: to.height,
           opacity: 1,
+          ...toRadius,
         }}
         transition={transition}
         onAnimationComplete={onComplete}
         style={{
           position: 'absolute',
           overflow: 'hidden',
-          borderRadius: `${PANEL_RADIUS}px`,
           boxShadow: isCenter ? centerCardShadow : 'none',
-          willChange: 'left, top, width, height',
+          willChange:
+            'left, top, width, height, border-radius',
         }}
       >
         <div
@@ -485,7 +495,7 @@ export function PhotoViewer({
             width: '100%',
             height: '100%',
             overflow: 'hidden',
-            borderRadius: `${PANEL_RADIUS}px`,
+            borderRadius: 'inherit',
           }}
         >
           <img
@@ -497,9 +507,9 @@ export function PhotoViewer({
               height: '100%',
               objectFit: 'cover',
               objectPosition:
-                role === 'left'
+                toRole === 'left'
                   ? 'right center'
-                  : role === 'right'
+                  : toRole === 'right'
                     ? 'left center'
                     : 'center',
               filter: isCenter ? 'none' : 'brightness(0.9) saturate(1.05) blur(1.6px)',
@@ -521,7 +531,7 @@ export function PhotoViewer({
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: role === 'left'
+                  background: toRole === 'left'
                     ? 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)'
                     : 'linear-gradient(225deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 35%)',
                   mixBlendMode: 'screen',
@@ -532,7 +542,7 @@ export function PhotoViewer({
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: role === 'left'
+                  background: toRole === 'left'
                     ? 'linear-gradient(90deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)'
                     : 'linear-gradient(270deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 55%)',
                   pointerEvents: 'none',
@@ -585,12 +595,14 @@ export function PhotoViewer({
             desktopFrames.left,
             desktopFrames.offLeft,
             'left',
+            'left',
           )}
           {renderAnimatedPanel(
             `anim-center-to-left-${currentIndex}-${desktopAnimation.cycle}`,
             currentIndex,
             desktopFrames.center,
             desktopFrames.left,
+            'center',
             'left',
           )}
           {renderAnimatedPanel(
@@ -598,6 +610,7 @@ export function PhotoViewer({
             nextIndex,
             desktopFrames.right,
             desktopFrames.center,
+            'right',
             'center',
             leadComplete,
           )}
@@ -606,6 +619,7 @@ export function PhotoViewer({
             next2Index,
             desktopFrames.offRight,
             desktopFrames.right,
+            'right',
             'right',
           )}
         </>
@@ -620,12 +634,14 @@ export function PhotoViewer({
           desktopFrames.right,
           desktopFrames.offRight,
           'right',
+          'right',
         )}
         {renderAnimatedPanel(
           `anim-center-to-right-${currentIndex}-${desktopAnimation.cycle}`,
           currentIndex,
           desktopFrames.center,
           desktopFrames.right,
+          'center',
           'right',
         )}
         {renderAnimatedPanel(
@@ -633,6 +649,7 @@ export function PhotoViewer({
           prevIndex,
           desktopFrames.left,
           desktopFrames.center,
+          'left',
           'center',
           leadComplete,
         )}
@@ -641,6 +658,7 @@ export function PhotoViewer({
           prev2Index,
           desktopFrames.offLeft,
           desktopFrames.left,
+          'left',
           'left',
         )}
       </>
