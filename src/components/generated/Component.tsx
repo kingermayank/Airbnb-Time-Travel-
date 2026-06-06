@@ -28,86 +28,7 @@ import { PORTAL_ICON_URL, MINDSCAPES_ICON_URL } from '../../design-system/patter
 import { HeaderRightSlotWithUserMenu } from '../HeaderRightSlotWithUserMenu';
 import { ListingCardSkeleton } from '../ListingCardSkeleton';
 import { useIsMobile } from '../../hooks/use-mobile';
-
-// Mock data - fallback until Supabase is populated (prices in Bitcoin)
-// Ordered according to homepage display order
-const MOCK_LISTINGS: ListingCardType[] = [
-  {
-    id: 'mock-3',
-    title: "Crystal Villa, Atlantis",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/bbe5b882-690a-4661-836a-08f66193c3f1.jpg",
-    hoverVideo: getListingHoverVideo("Crystal Villa, Atlantis"),
-    price: "₿0.012540 / hour",
-    rating: "4.82",
-    isGuestFavorite: true,
-  },
-  {
-    id: 'mock-9',
-    title: "Manhattan Loft, New York",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1e517539-a473-4b2a-b992-a49cc7dbbe8e.jpg",
-    hoverVideo: getListingHoverVideo("Manhattan Loft, New York"),
-    price: "₿0.002748 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-8',
-    title: "Alexander's Campaign Tent, Persia",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/31951292-b7a3-4d4e-9d00-944e3fd01f43.jpg",
-    hoverVideo: getListingHoverVideo("Alexander's Campaign Tent, Persia"),
-    price: "₿0.008244 / hour",
-    date: "330 BCE",
-  },
-  {
-    id: 'mock-1',
-    title: "Shah Jahan's Marble Suite, Agra",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/4d4e615e-dcce-4f7e-a73c-18add1151842.jpg",
-    hoverVideo: getListingHoverVideo("Shah Jahan's Marble Suite, Agra"),
-    price: "₿0.019032 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-2',
-    title: "Mars Colony Pod, Olympus Mons",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/7e511fa2-8f7a-4b6f-82d0-e82efff3c406.jpg",
-    hoverVideo: getListingHoverVideo("Mars Colony Pod, Olympus Mons"),
-    price: "₿0.008244 / hour",
-    rating: "4.82",
-    isGuestFavorite: true,
-  },
-  {
-    id: 'mock-4',
-    title: "First-Class Suite, RMS Titanic",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/ab970d7e-74d0-4a74-8e5c-4ca8f2a64ad0.jpg",
-    hoverVideo: getListingHoverVideo("First-Class Suite, RMS Titanic"),
-    price: "₿0.006768 / hour",
-    rating: "4.82",
-  },
-  {
-    id: 'mock-6',
-    title: "Floating Mountain Bungalow, Pandora",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/1221494e-450b-4112-b3ec-6845b91292d6.png",
-    hoverVideo: getListingHoverVideo("Floating Mountain Bungalow, Pandora"),
-    price: "₿0.027180 / hour",
-    rating: "4.82",
-    isGuestFavorite: true,
-  },
-  {
-    id: 'mock-7',
-    title: "Nile Villa, Ancient Egypt",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/04c1ff57-425d-4847-8646-178516b6c4f3.png",
-    hoverVideo: getListingHoverVideo("Nile Villa, Ancient Egypt"),
-    price: "₿0.009384 / hour",
-    date: "330 BCE",
-  },
-  {
-    id: 'mock-5',
-    title: "Resistance Safehouse Loft, Berlin",
-    image: "https://storage.googleapis.com/storage.magicpath.ai/user/331391857395396608/figma-assets/b2e96b48-0491-4bea-a1df-887341cc53d5.jpg",
-    hoverVideo: getListingHoverVideo("Resistance Safehouse Loft, Berlin"),
-    price: "₿0.003576 / hour",
-    rating: "4.82",
-  },
-];
+import { HOMEPAGE_LISTINGS } from '../../data/homepage-listings';
 
 const FIGMA_NAV_ITEMS = [
   { label: 'Time Travel', iconUrl: PORTAL_ICON_URL },
@@ -171,12 +92,13 @@ interface TransitionListing {
 
 interface CardProps {
   listing: ListingCardType;
+  priority: boolean;
   variants: Variants;
   shouldReduceMotion: boolean;
   onOpen: (listing: ListingCardType) => void;
 }
 
-function Card({ listing, variants, shouldReduceMotion, onOpen }: CardProps) {
+function Card({ listing, priority, variants, shouldReduceMotion, onOpen }: CardProps) {
   return (
     <motion.div
       variants={variants}
@@ -186,6 +108,8 @@ function Card({ listing, variants, shouldReduceMotion, onOpen }: CardProps) {
       <ListingCardPattern
         id={listing.id}
         image={listing.image}
+        imageLoading={priority ? 'eager' : 'lazy'}
+        imageFetchPriority={priority ? 'high' : 'auto'}
         hoverVideo={listing.hoverVideo}
         title={listing.title}
         year={listing.date}
@@ -232,10 +156,11 @@ function CardGrid({
         rowGap: 'var(--ds-spacing-40)',
       }}
     >
-      {listings.map((listing) => (
+      {listings.map((listing, index) => (
         <Card
           key={listing.id}
           listing={listing}
+          priority={index < (isMobile ? 1 : 3)}
           variants={listingItemVariants}
           shouldReduceMotion={shouldReduceMotion}
           onOpen={onOpen}
@@ -247,7 +172,7 @@ function CardGrid({
 
 export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const navigate = useNavigate();
-  const [listings, setListings] = useState<ListingCardType[]>(MOCK_LISTINGS);
+  const [listings, setListings] = useState<ListingCardType[]>(HOMEPAGE_LISTINGS);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingNavigation, setPendingNavigation] = useState<{ listingId: string } | null>(null);
@@ -384,28 +309,34 @@ export const AirbnbUi = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   }, []);
 
   const loadListings = useCallback(
-    async (theme?: string, era?: string) => {
+    async (theme?: string, era?: string, background = false) => {
       if (!isSupabaseConfigured()) return;
       try {
-        setIsLoading(true);
-        setError(null);
+        if (!background) {
+          setIsLoading(true);
+          setError(null);
+        }
         const data = await fetchListings({ theme, era });
         if (data && data.length > 0) {
           setListings(data);
-        } else {
+        } else if (!background) {
           setListings([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load listings');
+        if (!background) {
+          setError(err instanceof Error ? err.message : 'Failed to load listings');
+        }
       } finally {
-        setIsLoading(false);
+        if (!background) {
+          setIsLoading(false);
+        }
       }
     },
     []
   );
 
   useEffect(() => {
-    loadListings();
+    loadListings(undefined, undefined, true);
   }, [loadListings]);
 
   // Dismiss picker when tapping/clicking outside the search bar and open card

@@ -14,6 +14,7 @@
     "update-images-webp": "tsx scripts/update-listing-images-webp.ts",
     "generate-thumbnails": "tsx scripts/generate-thumbnails-for-existing.ts",
     "optimize-listing-images": "tsx scripts/optimize-listing-images.ts",
+    "optimize-homepage-thumbnails": "tsx scripts/optimize-homepage-thumbnails.ts",
     "extract-portal-poster": "tsx scripts/extract-portal-poster.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

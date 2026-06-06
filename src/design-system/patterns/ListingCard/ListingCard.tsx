@@ -9,6 +9,8 @@ import './ListingCard.css';
 export interface ListingCardProps {
   id: string;
   image: string;
+  imageLoading?: 'eager' | 'lazy';
+  imageFetchPriority?: 'high' | 'low' | 'auto';
   hoverVideo?: string;
   title: string;
   /** Optional year or era (e.g. "30 BC", "2187") shown with title. */
@@ -97,6 +99,8 @@ const SPECULAR_WAYPOINTS = [
 export function ListingCard({
   id,
   image,
+  imageLoading = 'lazy',
+  imageFetchPriority = 'auto',
   hoverVideo,
   title,
   year,
@@ -112,6 +116,7 @@ export function ListingCard({
 }: ListingCardProps) {
   const [isLiked, setIsLiked] = useState(defaultLiked);
   const [isHoveringImage, setIsHoveringImage] = useState(false);
+  const [hasRequestedHoverVideo, setHasRequestedHoverVideo] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
   const hoverVideoRef = useRef<HTMLVideoElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -273,6 +278,9 @@ export function ListingCard({
         style={imageContainerDynamicStyle}
         onMouseEnter={(e) => {
           setIsHoveringImage(true);
+          if (enableHoverVideo) {
+            setHasRequestedHoverVideo(true);
+          }
           if (!enableCursorEffects) return;
           targetRef.current.hover = 1;
           syncPointerTarget(e);
@@ -297,7 +305,8 @@ export function ListingCard({
         <motion.img
           src={image}
           alt={title}
-          loading="lazy"
+          loading={imageLoading}
+          fetchPriority={imageFetchPriority}
           layoutId={imageLayoutId}
           style={{
             position: 'absolute',
@@ -309,14 +318,14 @@ export function ListingCard({
             transition: `transform ${HOVER_DURATION_MS}ms ${EASE_OUT}`,
           }}
         />
-        {hoverVideo && (
+        {hoverVideo && hasRequestedHoverVideo && (
           <video
             ref={hoverVideoRef}
             src={hoverVideo}
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="none"
             aria-hidden
             tabIndex={-1}
             style={{
